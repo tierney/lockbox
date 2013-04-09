@@ -1,0 +1,17 @@
+Major components
+
+  o Zipping
+
+  o Remote interface for serialization.
+
+  o Web server for serialization.
+
+  o Encryption
+
+  o Delta encoding. Rsync values.
+
+  o Diffing modules.
+
+  o Fork consistency.
+
+  o File watching.
