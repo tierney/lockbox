@@ -5,6 +5,7 @@ Makefile
 /install-sh
 /depcomp
 /missing
+/configure.lineno
 /config.guess
 /config.sub
 /config.status
