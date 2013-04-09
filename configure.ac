@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([FULL-PACKAGE-NAME], [VERSION], [BUG-REPORT-ADDRESS])
+AC_INIT([Lockbox-CC], [0.1], [tierney@cs.nyu.edu])
 AC_CONFIG_SRCDIR([src/base/at_exit.cc])
 AC_CONFIG_HEADERS([config.h])
 
