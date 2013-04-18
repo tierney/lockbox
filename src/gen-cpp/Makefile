@@ -1,4 +1,4 @@
-CXX=clang++
+CXX=g++
 CXXFLAGS= -DHAVE_INTTYPES_H -DHAVE_NETINET_IN_H -Wall -Wextra -g -I/usr/local/include/thrift
 
 all: server client
