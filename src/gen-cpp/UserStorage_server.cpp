@@ -10,6 +10,9 @@
 #include <thrift/concurrency/PosixThreadFactory.h>
 #include <thrift/server/TNonblockingServer.h>
 
+#include <boost/thread.hpp>
+#include <ctime>
+
 using namespace ::apache::thrift;
 using namespace ::apache::thrift::protocol;
 using namespace ::apache::thrift::transport;
@@ -19,15 +22,39 @@ using apache::thrift::concurrency::ThreadManager;
 using apache::thrift::concurrency::PosixThreadFactory;
 using boost::shared_ptr;
 
+class Counter {
+ public:
+  Counter() : count_(0) {}
+
+  ~Counter() {}
+
+  void inc() {
+    boost::upgrade_lock<boost::shared_mutex> lock(mutex_);
+    boost::upgrade_to_unique_lock<boost::shared_mutex> unique_lock(lock);
+    ++count_;
+  }
+
+  int get() {
+    boost::shared_lock<boost::shared_mutex> lock(mutex_);
+    return count_;
+  }
+
+ private:
+  int count_;
+  boost::shared_mutex mutex_;
+};
+
 class UserStorageHandler : virtual public UserStorageIf {
  public:
-  UserStorageHandler() {
+  // Does not take ownership of |counter|.
+  UserStorageHandler(Counter* counter) : counter_(counter) {
     // Your initialization goes here
   }
 
   void store(const UserProfile& user) {
     // Your implementation goes here
-    printf("store\n");
+    counter_->inc();
+    printf("%ld store %d\n", time(NULL), counter_->get());
   }
 
   void retrieve(UserProfile& _return, const int32_t uid) {
@@ -35,19 +62,23 @@ class UserStorageHandler : virtual public UserStorageIf {
     printf("retrieve\n");
   }
 
+ private:
+  Counter* counter_;
+
 };
 
 int main(int argc, char **argv) {
-  int port = 9090;
-  // shared_ptr<UserStorageHandler> handler(new UserStorageHandler());
-  // shared_ptr<TProcessor> processor(new UserStorageProcessor(handler));
-  // shared_ptr<TServerTransport> serverTransport(new TServerSocket(port));
-  // shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
-  // shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
+  if (argc != 2) {
+    std::cerr << "Please check code for usage." << std::endl;
+    return 1;
+  }
 
-  // TSimpleServer server(processor, serverTransport, transportFactory, protocolFactory);
-  // server.serve();
-  shared_ptr<UserStorageHandler> handler(new UserStorageHandler());
+  Counter counter;
+  boost::shared_mutex mutex_;
+
+  int port = atoi(argv[1]);
+
+  shared_ptr<UserStorageHandler> handler(new UserStorageHandler(&counter));
   shared_ptr<TProcessor> processor(new UserStorageProcessor(handler));
   shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
 
@@ -56,7 +87,7 @@ int main(int argc, char **argv) {
   shared_ptr<PosixThreadFactory> threadFactory = shared_ptr<PosixThreadFactory>(new PosixThreadFactory());
   threadManager->threadFactory(threadFactory);
   threadManager->start();
-  TNonblockingServer server(processor, protocolFactory, 8888, threadManager);
+  TNonblockingServer server(processor, protocolFactory, port, threadManager);
   server.serve();
   return 0;
 }
