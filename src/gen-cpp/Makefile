@@ -1,5 +1,6 @@
 CXX=clang++
 CXXFLAGS= -DHAVE_INTTYPES_H -DHAVE_NETINET_IN_H -Wall -Wextra -g -I/usr/local/include/thrift
+
 all: server client
 
 server:
@@ -15,4 +16,4 @@ client:
 	$(CXX) $(CXXFLAGS) -L/usr/local/lib client.o userstorage.o constants.o types.o -o UserStorage_client -lthrift
 
 clean:
-	rm -f *.o UserStorage_{server,client}
+	rm -f *.o UserStorage_server UserStorage_client
