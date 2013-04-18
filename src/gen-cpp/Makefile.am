@@ -1,4 +1,4 @@
-AM_CXXFLAGS = -DHAVE_INTTYPES_H -DHAVE_NETINET_IN_H -Wall -Wextra -g -I/usr/local/include/thrift
+AM_CXXFLAGS = -DHAVE_INTTYPES_H -DHAVE_NETINET_IN_H -Wall -Wextra -g
 
 bin_PROGRAMS =
 
@@ -8,7 +8,7 @@ server_LDADD =
 server_LDADD += libuserstorage.a
 server_LDADD += libuser_constants.a
 server_LDADD += libuser_types.a
-server_LDADD += -lthrift -lthriftnb -levent -lboost_thread-mt
+server_LDADD += -lthrift -lthriftnb -levent -lboost_thread-mt -lpthread -lc
 
 
 bin_PROGRAMS += client
