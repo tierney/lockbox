@@ -3,7 +3,7 @@
 
 AC_PREREQ([2.69])
 AC_INIT([Lockbox-CC], [0.1], [tierney@cs.nyu.edu])
-AC_CONFIG_SRCDIR([src/base/at_exit.cc])
+AC_CONFIG_SRCDIR([src/lockbox_main.cc])
 AC_CONFIG_HEADERS([config.h])
 
 AC_PROG_RANLIB

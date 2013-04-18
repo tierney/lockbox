@@ -22,10 +22,10 @@ client_LDADD += -lthrift
 noinst_LIBRARIES =
 
 noinst_LIBRARIES += libuserstorage.a
-libuserstorage_a_SOURCES = UserStorage.cpp
+libuserstorage_a_SOURCES = UserStorage.cpp UserStorage.h
 
 noinst_LIBRARIES += libuser_constants.a
-libuser_constants_a_SOURCES = user_constants.cpp
+libuser_constants_a_SOURCES = user_constants.cpp user_constants.h
 
 noinst_LIBRARIES += libuser_types.a
-libuser_types_a_SOURCES = user_types.cpp
+libuser_types_a_SOURCES = user_types.cpp user_types.h
