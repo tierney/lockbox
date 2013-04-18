@@ -76,6 +76,5 @@ esac
 
 AC_CONFIG_FILES([Makefile
                  src/Makefile
-                 src/base/Makefile
-                 src/base/files/Makefile])
+                 src/gen-cpp/Makefile])
 AC_OUTPUT

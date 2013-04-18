@@ -8,7 +8,7 @@ server_LDADD =
 server_LDADD += libuserstorage.a
 server_LDADD += libuser_constants.a
 server_LDADD += libuser_types.a
-server_LDADD += -lthrift -lthriftnb -levent -boost_thread-mt
+server_LDADD += -lthrift -lthriftnb -levent -lboost_thread-mt
 
 
 bin_PROGRAMS += client
