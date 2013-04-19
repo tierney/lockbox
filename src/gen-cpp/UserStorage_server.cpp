@@ -74,7 +74,6 @@ int main(int argc, char **argv) {
   }
 
   Counter counter;
-  boost::shared_mutex mutex_;
 
   const int port = atoi(argv[1]);
   const int num_threads = atoi(argv[2]);
@@ -83,9 +82,13 @@ int main(int argc, char **argv) {
   shared_ptr<TProcessor> processor(new UserStorageProcessor(handler));
   shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
 
-  // using thread pool with maximum 15 threads to handle incoming requests
-  shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(num_threads);
-  shared_ptr<PosixThreadFactory> threadFactory = shared_ptr<PosixThreadFactory>(new PosixThreadFactory());
+  // Setup for the server that instantiates |num_threads| to handle requests.
+  shared_ptr<ThreadManager> threadManager =
+      ThreadManager::newSimpleThreadManager(num_threads);
+
+  shared_ptr<PosixThreadFactory> threadFactory =
+      shared_ptr<PosixThreadFactory>(new PosixThreadFactory());
+
   threadManager->threadFactory(threadFactory);
   threadManager->start();
   TNonblockingServer server(processor, protocolFactory, port, threadManager);
