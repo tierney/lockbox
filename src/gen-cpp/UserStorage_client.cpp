@@ -19,11 +19,11 @@ int main(int argc, char **argv) {
 
   UserProfile profile;
   UserStorageClient client(protocol);
-  transport->open();
   for (int i = 0; i < 100000; i++) {
+    transport->open();
     client.store(profile);
+    transport->close();
   }
-  transport->close();
 
   return 0;
 }

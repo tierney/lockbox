@@ -9,7 +9,7 @@ class AttackThread(threading.Thread):
     threading.Thread.__init__(self)
 
   def run(self):
-    subprocess.Popen("./UserStorage_client", shell = True)
+    subprocess.Popen("./client 'beaker-17.news.cs.nyu.edu' 9090", shell = True)
 
 
 def main(argv):

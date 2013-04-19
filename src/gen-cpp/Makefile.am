@@ -1,5 +1,7 @@
 AM_CXXFLAGS = -DHAVE_INTTYPES_H -DHAVE_NETINET_IN_H -Wall -Wextra -g
 
+EXTRA_DIST = attack.py
+
 bin_PROGRAMS =
 
 bin_PROGRAMS += server
