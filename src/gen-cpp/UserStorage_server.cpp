@@ -68,7 +68,7 @@ class UserStorageHandler : virtual public UserStorageIf {
 };
 
 int main(int argc, char **argv) {
-  if (argc != 2) {
+  if (argc != 3) {
     std::cerr << "Please check code for usage." << std::endl;
     return 1;
   }
@@ -76,14 +76,15 @@ int main(int argc, char **argv) {
   Counter counter;
   boost::shared_mutex mutex_;
 
-  int port = atoi(argv[1]);
+  const int port = atoi(argv[1]);
+  const int num_threads = atoi(argv[2]);
 
   shared_ptr<UserStorageHandler> handler(new UserStorageHandler(&counter));
   shared_ptr<TProcessor> processor(new UserStorageProcessor(handler));
   shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
 
   // using thread pool with maximum 15 threads to handle incoming requests
-  shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(15);
+  shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(num_threads);
   shared_ptr<PosixThreadFactory> threadFactory = shared_ptr<PosixThreadFactory>(new PosixThreadFactory());
   threadManager->threadFactory(threadFactory);
   threadManager->start();
