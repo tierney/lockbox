@@ -8,7 +8,12 @@ using namespace apache::thrift::protocol;
 using namespace apache::thrift::transport;
 
 int main(int argc, char **argv) {
-  boost::shared_ptr<TSocket> socket(new TSocket("localhost", 9090));
+  if (argc != 3) {
+    std::cerr << "Please check usage in code." << std::endl;
+    return 1;
+  }
+
+  boost::shared_ptr<TSocket> socket(new TSocket(argv[1], atoi(argv[2])));
   boost::shared_ptr<TTransport> transport(new TFramedTransport(socket));
   boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
 
