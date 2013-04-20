@@ -26,6 +26,25 @@ BOOST_REQUIRE([1.34])
 dnl Then look for specific Boost libraries you need:
 BOOST_THREADS
 
+AC_ARG_WITH([thrift-libdir],
+    [AS_HELP_STRING([--with-thrift-libdir=LIB_DIR],
+        [location of the protocol buffers libraries, defaults to /usr/lib])],
+    [THRIFT_LIBDIR="$withval"],
+    [THRIFT_LIBDIR='/usr/lib'])
+AC_SUBST([THRIFT_LIBDIR])
+
+LDFLAGS="$LDFLAGS -L$THRIFT_LIBDIR"
+
+AC_CHECK_LIB([thrift], [main], [], [AC_MSG_ERROR([cannot find thrift library])])
+
+AC_ARG_WITH([thrift],
+    [AS_HELP_STRING([--with-thrift=PATH],
+        [location of the thrift protocol compiler binary, defaults to thrift])],
+    [THRIFT="$withval"],
+    [THRIFT='thrift'])
+AC_SUBST([THRIFT])
+
+
 # Checks for header files.
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h fenv.h float.h inttypes.h limits.h locale.h mach/mach.h malloc.h netinet/in.h stddef.h stdint.h stdlib.h string.h sys/ioctl.h sys/param.h sys/socket.h sys/statvfs.h sys/time.h sys/vfs.h unistd.h utime.h wchar.h wctype.h])
 
