@@ -4,15 +4,27 @@
 AC_PREREQ([2.69])
 AC_INIT([Lockbox-CC], [0.1], [tierney@cs.nyu.edu])
 AC_CONFIG_SRCDIR([src/lockbox_main.cc])
+AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([config.h])
-
-AC_PROG_RANLIB
 AM_INIT_AUTOMAKE
+AC_CONFIG_MACRO_DIR([build-aux])
+
 # Checks for programs.
+AC_CANONICAL_HOST
+
+AC_PROG_LIBTOOL
+
+AC_PROG_GREP
+AC_PROG_EGREP
 AC_PROG_CXX
 AC_PROG_CC
 
 # Checks for libraries.
+
+dnl First look for Boost, maybe for a specific minimum version:
+BOOST_REQUIRE([1.34])
+dnl Then look for specific Boost libraries you need:
+BOOST_THREADS
 
 # Checks for header files.
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h fenv.h float.h inttypes.h limits.h locale.h mach/mach.h malloc.h netinet/in.h stddef.h stdint.h stdlib.h string.h sys/ioctl.h sys/param.h sys/socket.h sys/statvfs.h sys/time.h sys/vfs.h unistd.h utime.h wchar.h wctype.h])

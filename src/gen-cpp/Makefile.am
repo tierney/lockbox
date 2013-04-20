@@ -7,27 +7,27 @@ bin_PROGRAMS =
 bin_PROGRAMS += server
 server_SOURCES = UserStorage_server.cpp
 server_LDADD =
-server_LDADD += libuserstorage.a
-server_LDADD += libuser_constants.a
-server_LDADD += libuser_types.a
-server_LDADD += -lthrift -lthriftnb -levent -lboost_thread-mt -lpthread -lc
-
+server_LDADD += libuserstorage.la
+server_LDADD += libuser_constants.la
+server_LDADD += libuser_types.la
+server_LDADD += -lthrift -lthriftnb -levent -lpthread -lc
+server_LDADD += $(BOOST_THREAD_LIBS)
 
 bin_PROGRAMS += client
 client_SOURCES = UserStorage_client.cpp
 client_LDADD =
-client_LDADD += libuserstorage.a
-client_LDADD += libuser_constants.a
-client_LDADD += libuser_types.a
+client_LDADD += libuserstorage.la
+client_LDADD += libuser_constants.la
+client_LDADD += libuser_types.la
 client_LDADD += -lthrift
 
-noinst_LIBRARIES =
+noinst_LTLIBRARIES =
 
-noinst_LIBRARIES += libuserstorage.a
-libuserstorage_a_SOURCES = UserStorage.cpp UserStorage.h
+noinst_LTLIBRARIES += libuserstorage.la
+libuserstorage_la_SOURCES = UserStorage.cpp UserStorage.h
 
-noinst_LIBRARIES += libuser_constants.a
-libuser_constants_a_SOURCES = user_constants.cpp user_constants.h
+noinst_LTLIBRARIES += libuser_constants.la
+libuser_constants_la_SOURCES = user_constants.cpp user_constants.h
 
-noinst_LIBRARIES += libuser_types.a
-libuser_types_a_SOURCES = user_types.cpp user_types.h
+noinst_LTLIBRARIES += libuser_types.la
+libuser_types_la_SOURCES = user_types.cpp user_types.h
