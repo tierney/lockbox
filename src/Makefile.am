@@ -45,16 +45,16 @@ $(nodist_libuserthrift_la_SOURCES): $(srcdir)/user.thrift
 	$(THRIFT_BUILD)
 
 
-noinst_LTLIBRARIES += libhcdthrift.la
-libhcdthrift_la_SOURCES =
-libhcdthrift_la_SOURCES += gen-cpp/VersionExchange.cpp
-libhcdthrift_la_SOURCES += gen-cpp/VersionExchange.h
-libhcdthrift_la_SOURCES += gen-cpp/hcd_constants.cpp
-libhcdthrift_la_SOURCES += gen-cpp/hcd_constants.h
-libhcdthrift_la_SOURCES += gen-cpp/hcd_types.cpp
-libhcdthrift_la_SOURCES += gen-cpp/hcd_types.h
+noinst_LTLIBRARIES += libhash_chain_digestthrift.la
+libhash_chain_digestthrift_la_SOURCES =
+libhash_chain_digestthrift_la_SOURCES += gen-cpp/VersionExchange.cpp
+libhash_chain_digestthrift_la_SOURCES += gen-cpp/VersionExchange.h
+libhash_chain_digestthrift_la_SOURCES += gen-cpp/hash_chain_digest_constants.cpp
+libhash_chain_digestthrift_la_SOURCES += gen-cpp/hash_chain_digest_constants.h
+libhash_chain_digestthrift_la_SOURCES += gen-cpp/hash_chain_digest_types.cpp
+libhash_chain_digestthrift_la_SOURCES += gen-cpp/hash_chain_digest_types.h
 
-$(nodist_libhcdthrift_la_SOURCES): $(srcdir)/hcd.thrift
+$(nodist_libhash_chain_digestthrift_la_SOURCES): $(srcdir)/hash_chain_digest.thrift
 	$(THRIFT_BUILD)
 
 
@@ -63,7 +63,7 @@ clean-local: clean-local-check
 clean-local-check:
 	-rm -rf \
 		$(nodist_libuserthrift_la_SOURCES) \
-		$(nodist_libhcdthrift_la_SOURCES) \
+		$(nodist_libhash_chain_digestthrift_la_SOURCES) \
 		*.skeleton.cpp
 
 
