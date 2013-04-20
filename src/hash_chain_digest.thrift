@@ -1,4 +1,4 @@
-namespace cpp lockbox;
+namespace cpp lockbox
 
 struct HCDHistory {
   1: required list<string> history,

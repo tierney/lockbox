@@ -17,8 +17,8 @@ int main(int argc, char **argv) {
   boost::shared_ptr<TTransport> transport(new TFramedTransport(socket));
   boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
 
-  UserProfile profile;
-  UserStorageClient client(protocol);
+  lockbox::UserProfile profile;
+  lockbox::UserStorageClient client(protocol);
   for (int i = 0; i < 100000; i++) {
     transport->open();
     client.store(profile);

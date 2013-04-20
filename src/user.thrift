@@ -1,4 +1,4 @@
-namespace cpp lockbox;
+namespace cpp lockbox
 
 struct UserProfile {
   1: i32 uid,

@@ -22,6 +22,8 @@ using apache::thrift::concurrency::ThreadManager;
 using apache::thrift::concurrency::PosixThreadFactory;
 using boost::shared_ptr;
 
+namespace lockbox {
+
 class Counter {
  public:
   Counter() : count_(0) {}
@@ -67,19 +69,22 @@ class UserStorageHandler : virtual public UserStorageIf {
 
 };
 
+} // namespace lockbox
+
 int main(int argc, char **argv) {
   if (argc != 3) {
     std::cerr << "Please check code for usage." << std::endl;
     return 1;
   }
 
-  Counter counter;
+  lockbox::Counter counter;
 
   const int port = atoi(argv[1]);
   const int num_threads = atoi(argv[2]);
 
-  shared_ptr<UserStorageHandler> handler(new UserStorageHandler(&counter));
-  shared_ptr<TProcessor> processor(new UserStorageProcessor(handler));
+  shared_ptr<lockbox::UserStorageHandler> handler(
+      new lockbox::UserStorageHandler(&counter));
+  shared_ptr<TProcessor> processor(new lockbox::UserStorageProcessor(handler));
   shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
 
   // Setup for the server that instantiates |num_threads| to handle requests.

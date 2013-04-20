@@ -29,32 +29,32 @@ client_LDADD += -lthrift
 
 # thrift compiler command. Note that the --out value for the output
 # directory.
-THRIFT_BUILD = $(THRIFT) --gen cpp --out gen-cpp $<
+THRIFT_BUILD = $(THRIFT) --gen cpp --out . $<
 
 
 noinst_LTLIBRARIES += libuserthrift.la
 libuserthrift_la_SOURCES =
-libuserthrift_la_SOURCES += gen-cpp/UserStorage.cpp
-libuserthrift_la_SOURCES += gen-cpp/UserStorage.h
-libuserthrift_la_SOURCES += gen-cpp/user_constants.cpp
-libuserthrift_la_SOURCES += gen-cpp/user_types.cpp
-libuserthrift_la_SOURCES += gen-cpp/user_constants.h
-libuserthrift_la_SOURCES += gen-cpp/user_types.h
+libuserthrift_la_SOURCES += UserStorage.cpp
+libuserthrift_la_SOURCES += UserStorage.h
+libuserthrift_la_SOURCES += user_constants.cpp
+libuserthrift_la_SOURCES += user_types.cpp
+libuserthrift_la_SOURCES += user_constants.h
+libuserthrift_la_SOURCES += user_types.h
 
-$(nodist_libuserthrift_la_SOURCES): $(srcdir)/user.thrift
+$(libuserthrift_la_SOURCES): $(srcdir)/user.thrift
 	$(THRIFT_BUILD)
 
 
 noinst_LTLIBRARIES += libhash_chain_digestthrift.la
 libhash_chain_digestthrift_la_SOURCES =
-libhash_chain_digestthrift_la_SOURCES += gen-cpp/VersionExchange.cpp
-libhash_chain_digestthrift_la_SOURCES += gen-cpp/VersionExchange.h
-libhash_chain_digestthrift_la_SOURCES += gen-cpp/hash_chain_digest_constants.cpp
-libhash_chain_digestthrift_la_SOURCES += gen-cpp/hash_chain_digest_constants.h
-libhash_chain_digestthrift_la_SOURCES += gen-cpp/hash_chain_digest_types.cpp
-libhash_chain_digestthrift_la_SOURCES += gen-cpp/hash_chain_digest_types.h
+libhash_chain_digestthrift_la_SOURCES += VersionExchange.cpp
+libhash_chain_digestthrift_la_SOURCES += VersionExchange.h
+libhash_chain_digestthrift_la_SOURCES += hash_chain_digest_constants.cpp
+libhash_chain_digestthrift_la_SOURCES += hash_chain_digest_constants.h
+libhash_chain_digestthrift_la_SOURCES += hash_chain_digest_types.cpp
+libhash_chain_digestthrift_la_SOURCES += hash_chain_digest_types.h
 
-$(nodist_libhash_chain_digestthrift_la_SOURCES): $(srcdir)/hash_chain_digest.thrift
+$(libhash_chain_digestthrift_la_SOURCES): $(srcdir)/hash_chain_digest.thrift
 	$(THRIFT_BUILD)
 
 
@@ -62,8 +62,8 @@ clean-local: clean-local-check
 .PHONY: clean-local-check
 clean-local-check:
 	-rm -rf \
-		$(nodist_libuserthrift_la_SOURCES) \
-		$(nodist_libhash_chain_digestthrift_la_SOURCES) \
+		$(libuserthrift_la_SOURCES) \
+		$(libhash_chain_digestthrift_la_SOURCES) \
 		*.skeleton.cpp
 
 
