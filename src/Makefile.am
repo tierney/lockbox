@@ -13,7 +13,8 @@ bin_PROGRAMS += lockbox_main
 lockbox_main_LDADD = $(DEPS_LIBS) $(LIBEVENT_LIBS) $(GTK_LIBS)
 lockbox_main_SOURCES = lockbox_main.cc
 lockbox_main_SOURCES +=
-lockbox_main_SOURCES += base/run_loop.h base/run_loop.cc
+lockbox_main_SOURCES += base/run_loop.h
+lockbox_main_SOURCES += base/run_loop.cc
 lockbox_main_SOURCES += base/pending_task.cc
 lockbox_main_SOURCES += base/metrics/statistics_recorder.cc
 lockbox_main_SOURCES += base/metrics/histogram.cc
@@ -102,6 +103,7 @@ lockbox_main_LDADD += libcallback.a
 lockbox_main_LDADD += liblocation.a
 lockbox_main_LDADD += libtask_runner.a
 lockbox_main_LDADD += liblock.a
+
 
 bin_PROGRAMS += server
 server_SOURCES = UserStorage_server.cpp
