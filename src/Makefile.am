@@ -146,7 +146,7 @@ libhash_chain_digestthrift_la_SOURCES += hash_chain_digest_constants.h
 libhash_chain_digestthrift_la_SOURCES += hash_chain_digest_types.cpp
 libhash_chain_digestthrift_la_SOURCES += hash_chain_digest_types.h
 
-$(libhash_chain_digestthrift_a_SOURCES): $(srcdir)/hash_chain_digest.thrift
+$(libhash_chain_digestthrift_la_SOURCES): $(srcdir)/hash_chain_digest.thrift
 	$(THRIFT_BUILD)
 
 
