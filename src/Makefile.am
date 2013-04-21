@@ -1,5 +1,5 @@
 AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src
-AM_CPPFLAGS += -DHAVE_INTTYPES_H -DHAVE_NETINET_IN_H
+AM_CPPFLAGS += -DHAVE_INTTYPES_H -DHAVE_NETINET_IN_H $(DEPS_CFLAGS) $(GTK_CFLAGS)
 AM_CXXFLAGS = -Wall -Wextra
 
 SUBDIRS =
@@ -10,9 +10,90 @@ noinst_LIBRARIES =
 
 
 bin_PROGRAMS += lockbox_main
+lockbox_main_LDADD = $(DEPS_LIBS) $(LIBEVENT_LIBS) $(GTK_LIBS)
 lockbox_main_SOURCES = lockbox_main.cc
 lockbox_main_SOURCES +=
-lockbox_main_LDADD = libfile_path_watcher.a
+lockbox_main_SOURCES += base/run_loop.h base/run_loop.cc
+lockbox_main_SOURCES += base/pending_task.cc
+lockbox_main_SOURCES += base/metrics/statistics_recorder.cc
+lockbox_main_SOURCES += base/metrics/histogram.cc
+lockbox_main_SOURCES += base/metrics/histogram_base.cc
+lockbox_main_SOURCES += base/pickle.h base/base_export.h base/pickle.cc
+lockbox_main_SOURCES += base/values.cc
+lockbox_main_SOURCES += base/metrics/bucket_ranges.cc
+lockbox_main_SOURCES += base/time_posix.cc
+lockbox_main_SOURCES += base/metrics/sample_vector.cc
+lockbox_main_SOURCES += base/time.cc
+lockbox_main_SOURCES += base/stringprintf.cc
+lockbox_main_SOURCES += base/threading/thread_restrictions.cc \
+	base/debug/alias.cc \
+	base/memory/weak_ptr.cc \
+	base/debug/trace_event_impl.h \
+	base/debug/trace_event_impl.cc
+lockbox_main_SOURCES += base/threading/platform_thread_posix.cc
+lockbox_main_SOURCES += base/synchronization/cancellation_flag.cc
+lockbox_main_SOURCES += base/synchronization/waitable_event_posix.cc
+lockbox_main_SOURCES += base/string_util.cc
+lockbox_main_SOURCES += base/strings/string_split.h
+lockbox_main_SOURCES += base/strings/string_split.cc
+lockbox_main_SOURCES += base/memory/ref_counted_memory.cc
+lockbox_main_SOURCES += base/threading/thread_id_name_manager.cc
+lockbox_main_SOURCES += base/threading/thread_local_posix.cc
+lockbox_main_SOURCES += base/atomicops_internals_x86_gcc.cc
+lockbox_main_SOURCES += base/at_exit.cc
+lockbox_main_SOURCES += base/memory/singleton.h base/memory/singleton.cc
+lockbox_main_SOURCES += base/strings/string_piece.cc
+lockbox_main_SOURCES += base/synchronization/condition_variable_posix.cc
+lockbox_main_SOURCES += base/third_party/dynamic_annotations/dynamic_annotations.c
+lockbox_main_SOURCES += base/process_util_linux.cc
+lockbox_main_SOURCES += base/process_posix.cc
+lockbox_main_SOURCES += base/process_util_posix.cc \
+	base/process_util.h \
+	base/process_util.cc \
+	base/allocator/type_profiler_control.cc \
+	base/posix/file_descriptor_shuffle.cc \
+	base/tracking_info.cc
+lockbox_main_SOURCES += base/thread_task_runner_handle.cc
+lockbox_main_SOURCES += base/message_pump_default.cc
+lockbox_main_SOURCES += base/message_pump_libevent.cc
+lockbox_main_SOURCES += base/message_pump_gtk.cc
+lockbox_main_SOURCES += base/message_pump_glib.cc
+lockbox_main_SOURCES += base/metrics/sparse_histogram.cc
+lockbox_main_SOURCES += base/metrics/sample_map.cc
+lockbox_main_SOURCES += base/metrics/histogram_samples.cc
+lockbox_main_SOURCES += base/json/json_string_value_serializer.cc
+lockbox_main_SOURCES += base/string16.cc
+lockbox_main_SOURCES += base/utf_string_conversions.cc
+lockbox_main_SOURCES += base/json/json_writer.cc
+lockbox_main_SOURCES += base/third_party/nspr/prtime.cc
+lockbox_main_SOURCES += base/threading/thread_checker_impl.cc
+lockbox_main_SOURCES += base/third_party/icu/icu_utf.cc
+lockbox_main_SOURCES += base/strings/string_number_conversions.cc
+lockbox_main_SOURCES += base/sys_info_posix.cc
+lockbox_main_SOURCES += base/message_pump.cc
+lockbox_main_SOURCES += base/json/json_reader.cc
+lockbox_main_SOURCES += base/strings/utf_string_conversion_utils.cc
+lockbox_main_SOURCES += base/json/string_escape.cc
+lockbox_main_SOURCES += base/third_party/dmg_fp/g_fmt.cc
+lockbox_main_SOURCES += base/third_party/dmg_fp/dtoa.cc
+lockbox_main_SOURCES += base/json/json_parser.cc
+lockbox_main_SOURCES += base/debug/stack_trace_posix.cc
+lockbox_main_SOURCES += base/debug/stack_trace.cc
+lockbox_main_SOURCES += base/debug/debugger_posix.cc
+lockbox_main_SOURCES += base/safe_strerror_posix.cc
+lockbox_main_SOURCES += base/vlog.cc
+lockbox_main_SOURCES += base/command_line.cc
+lockbox_main_SOURCES += base/base_switches.cc
+lockbox_main_SOURCES += base/strings/sys_string_conversions_posix.cc
+lockbox_main_SOURCES += base/platform_file.cc
+lockbox_main_SOURCES += base/platform_file_posix.cc
+lockbox_main_SOURCES += base/profiler/tracked_time.cc
+lockbox_main_SOURCES += base/threading/thread_local_storage_posix.cc
+lockbox_main_SOURCES += base/profiler/alternate_timer.cc
+lockbox_main_SOURCES += base/threading/thread_collision_warner.cc
+lockbox_main_SOURCES += base/threading/post_task_and_reply_impl.cc
+
+lockbox_main_LDADD += libfile_path_watcher.a
 lockbox_main_LDADD += libmessage_loop.a
 lockbox_main_LDADD += libmessage_loop_proxy.a
 lockbox_main_LDADD += libtracked_objects.a
@@ -50,7 +131,7 @@ libuserthrift_a_SOURCES += user_types.cpp
 libuserthrift_a_SOURCES += user_constants.h
 libuserthrift_a_SOURCES += user_types.h
 
-$(libuserthrift_la_SOURCES): $(srcdir)/user.thrift
+$(libuserthrift_a_SOURCES): $(srcdir)/user.thrift
 	$(THRIFT_BUILD)
 
 
@@ -63,7 +144,7 @@ libhash_chain_digestthrift_a_SOURCES += hash_chain_digest_constants.h
 libhash_chain_digestthrift_a_SOURCES += hash_chain_digest_types.cpp
 libhash_chain_digestthrift_a_SOURCES += hash_chain_digest_types.h
 
-$(libhash_chain_digestthrift_la_SOURCES): $(srcdir)/hash_chain_digest.thrift
+$(libhash_chain_digestthrift_a_SOURCES): $(srcdir)/hash_chain_digest.thrift
 	$(THRIFT_BUILD)
 
 
@@ -76,7 +157,8 @@ clean-local-check:
 		*.skeleton.cpp
 
 noinst_LIBRARIES += libfile_path_watcher.a
-libfile_path_watcher_a_CPPFLAGS = -I$(top_srcdir)/src -I/usr/include/glib-2.0
+libfile_path_watcher_a_CPPFLAGS = -I$(top_srcdir)/src $(DEPS_CFLAGS)
+libfile_path_watcher_a_LIBS = $(DEPS_LIBS)
 libfile_path_watcher_a_SOURCES = base/files/file_path_watcher.h
 libfile_path_watcher_a_SOURCES += base/files/file_path_watcher.cc
 libfile_path_watcher_a_SOURCES += base/files/file_path_watcher_@FILE_PATH_WATCHER_SUFFIX@.cc
@@ -112,6 +194,7 @@ libfile_path_watcher_a_SOURCES += base/lazy_instance.cc
 libfile_path_watcher_a_SOURCES += base/file_util.cc
 libfile_path_watcher_a_SOURCES += base/file_util_linux.cc
 libfile_path_watcher_a_SOURCES += base/file_util_posix.cc
+libfile_path_watcher_a_SOURCES += base/message_loop/message_loop_proxy_impl.cc
 
 
 
