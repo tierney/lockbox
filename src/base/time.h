@@ -23,7 +23,7 @@
 #ifndef BASE_TIME_H_
 #define BASE_TIME_H_
 
-#include <ctime>
+#include <time.h>
 
 #include "base/atomicops.h"
 #include "base/base_export.h"
