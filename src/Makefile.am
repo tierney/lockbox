@@ -6,7 +6,7 @@ SUBDIRS =
 TESTS =
 bin_PROGRAMS =
 noinst_PROGRAMS =
-noinst_LIBRARIES =
+noinst_LTLIBRARIES =
 
 
 bin_PROGRAMS += lockbox_main
@@ -94,15 +94,15 @@ lockbox_main_SOURCES += base/profiler/alternate_timer.cc
 lockbox_main_SOURCES += base/threading/thread_collision_warner.cc
 lockbox_main_SOURCES += base/threading/post_task_and_reply_impl.cc
 
-lockbox_main_LDADD += libfile_path_watcher.a
-lockbox_main_LDADD += libmessage_loop.a
-lockbox_main_LDADD += libmessage_loop_proxy.a
-lockbox_main_LDADD += libtracked_objects.a
-lockbox_main_LDADD += libref_counted.a
-lockbox_main_LDADD += libcallback.a
-lockbox_main_LDADD += liblocation.a
-lockbox_main_LDADD += libtask_runner.a
-lockbox_main_LDADD += liblock.a
+lockbox_main_LDADD += libfile_path_watcher.la
+lockbox_main_LDADD += libmessage_loop.la
+lockbox_main_LDADD += libmessage_loop_proxy.la
+lockbox_main_LDADD += libtracked_objects.la
+lockbox_main_LDADD += libref_counted.la
+lockbox_main_LDADD += libcallback.la
+lockbox_main_LDADD += liblocation.la
+lockbox_main_LDADD += libtask_runner.la
+lockbox_main_LDADD += liblock.la
 
 
 bin_PROGRAMS += server
@@ -124,27 +124,27 @@ client_LDADD += -lthrift
 THRIFT_BUILD = $(THRIFT) --gen cpp --out . $<
 
 
-noinst_LIBRARIES += libuserthrift.a
-libuserthrift_a_SOURCES =
-libuserthrift_a_SOURCES += UserStorage.cpp
-libuserthrift_a_SOURCES += UserStorage.h
-libuserthrift_a_SOURCES += user_constants.cpp
-libuserthrift_a_SOURCES += user_types.cpp
-libuserthrift_a_SOURCES += user_constants.h
-libuserthrift_a_SOURCES += user_types.h
+noinst_LTLIBRARIES += libuserthrift.la
+libuserthrift_la_SOURCES =
+libuserthrift_la_SOURCES += UserStorage.cpp
+libuserthrift_la_SOURCES += UserStorage.h
+libuserthrift_la_SOURCES += user_constants.cpp
+libuserthrift_la_SOURCES += user_types.cpp
+libuserthrift_la_SOURCES += user_constants.h
+libuserthrift_la_SOURCES += user_types.h
 
-$(libuserthrift_a_SOURCES): $(srcdir)/user.thrift
+$(libuserthrift_la_SOURCES): $(srcdir)/user.thrift
 	$(THRIFT_BUILD)
 
 
-noinst_LIBRARIES += libhash_chain_digestthrift.a
-libhash_chain_digestthrift_a_SOURCES =
-libhash_chain_digestthrift_a_SOURCES += VersionExchange.cpp
-libhash_chain_digestthrift_a_SOURCES += VersionExchange.h
-libhash_chain_digestthrift_a_SOURCES += hash_chain_digest_constants.cpp
-libhash_chain_digestthrift_a_SOURCES += hash_chain_digest_constants.h
-libhash_chain_digestthrift_a_SOURCES += hash_chain_digest_types.cpp
-libhash_chain_digestthrift_a_SOURCES += hash_chain_digest_types.h
+noinst_LTLIBRARIES += libhash_chain_digestthrift.la
+libhash_chain_digestthrift_la_SOURCES =
+libhash_chain_digestthrift_la_SOURCES += VersionExchange.cpp
+libhash_chain_digestthrift_la_SOURCES += VersionExchange.h
+libhash_chain_digestthrift_la_SOURCES += hash_chain_digest_constants.cpp
+libhash_chain_digestthrift_la_SOURCES += hash_chain_digest_constants.h
+libhash_chain_digestthrift_la_SOURCES += hash_chain_digest_types.cpp
+libhash_chain_digestthrift_la_SOURCES += hash_chain_digest_types.h
 
 $(libhash_chain_digestthrift_a_SOURCES): $(srcdir)/hash_chain_digest.thrift
 	$(THRIFT_BUILD)
@@ -158,13 +158,13 @@ clean-local-check:
 		$(libhash_chain_digestthrift_a_SOURCES) \
 		*.skeleton.cpp
 
-noinst_LIBRARIES += libfile_path_watcher.a
-libfile_path_watcher_a_CPPFLAGS = -I$(top_srcdir)/src $(DEPS_CFLAGS)
-libfile_path_watcher_a_LIBS = $(DEPS_LIBS)
-libfile_path_watcher_a_SOURCES = base/files/file_path_watcher.h
-libfile_path_watcher_a_SOURCES += base/files/file_path_watcher.cc
-libfile_path_watcher_a_SOURCES += base/files/file_path_watcher_@FILE_PATH_WATCHER_SUFFIX@.cc
-libfile_path_watcher_a_SOURCES += \
+noinst_LTLIBRARIES += libfile_path_watcher.la
+libfile_path_watcher_la_CPPFLAGS = -I$(top_srcdir)/src $(DEPS_CFLAGS)
+libfile_path_watcher_la_LIBS = $(DEPS_LIBS)
+libfile_path_watcher_la_SOURCES = base/files/file_path_watcher.h
+libfile_path_watcher_la_SOURCES += base/files/file_path_watcher.cc
+libfile_path_watcher_la_SOURCES += base/files/file_path_watcher_@FILE_PATH_WATCHER_SUFFIX@.cc
+libfile_path_watcher_la_SOURCES += \
  base/base_export.h base/basictypes.h base/port.h build/build_config.h \
  base/callback.h base/callback_forward.h base/callback_internal.h \
  base/memory/ref_counted.h base/atomic_ref_count.h base/atomicops.h \
@@ -189,48 +189,48 @@ libfile_path_watcher_a_SOURCES += \
  base/observer_list.h base/pending_task.h base/tracking_info.h \
  base/message_pump_libevent.h base/message_pump_gtk.h \
  base/message_pump_glib.h base/threading/thread.h
-libfile_path_watcher_a_SOURCES += base/threading/thread.cc
-libfile_path_watcher_a_SOURCES += base/logging.cc
-libfile_path_watcher_a_SOURCES += base/files/file_path.cc
-libfile_path_watcher_a_SOURCES += base/lazy_instance.cc
-libfile_path_watcher_a_SOURCES += base/file_util.cc
-libfile_path_watcher_a_SOURCES += base/file_util_linux.cc
-libfile_path_watcher_a_SOURCES += base/file_util_posix.cc
-libfile_path_watcher_a_SOURCES += base/message_loop/message_loop_proxy_impl.cc
+libfile_path_watcher_la_SOURCES += base/threading/thread.cc
+libfile_path_watcher_la_SOURCES += base/logging.cc
+libfile_path_watcher_la_SOURCES += base/files/file_path.cc
+libfile_path_watcher_la_SOURCES += base/lazy_instance.cc
+libfile_path_watcher_la_SOURCES += base/file_util.cc
+libfile_path_watcher_la_SOURCES += base/file_util_linux.cc
+libfile_path_watcher_la_SOURCES += base/file_util_posix.cc
+libfile_path_watcher_la_SOURCES += base/message_loop/message_loop_proxy_impl.cc
 
 
 
-noinst_LIBRARIES += libmessage_loop.a
-libmessage_loop_a_SOURCES = base/message_loop.h
-libmessage_loop_a_SOURCES += base/message_loop.cc
+noinst_LTLIBRARIES += libmessage_loop.la
+libmessage_loop_la_SOURCES = base/message_loop.h
+libmessage_loop_la_SOURCES += base/message_loop.cc
 
-noinst_LIBRARIES += libmessage_loop_proxy.a
-libmessage_loop_proxy_a_SOURCES = base/message_loop/message_loop_proxy.h
-libmessage_loop_proxy_a_SOURCES += base/message_loop/message_loop_proxy.cc
+noinst_LTLIBRARIES += libmessage_loop_proxy.la
+libmessage_loop_proxy_la_SOURCES = base/message_loop/message_loop_proxy.h
+libmessage_loop_proxy_la_SOURCES += base/message_loop/message_loop_proxy.cc
 
-noinst_LIBRARIES += libtracked_objects.a
-libtracked_objects_a_SOURCES = base/tracked_objects.h
-libtracked_objects_a_SOURCES += base/tracked_objects.cc
+noinst_LTLIBRARIES += libtracked_objects.la
+libtracked_objects_la_SOURCES = base/tracked_objects.h
+libtracked_objects_la_SOURCES += base/tracked_objects.cc
 
-noinst_LIBRARIES += libref_counted.a
-libref_counted_a_SOURCES = base/memory/ref_counted.h
-libref_counted_a_SOURCES += base/memory/ref_counted.cc
+noinst_LTLIBRARIES += libref_counted.la
+libref_counted_la_SOURCES = base/memory/ref_counted.h
+libref_counted_la_SOURCES += base/memory/ref_counted.cc
 
-noinst_LIBRARIES += libcallback.a
-libcallback_a_SOURCES = base/callback.h
-libcallback_a_SOURCES += base/callback_forward.h
-libcallback_a_SOURCES += base/cancelable_callback.h
-libcallback_a_SOURCES += base/callback_internal.cc
-libcallback_a_SOURCES += base/callback_helpers.h
+noinst_LTLIBRARIES += libcallback.la
+libcallback_la_SOURCES = base/callback.h
+libcallback_la_SOURCES += base/callback_forward.h
+libcallback_la_SOURCES += base/cancelable_callback.h
+libcallback_la_SOURCES += base/callback_internal.cc
+libcallback_la_SOURCES += base/callback_helpers.h
 
-noinst_LIBRARIES += liblocation.a
-liblocation_a_SOURCES = base/location.h base/location.cc
+noinst_LTLIBRARIES += liblocation.la
+liblocation_la_SOURCES = base/location.h base/location.cc
 
-noinst_LIBRARIES += libtask_runner.a
-libtask_runner_a_SOURCES = base/task_runner.h base/task_runner.cc base/task_runner_util.h
+noinst_LTLIBRARIES += libtask_runner.la
+libtask_runner_la_SOURCES = base/task_runner.h base/task_runner.cc base/task_runner_util.h
 
-noinst_LIBRARIES += liblock.a
-liblock_a_SOURCES = base/synchronization/lock_impl.h
-liblock_a_SOURCES += base/synchronization/lock_impl_posix.cc
-liblock_a_SOURCES += base/synchronization/lock.h
-liblock_a_SOURCES += base/synchronization/lock.cc
+noinst_LTLIBRARIES += liblock.la
+liblock_la_SOURCES = base/synchronization/lock_impl.h
+liblock_la_SOURCES += base/synchronization/lock_impl_posix.cc
+liblock_la_SOURCES += base/synchronization/lock.h
+liblock_la_SOURCES += base/synchronization/lock.cc
