@@ -71,12 +71,12 @@ clean-local: clean-local-check
 .PHONY: clean-local-check
 clean-local-check:
 	-rm -rf \
-		$(libuserthrift_la_SOURCES) \
-		$(libhash_chain_digestthrift_la_SOURCES) \
+		$(libuserthrift_a_SOURCES) \
+		$(libhash_chain_digestthrift_a_SOURCES) \
 		*.skeleton.cpp
 
 noinst_LIBRARIES += libfile_path_watcher.a
-libfile_path_watcher_a_CPPFLAGS = -I$(top_srcdir)/src
+libfile_path_watcher_a_CPPFLAGS = -I$(top_srcdir)/src -I/usr/include/glib-2.0
 libfile_path_watcher_a_SOURCES = base/files/file_path_watcher.h
 libfile_path_watcher_a_SOURCES += base/files/file_path_watcher.cc
 libfile_path_watcher_a_SOURCES += base/files/file_path_watcher_@FILE_PATH_WATCHER_SUFFIX@.cc
