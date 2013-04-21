@@ -1,10 +1,10 @@
 
-// #include "base/files/file_path_watcher.h"
+#include "base/files/file_path_watcher.h"
 
-// using base::files::FilePathWatcher;
+using base::FilePathWatcher;
 
 int main(int argc, char** argv) {
-  // FilePathWatcher fpw;
+  FilePathWatcher fpw;
 
   return 0;
 }

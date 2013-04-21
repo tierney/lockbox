@@ -34,10 +34,10 @@
 #include "base/message_pump_android.h"
 #endif
 
-#if defined(TOOLKIT_GTK)
-#include <gdk/gdk.h>
-#include <gdk/gdkx.h>
-#endif
+// #if defined(TOOLKIT_GTK)
+// #include <gdk/gdk.h>
+// #include <gdk/gdkx.h>
+// #endif
 
 namespace base {
 
