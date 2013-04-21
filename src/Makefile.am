@@ -154,9 +154,10 @@ clean-local: clean-local-check
 .PHONY: clean-local-check
 clean-local-check:
 	-rm -rf \
-		$(libuserthrift_a_SOURCES) \
-		$(libhash_chain_digestthrift_a_SOURCES) \
+		$(libuserthrift_la_SOURCES) \
+		$(libhash_chain_digestthrift_la_SOURCES) \
 		*.skeleton.cpp
+
 
 noinst_LTLIBRARIES += libfile_path_watcher.la
 libfile_path_watcher_la_CPPFLAGS = -I$(top_srcdir)/src $(DEPS_CFLAGS)
