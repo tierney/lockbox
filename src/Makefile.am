@@ -105,6 +105,14 @@ libfile_path_watcher_a_SOURCES += \
  base/observer_list.h base/pending_task.h base/tracking_info.h \
  base/message_pump_libevent.h base/message_pump_gtk.h \
  base/message_pump_glib.h base/threading/thread.h
+libfile_path_watcher_a_SOURCES += base/threading/thread.cc
+libfile_path_watcher_a_SOURCES += base/logging.cc
+libfile_path_watcher_a_SOURCES += base/files/file_path.cc
+libfile_path_watcher_a_SOURCES += base/lazy_instance.cc
+libfile_path_watcher_a_SOURCES += base/file_util.cc
+libfile_path_watcher_a_SOURCES += base/file_util_linux.cc
+libfile_path_watcher_a_SOURCES += base/file_util_posix.cc
+
 
 
 noinst_LIBRARIES += libmessage_loop.a
