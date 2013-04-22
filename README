@@ -1,19 +1,33 @@
 Major components
 
-  o Zipping
+  o Zipping.
 
   o Remote interface for serialization.
 
-  o Web server for serialization.
+    o thrift
+
+  o Server for serialization.
+
+    o thrift
 
   o Encryption
 
+    o OpenSSL
+
   o Delta encoding. Rsync values.
+
+    o courgette
 
   o Diffing modules.
 
+    o courgette
+
   o Fork consistency.
+
+    o thrift / hashes from OpenSSL
 
   o File watching
 
     o Use python watchdog in order to generate events.
+
+    o Chromium interface may work on Linux...

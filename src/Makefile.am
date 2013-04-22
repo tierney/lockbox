@@ -11,6 +11,11 @@ noinst_LTLIBRARIES =
 
 EXTRA_DIST = base/base_export.h
 
+noinst_LTLIBRARIES += testing/gtest/src/libgtest.la
+testing_gtest_src_libgtest_la_CPPFLAGS = -Itesting/gtest
+testing_gtest_src_libgtest_la_SOURCES = testing/gtest/src/gtest.cc
+testing_gtest_src_libgtest_la_SOURCES += testing/gtest/src/gtest-port.cc
+
 bin_PROGRAMS += lockbox_main
 lockbox_main_LDADD = $(DEPS_LIBS)
 lockbox_main_SOURCES = lockbox_main.cc
@@ -496,7 +501,8 @@ libstreams_la_LIBADD += libat_exit.la
 # bin_PROGRAMS += streams_unittest
 # streams_unittest_SOURCES = courgette/streams_unittest.cc
 # streams_unittest_LDADD = libsimple_delta.la
-# streams_unittest_LDADD += liblock.la
+# streams_unittest_LDADD += libstreams.la
+# streams_unittest_LDADD += testing/gtest/src/libgtest.la
 
 noinst_LTLIBRARIES += libbsdiff.la
 libbsdiff_la_SOURCES = courgette/third_party/bsdiff.h
