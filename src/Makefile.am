@@ -1,5 +1,6 @@
 AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src
-AM_CPPFLAGS += -DHAVE_INTTYPES_H -DHAVE_NETINET_IN_H -DCOURGETTE_USE_CRC_LIB $(DEPS_CFLAGS) $(GTK_CFLAGS)
+AM_CPPFLAGS += -DHAVE_INTTYPES_H -DHAVE_NETINET_IN_H -DCOURGETTE_USE_CRC_LIB \
+	$(DEPS_CFLAGS) $(GTK_CFLAGS)
 AM_CXXFLAGS = -Wall -Wextra
 
 SUBDIRS =
@@ -103,6 +104,7 @@ lockbox_main_LDADD += libsafe_strerror_posix.la
 lockbox_main_LDADD += libvlog.la
 lockbox_main_LDADD += libcommand_line.la
 lockbox_main_LDADD += libbase_switches.la
+lockbox_main_LDADD += libthread.la
 
 noinst_LTLIBRARIES += libsys_info.la
 libsys_info_la_SOURCES = base/sys_info.h
@@ -292,8 +294,11 @@ libfile_path_watcher_la_SOURCES += \
  base/observer_list.h base/pending_task.h base/tracking_info.h \
  base/message_pump_libevent.h base/message_pump_gtk.h \
  base/message_pump_glib.h base/threading/thread.h
-libfile_path_watcher_la_SOURCES += base/threading/thread.cc
 libfile_path_watcher_la_SOURCES += base/message_loop/message_loop_proxy_impl.cc
+
+noinst_LTLIBRARIES += libthread.la
+libthread_la_SOURCES = base/threading/thread.h
+libthread_la_SOURCES += base/threading/thread.cc
 
 noinst_LTLIBRARIES += libfile_util.la
 libfile_util_la_SOURCES = base/file_util.h
