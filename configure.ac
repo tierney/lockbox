@@ -53,6 +53,7 @@ AC_SUBST(COURGETTE_USE_CRC_LIB)
 PKG_CHECK_MODULES([DEPS], [glib-2.0 >= 2.24.1])
 PKG_CHECK_MODULES([GTK], [gtk+-2.0])
 PKG_CHECK_MODULES([LIBEVENT], [libevent >= 2.0.0])
+PKG_CHECK_MODULES([ZLIB], [zlib])
 
 # Checks for header files.
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h fenv.h float.h inttypes.h limits.h locale.h mach/mach.h malloc.h netinet/in.h stddef.h stdint.h stdlib.h string.h sys/ioctl.h sys/param.h sys/socket.h sys/statvfs.h sys/time.h sys/vfs.h unistd.h utime.h wchar.h wctype.h])

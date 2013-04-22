@@ -19,7 +19,7 @@ lockbox_main_SOURCES += base/pending_task.cc
 lockbox_main_SOURCES += base/metrics/statistics_recorder.cc
 lockbox_main_SOURCES += base/metrics/histogram.cc
 lockbox_main_SOURCES += base/metrics/histogram_base.cc
-lockbox_main_SOURCES += base/pickle.h base/base_export.h base/pickle.cc
+lockbox_main_SOURCES += base/base_export.h
 lockbox_main_SOURCES += base/values.cc
 lockbox_main_SOURCES += base/metrics/bucket_ranges.cc
 lockbox_main_SOURCES += base/metrics/sample_vector.cc
@@ -30,10 +30,6 @@ lockbox_main_SOURCES += \
 lockbox_main_SOURCES += base/synchronization/cancellation_flag.cc
 lockbox_main_SOURCES += base/synchronization/waitable_event_posix.cc
 lockbox_main_SOURCES += base/memory/ref_counted_memory.cc
-lockbox_main_SOURCES += base/threading/thread_id_name_manager.cc
-lockbox_main_SOURCES += base/threading/thread_local_posix.cc
-lockbox_main_SOURCES += base/atomicops_internals_x86_gcc.cc
-lockbox_main_SOURCES += base/memory/singleton.h base/memory/singleton.cc
 lockbox_main_SOURCES += base/synchronization/condition_variable_posix.cc
 lockbox_main_SOURCES += base/third_party/dynamic_annotations/dynamic_annotations.c
 lockbox_main_SOURCES += base/process_util_linux.cc
@@ -53,21 +49,15 @@ lockbox_main_SOURCES += base/metrics/sparse_histogram.cc
 lockbox_main_SOURCES += base/metrics/sample_map.cc
 lockbox_main_SOURCES += base/metrics/histogram_samples.cc
 lockbox_main_SOURCES += base/json/json_string_value_serializer.cc
-lockbox_main_SOURCES += base/string16.cc
 lockbox_main_SOURCES += base/json/json_writer.cc
-lockbox_main_SOURCES += base/third_party/nspr/prtime.cc
 lockbox_main_SOURCES += base/threading/thread_checker_impl.cc
-lockbox_main_SOURCES += base/third_party/icu/icu_utf.cc
 lockbox_main_SOURCES += base/sys_info_posix.cc
 lockbox_main_SOURCES += base/message_pump.cc
 lockbox_main_SOURCES += base/json/json_reader.cc
 lockbox_main_SOURCES += base/strings/utf_string_conversion_utils.cc
 lockbox_main_SOURCES += base/json/string_escape.cc
-lockbox_main_SOURCES += base/third_party/dmg_fp/g_fmt.cc
-lockbox_main_SOURCES += base/third_party/dmg_fp/dtoa.cc
 lockbox_main_SOURCES += base/json/json_parser.cc
 
-lockbox_main_SOURCES += base/strings/sys_string_conversions_posix.cc
 lockbox_main_SOURCES += base/profiler/tracked_time.cc
 lockbox_main_SOURCES += base/threading/thread_local_storage_posix.cc
 lockbox_main_SOURCES += base/profiler/alternate_timer.cc
@@ -102,6 +92,57 @@ lockbox_main_LDADD += libsafe_strerror_posix.la
 lockbox_main_LDADD += libvlog.la
 lockbox_main_LDADD += libbase_switches.la
 lockbox_main_LDADD += libstring_split.la
+lockbox_main_LDADD += libdmg_fp.la
+lockbox_main_LDADD += libstring16.la
+lockbox_main_LDADD += libsys_string_conversions.la
+lockbox_main_LDADD += libpickle.la
+lockbox_main_LDADD += libprtime.la
+lockbox_main_LDADD += libthread_local.la
+lockbox_main_LDADD += liblazy_instance.la
+lockbox_main_LDADD += libicu_utf.la
+lockbox_main_LDADD += libatomic_internals_x86_gcc.la
+lockbox_main_LDADD += libsingleton.la
+lockbox_main_LDADD += libthread_id_name_manager.la
+
+noinst_LTLIBRARIES += libthread_id_name_manager.la
+libthread_id_name_manager_la_SOURCES = base/threading/thread_id_name_manager.h
+libthread_id_name_manager_la_SOURCES += base/threading/thread_id_name_manager.cc
+
+noinst_LTLIBRARIES += libsingleton.la
+libsingleton_la_SOURCES = base/memory/singleton.h base/memory/singleton.cc
+
+noinst_LTLIBRARIES += libatomic_internals_x86_gcc.la
+libatomic_internals_x86_gcc_la_SOURCES = base/atomicops_internals_x86_gcc.cc
+libatomic_internals_x86_gcc_la_SOURCES += base/atomicops_internals_x86_gcc.h
+
+noinst_LTLIBRARIES += libicu_utf.la
+libicu_utf_la_SOURCES = base/third_party/icu/icu_utf.h
+libicu_utf_la_SOURCES += base/third_party/icu/icu_utf.cc
+
+noinst_LTLIBRARIES += libthread_local.la
+libthread_local_la_SOURCES = base/threading/thread_local.h
+libthread_local_la_SOURCES += base/threading/thread_local_posix.cc
+
+noinst_LTLIBRARIES += libprtime.la
+libprtime_la_SOURCES = base/third_party/nspr/prtime.h
+libprtime_la_SOURCES += base/third_party/nspr/prtime.cc
+
+noinst_LTLIBRARIES += libpickle.la
+libpickle_la_SOURCES = base/pickle.h
+libpickle_la_SOURCES += base/pickle.cc
+
+noinst_LTLIBRARIES += libsys_string_conversions.la
+libsys_string_conversions_la_SOURCES = base/strings/sys_string_conversions.h
+libsys_string_conversions_la_SOURCES += base/strings/sys_string_conversions_posix.cc
+
+noinst_LTLIBRARIES += libstring16.la
+libstring16_la_SOURCES = base/string16.h
+libstring16_la_SOURCES += base/string16.cc
+
+noinst_LTLIBRARIES += libdmg_fp.la
+libdmg_fp_la_SOURCES = base/third_party/dmg_fp/g_fmt.cc
+libdmg_fp_la_SOURCES += base/third_party/dmg_fp/dtoa.cc
+
 
 noinst_LTLIBRARIES += libstring_split.la
 libstring_split_la_SOURCES = base/strings/string_split.h
@@ -206,11 +247,14 @@ libfile_path_watcher_la_SOURCES += \
  base/message_pump_glib.h base/threading/thread.h
 libfile_path_watcher_la_SOURCES += base/threading/thread.cc
 libfile_path_watcher_la_SOURCES += base/logging.cc
-libfile_path_watcher_la_SOURCES += base/lazy_instance.cc
 libfile_path_watcher_la_SOURCES += base/file_util.cc
 libfile_path_watcher_la_SOURCES += base/file_util_linux.cc
 libfile_path_watcher_la_SOURCES += base/file_util_posix.cc
 libfile_path_watcher_la_SOURCES += base/message_loop/message_loop_proxy_impl.cc
+
+noinst_LTLIBRARIES += liblazy_instance.la
+liblazy_instance_la_SOURCES = base/lazy_instance.h
+liblazy_instance_la_SOURCES += base/lazy_instance.cc
 
 noinst_LTLIBRARIES += libfile_path.la
 libfile_path_la_SOURCES = base/files/file_path.cc
@@ -407,18 +451,16 @@ delta_encoding_main_LDADD += libencoded_program.la
 delta_encoding_main_LDADD += libadjustment_method.la
 delta_encoding_main_LDADD += libstring_number_conversions.la
 delta_encoding_main_LDADD += libfile_path.la
-delta_encoding_main_LDADD += libat_exit.la
 delta_encoding_main_LDADD += libtime.la
 delta_encoding_main_LDADD += libensemble.la
 delta_encoding_main_LDADD += libdifference_estimator.la
-delta_encoding_main_LDADD += libcrc.la
+delta_encoding_main_LDADD += libcrc.la $(ZLIB_LIBS)
 delta_encoding_main_LDADD += libmemory_mapped_file.la
 delta_encoding_main_LDADD += libplatform_file.la
 delta_encoding_main_LDADD += libstringprintf.la
 delta_encoding_main_LDADD += libthread_restrictions.la
 delta_encoding_main_LDADD += libstring_util.la
 delta_encoding_main_LDADD += libstring_piece.la
-delta_encoding_main_LDADD += libplatform_thread.la
 delta_encoding_main_LDADD += libutf_string_conversions.la
 delta_encoding_main_LDADD += libstack_trace.la
 delta_encoding_main_LDADD += libalias.la
@@ -430,3 +472,16 @@ delta_encoding_main_LDADD += libstring_split.la
 delta_encoding_main_LDADD += libdisassembler_win32_x86.la
 delta_encoding_main_LDADD += libdisassembler_elf_32_x86.la
 delta_encoding_main_LDADD += libenvironment.la
+delta_encoding_main_LDADD += libdmg_fp.la
+delta_encoding_main_LDADD += libstring16.la
+delta_encoding_main_LDADD += libsys_string_conversions.la
+delta_encoding_main_LDADD += libpickle.la
+delta_encoding_main_LDADD += libprtime.la
+delta_encoding_main_LDADD += libthread_local.la
+delta_encoding_main_LDADD += liblazy_instance.la
+delta_encoding_main_LDADD += libicu_utf.la
+delta_encoding_main_LDADD += libatomic_internals_x86_gcc.la
+delta_encoding_main_LDADD += libsingleton.la
+delta_encoding_main_LDADD += libat_exit.la
+delta_encoding_main_LDADD += libthread_id_name_manager.la
+delta_encoding_main_LDADD += libplatform_thread.la
