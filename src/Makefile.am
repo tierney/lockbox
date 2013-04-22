@@ -46,7 +46,7 @@ lockbox_main_SOURCES += base/memory/singleton.h base/memory/singleton.cc
 lockbox_main_SOURCES += base/strings/string_piece.cc
 lockbox_main_SOURCES += base/synchronization/condition_variable_posix.cc
 lockbox_main_SOURCES += base/third_party/dynamic_annotations/dynamic_annotations.c
-lockbox_main_SOURCES += base/process_util_linux.cc
+lockbox_main_SOURCES += base/process_util_@GENERIC_OS_SUFFIX@.@OS_LANG_EXT@
 lockbox_main_SOURCES += base/process_posix.cc
 lockbox_main_SOURCES += base/process_util_posix.cc \
 	base/process_util.h \
@@ -195,8 +195,8 @@ libfile_path_watcher_la_SOURCES += base/logging.cc
 libfile_path_watcher_la_SOURCES += base/files/file_path.cc
 libfile_path_watcher_la_SOURCES += base/lazy_instance.cc
 libfile_path_watcher_la_SOURCES += base/file_util.cc
-libfile_path_watcher_la_SOURCES += base/file_util_linux.cc
-libfile_path_watcher_la_SOURCES += base/file_util_posix.cc
+libfile_path_watcher_la_SOURCES += base/file_util_@GENERIC_OS_SUFFIX@.@OS_LANG_EXT@
+# libfile_path_watcher_la_SOURCES += base/file_util_posix.cc
 libfile_path_watcher_la_SOURCES += base/message_loop/message_loop_proxy_impl.cc
 
 

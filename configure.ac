@@ -49,8 +49,6 @@ AC_CHECK_LIB([glib-2.0], [main], [], [AC_MSG_ERROR([cannot find glib library])])
 
 
 # Should create two variables DEPS_CFLAGS and DEPS_LIBS that allows us to ...
-PKG_CHECK_MODULES([DEPS], [glib-2.0 >= 2.24.1])
-PKG_CHECK_MODULES([GTK], [gtk+-2.0])
 PKG_CHECK_MODULES([LIBEVENT], [libevent >= 2.0.0])
 
 # Checks for header files.
@@ -99,13 +97,16 @@ case $host_os in
   darwin* )
         # Do something specific for mac
         AC_SUBST(FILE_PATH_WATCHER_SUFFIX, kqueue)
+        AC_SUBST(GENERIC_OS_SUFFIX, mac)
+        AC_SUBST(OS_LANG_EXT, mm)
         ;;
   linux*)
         # Do something specific for linux
         AC_SUBST(FILE_PATH_WATCHER_SUFFIX, linux)
-        ;;
-   *BSD*)
-        # Do something specific for BSD
+        AC_SUBST(GENERIC_OS_SUFFIX, linux)
+        AC_SUBST(OS_LANG_EXT, cc)
+        PKG_CHECK_MODULES([DEPS], [glib-2.0 >= 2.24.1])
+        PKG_CHECK_MODULES([GTK], [gtk+-2.0])
         ;;
     *)
         #Default Case
