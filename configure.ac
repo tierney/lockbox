@@ -47,6 +47,7 @@ AC_SUBST([THRIFT])
 
 AC_CHECK_LIB([glib-2.0], [main], [], [AC_MSG_ERROR([cannot find glib library])])
 
+AC_SUBST(COURGETTE_USE_CRC_LIB)
 
 # Should create two variables DEPS_CFLAGS and DEPS_LIBS that allows us to ...
 PKG_CHECK_MODULES([DEPS], [glib-2.0 >= 2.24.1])
