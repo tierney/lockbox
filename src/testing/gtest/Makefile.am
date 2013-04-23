@@ -236,6 +236,9 @@ TESTS_ENVIRONMENT = GTEST_SOURCE_DIR="$(srcdir)/test" \
                     GTEST_BUILD_DIR="$(top_builddir)/test"
 check_PROGRAMS=
 
+# TODO(tierney): If we want to test all of the gtest framework, then uncomment
+# the following tests.
+
 # A simple sample on using gtest.
 TESTS += samples/sample1_unittest
 check_PROGRAMS += samples/sample1_unittest
