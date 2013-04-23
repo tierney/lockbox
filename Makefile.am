@@ -1,7 +1,7 @@
 aclocaldir = $(datadir)/aclocal
 
-ACLOCAL_AMFLAGS = -I build-aux
+ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = src
+SUBDIRS = src/testing/gtest src src/crypto
 
-aclocal_DATA = build-aux/boost.m4
+aclocal_DATA = m4/boost.m4

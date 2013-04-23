@@ -3,7 +3,6 @@ AM_CPPFLAGS += -DHAVE_INTTYPES_H -DHAVE_NETINET_IN_H -DCOURGETTE_USE_CRC_LIB \
 	$(DEPS_CFLAGS) $(GTK_CFLAGS)
 AM_CXXFLAGS = -Wall -Wextra
 
-SUBDIRS = crypto
 TESTS =
 bin_PROGRAMS =
 noinst_PROGRAMS =
@@ -73,18 +72,26 @@ noinst_LTLIBRARIES += base/metrics/libstatistics_recorder.la
 base_metrics_libstatistics_recorder_la_SOURCES = base/metrics/statistics_recorder.h
 base_metrics_libstatistics_recorder_la_SOURCES += base/metrics/statistics_recorder.cc
 
-noinst_LTLIBRARIES += base/debug/libtrace_event_impl.la
-base_debug_libtrace_event_impl_la_SOURCES =	base/debug/trace_event_impl.cc
-base_debug_libtrace_event_impl_la_SOURCES += base/debug/trace_event_impl.h
-base_debug_libtrace_event_impl_la_LIBADD = base/memory/libref_counted_memory.la
-base_debug_libtrace_event_impl_la_LIBADD += base/memory/libweak_ptr.la
-base_debug_libtrace_event_impl_la_LIBADD += base/synchronization/libcancellation_flag.la
-base_debug_libtrace_event_impl_la_LIBADD += base/libstringprintf.la
-base_debug_libtrace_event_impl_la_LIBADD += libatomic_internals_x86_gcc.la
-base_debug_libtrace_event_impl_la_LIBADD += base/memory/libsingleton.la
-base_debug_libtrace_event_impl_la_LIBADD += libat_exit.la
-base_debug_libtrace_event_impl_la_LIBADD += libthread_id_name_manager.la
-base_debug_libtrace_event_impl_la_LIBADD += base/libprocess_util.la
+
+noinst_LTLIBRARIES += base/debug/libtrace_event.la
+base_debug_libtrace_event_la_SOURCES = base/debug/trace_event.h
+base_debug_libtrace_event_la_SOURCES += base/debug/trace_event_impl.cc
+base_debug_libtrace_event_la_SOURCES += base/debug/trace_event_impl.h
+base_debug_libtrace_event_la_SOURCES += base/hash_tables.h
+base_debug_libtrace_event_la_SOURCES += base/memory/scoped_vector.h
+base_debug_libtrace_event_la_SOURCES += base/observer_list.h
+base_debug_libtrace_event_la_SOURCES += base/observer_list_threadsafe.h
+
+base_debug_libtrace_event_la_LIBADD = base/memory/libref_counted_memory.la
+base_debug_libtrace_event_la_LIBADD += base/libstring_util.la
+base_debug_libtrace_event_la_LIBADD += libcallback.la
+base_debug_libtrace_event_la_LIBADD += base/synchronization/libcondition_variable_posix.la
+base_debug_libtrace_event_la_LIBADD += base/threading/libthread.la
+base_debug_libtrace_event_la_LIBADD += base/libtimer.la
+base_debug_libtrace_event_la_LIBADD += base/threading/libplatform_thread.la
+base_debug_libtrace_event_la_LIBADD += base/synchronization/libcancellation_flag.la
+base_debug_libtrace_event_la_LIBADD += base/memory/libsingleton.la
+base_debug_libtrace_event_la_LIBADD += base/strings/libstring_piece.la
 
 noinst_LTLIBRARIES += base/libpending_task.la
 base_libpending_task_la_SOURCES = base/pending_task.h
@@ -138,13 +145,16 @@ noinst_LTLIBRARIES += base/metrics/libsparse_histogram.la
 base_metrics_libsparse_histogram_la_SOURCES = base/metrics/sparse_histogram.cc
 base_metrics_libsparse_histogram_la_SOURCES += base/metrics/sparse_histogram.h
 base_metrics_libsparse_histogram_la_LIBADD = base/metrics/libsample_map.la
-base_metrics_libsparse_histogram_la_LIBADD += base/metrics/libstatistics_recorder.la
 base_metrics_libsparse_histogram_la_LIBADD += base/metrics/libhistogram_samples.la
+# base_metrics_libsparse_histogram_la_LIBADD += base/metrics/libhistogram_base.la
+base_metrics_libsparse_histogram_la_LIBADD += base/synchronization/liblock.la
 
 
 noinst_LTLIBRARIES += base/json/libjson_string_value_serializer.la
 base_json_libjson_string_value_serializer_la_SOURCES = base/json/json_string_value_serializer.h
 base_json_libjson_string_value_serializer_la_SOURCES += base/json/json_string_value_serializer.cc
+base_json_libjson_string_value_serializer_la_LIBADD = base/json/libjson_reader.la
+base_json_libjson_string_value_serializer_la_LIBADD += base/json/libjson_writer.la
 
 noinst_LTLIBRARIES += base/json/libstring_escape.la
 base_json_libstring_escape_la_SOURCES = base/json/string_escape.h
@@ -158,13 +168,12 @@ base_json_libjson_writer_la_LIBADD = base/json/libstring_escape.la
 noinst_LTLIBRARIES += base/json/libjson_parser.la
 base_json_libjson_parser_la_SOURCES = base/json/json_parser.h
 base_json_libjson_parser_la_SOURCES += base/json/json_parser.cc
-base_json_libjson_parser_la_LIBADD = base/json/libjson_string_value_serializer.la
-base_json_libjson_parser_la_LIBADD += base/libvalues.la
 
 noinst_LTLIBRARIES += base/json/libjson_reader.la
 base_json_libjson_reader_la_SOURCES = base/json/json_reader.h
 base_json_libjson_reader_la_SOURCES += base/json/json_reader.cc
-base_json_libjson_reader_la_LIBADD = base/json/libjson_parser.la
+base_json_libjson_reader_la_LIBADD = base/strings/libstring_piece.la
+base_json_libjson_reader_la_LIBADD += base/json/libjson_parser.la
 
 noinst_LTLIBRARIES += base/threading/libpost_task_and_reply_impl.la
 base_threading_libpost_task_and_reply_impl_la_SOURCES = base/threading/post_task_and_reply_impl.cc
@@ -173,15 +182,28 @@ base_threading_libpost_task_and_reply_impl_la_LIBADD = base/message_loop/libmess
 noinst_LTLIBRARIES += base/metrics/libhistogram.la
 base_metrics_libhistogram_la_SOURCES = base/metrics/histogram.cc
 base_metrics_libhistogram_la_SOURCES += base/metrics/histogram.h
-base_metrics_libhistogram_la_SOURCES += base/metrics/histogram_base.cc
-base_metrics_libhistogram_la_LIBADD = base/json/libjson_reader.la
-base_metrics_libhistogram_la_LIBADD += base/json/libjson_writer.la
-base_metrics_libhistogram_la_LIBADD += base/json/libjson_string_value_serializer.la
-base_metrics_libhistogram_la_LIBADD += base/metrics/libsparse_histogram.la
+base_metrics_libhistogram_la_LIBADD = base/metrics/libhistogram_base.la
+base_metrics_libhistogram_la_LIBADD += base/metrics/libhistogram_samples.la
+# base_metrics_libhistogram_la_LIBADD += base/json/libjson_reader.la
+# base_metrics_libhistogram_la_LIBADD += base/json/libjson_writer.la
+# base_metrics_libhistogram_la_LIBADD += base/json/libjson_string_value_serializer.la
+# base_metrics_libhistogram_la_LIBADD += base/metrics/libsparse_histogram.la
 base_metrics_libhistogram_la_LIBADD += base/libvalues.la
 base_metrics_libhistogram_la_LIBADD += base/metrics/libbucket_ranges.la
 base_metrics_libhistogram_la_LIBADD += base/metrics/libsample_vector.la
-base_metrics_libhistogram_la_LIBADD += base/metrics/libstatistics_recorder.la
+base_metrics_libhistogram_la_LIBADD += base/libatomicops.la
+base_metrics_libhistogram_la_LIBADD += base/libtime.la
+
+# base_metrics_libhistogram_la_LIBADD += base/metrics/libstatistics_recorder.la
+
+
+
+noinst_LTLIBRARIES += base/metrics/libhistogram_base.la
+base_metrics_libhistogram_base_la_SOURCES = base/metrics/histogram_base.h
+base_metrics_libhistogram_base_la_SOURCES += base/metrics/histogram_base.cc
+base_metrics_libhistogram_base_la_LIBADD = base/libtime.la
+base_metrics_libhistogram_base_la_LIBADD += base/json/libjson_string_value_serializer.la
+base_metrics_libhistogram_base_la_LIBADD += base/metrics/libsparse_histogram.la
 
 
 noinst_LTLIBRARIES += libsys_info.la
@@ -224,6 +246,10 @@ base_libprocess_util_la_LIBADD += base/allocator/libtype_profiler_control.la
 base_libprocess_util_la_LIBADD += base/posix/libfile_descriptor_shuffle.la
 base_libprocess_util_la_LIBADD += libfile_util.la
 
+noinst_LTLIBRARIES += base/libtimer.la
+base_libtimer_la_SOURCES = base/timer.h
+base_libtimer_la_SOURCES += base/timer.cc
+
 noinst_LTLIBRARIES += base/profiler/libalternate_timer.la
 base_profiler_libalternate_timer_la_SOURCES = base/profiler/alternate_timer.h
 base_profiler_libalternate_timer_la_SOURCES += base/profiler/alternate_timer.cc
@@ -239,7 +265,6 @@ libtracked_time_la_SOURCES += base/profiler/tracked_time.cc
 noinst_LTLIBRARIES += libthread_collision_warner.la
 libthread_collision_warner_la_SOURCES = base/threading/thread_collision_warner.h
 libthread_collision_warner_la_SOURCES += base/threading/thread_collision_warner.cc
-libthread_collision_warner_la_LIBADD = libatomic_internals_x86_gcc.la
 
 noinst_LTLIBRARIES += libutf_string_conversion_utils.la
 libutf_string_conversion_utils_la_SOURCES = base/strings/utf_string_conversion_utils.h
@@ -248,17 +273,19 @@ libutf_string_conversion_utils_la_SOURCES += base/strings/utf_string_conversion_
 noinst_LTLIBRARIES += libthread_id_name_manager.la
 libthread_id_name_manager_la_SOURCES = base/threading/thread_id_name_manager.h
 libthread_id_name_manager_la_SOURCES += base/threading/thread_id_name_manager.cc
-libthread_id_name_manager_la_LIBADD = liblock.la
-libthread_id_name_manager_la_LIBADD += libatomic_internals_x86_gcc.la
+libthread_id_name_manager_la_LIBADD = base/synchronization/liblock.la
+libthread_id_name_manager_la_LIBADD += base/libatomicops.la
 
 noinst_LTLIBRARIES += base/memory/libsingleton.la
 base_memory_libsingleton_la_SOURCES = base/memory/singleton.h
 base_memory_libsingleton_la_SOURCES += base/memory/singleton.cc
-base_memory_libsingleton_la_LIBADD = libplatform_thread.la
+base_memory_libsingleton_la_LIBADD = base/threading/libplatform_thread.la
+base_memory_libsingleton_la_LIBADD += libat_exit.la
 
-noinst_LTLIBRARIES += libatomic_internals_x86_gcc.la
-libatomic_internals_x86_gcc_la_SOURCES = base/atomicops_internals_x86_gcc.cc
-libatomic_internals_x86_gcc_la_SOURCES += base/atomicops_internals_x86_gcc.h
+noinst_LTLIBRARIES += base/libatomicops.la
+base_libatomicops_la_SOURCES = base/atomicops_internals_x86_gcc.cc
+base_libatomicops_la_SOURCES += base/atomicops_internals_x86_gcc.h
+base_libatomicops_la_SOURCES += base/atomicops.h
 
 noinst_LTLIBRARIES += libicu_utf.la
 libicu_utf_la_SOURCES = base/third_party/icu/icu_utf.h
@@ -283,7 +310,6 @@ libsys_string_conversions_la_SOURCES += base/strings/sys_string_conversions_posi
 noinst_LTLIBRARIES += libstring16.la
 libstring16_la_SOURCES = base/string16.h
 libstring16_la_SOURCES += base/string16.cc
-libstring16_la_LIBADD = libutf_string_conversions.la
 
 noinst_LTLIBRARIES += libdmg_fp.la
 libdmg_fp_la_SOURCES = base/third_party/dmg_fp/g_fmt.cc
@@ -295,15 +321,15 @@ libstring_split_la_SOURCES = base/strings/string_split.h
 libstring_split_la_SOURCES += base/strings/string_split.cc
 
 
-noinst_LTLIBRARIES += libstack_trace.la
-libstack_trace_la_SOURCES = base/debug/stack_trace.h
-libstack_trace_la_SOURCES += base/debug/stack_trace_posix.cc
-libstack_trace_la_SOURCES += base/debug/stack_trace.cc
-libstack_trace_la_LIBADD = base/debug/libdebugger.la
+noinst_LTLIBRARIES += base/debug/libstack_trace.la
+base_debug_libstack_trace_la_SOURCES = base/debug/stack_trace.h
+base_debug_libstack_trace_la_SOURCES += base/debug/stack_trace_posix.cc
+base_debug_libstack_trace_la_SOURCES += base/debug/stack_trace.cc
+base_debug_libstack_trace_la_LIBADD = base/debug/libdebugger.la
 
-noinst_LTLIBRARIES += libalias.la
-libalias_la_SOURCES = base/debug/alias.cc
-libalias_la_SOURCES += base/debug/alias.h
+noinst_LTLIBRARIES += base/debug/libalias.la
+base_debug_libalias_la_SOURCES = base/debug/alias.cc
+base_debug_libalias_la_SOURCES += base/debug/alias.h
 
 
 
@@ -367,21 +393,22 @@ libfile_path_watcher_la_LIBS = $(DEPS_LIBS)
 libfile_path_watcher_la_SOURCES = base/files/file_path_watcher.h
 libfile_path_watcher_la_SOURCES += base/files/file_path_watcher.cc
 libfile_path_watcher_la_SOURCES += base/files/file_path_watcher_@FILE_PATH_WATCHER_SUFFIX@.cc
-libfile_path_watcher_la_LIBADD = base/libthread.la
-libfile_path_watcher_la_LIBADD += base/message_loop/libmessage_loop_proxy.la
-libfile_path_watcher_la_LIBADD += liblogging.la
+libfile_path_watcher_la_LIBADD = base/message_loop/libmessage_loop_proxy.la
 libfile_path_watcher_la_LIBADD += libcallback.la
 libfile_path_watcher_la_LIBADD += libtask_runner.la
 libfile_path_watcher_la_LIBADD += libmessage_loop.la
 libfile_path_watcher_la_LIBADD += libfile_path.la
 libfile_path_watcher_la_LIBADD += libfile_util.la
+libfile_path_watcher_la_LIBADD += base/threading/libthread.la
+libfile_path_watcher_la_LIBADD += base/strings/libstring_piece.la
+libfile_path_watcher_la_LIBADD += liblogging.la
 
-noinst_LTLIBRARIES += base/libthread.la
-base_libthread_la_SOURCES = base/threading/thread.h
-base_libthread_la_SOURCES += base/threading/thread.cc
-base_libthread_la_LIBADD = base/memory/libweak_ptr.la
-base_libthread_la_LIBADD += libmessage_loop.la
-base_libthread_la_LIBADD += base/synchronization/libwaitable_event_posix.la
+noinst_LTLIBRARIES += base/threading/libthread.la
+base_threading_libthread_la_SOURCES = base/threading/thread.h
+base_threading_libthread_la_SOURCES += base/threading/thread.cc
+base_threading_libthread_la_LIBADD = base/memory/libweak_ptr.la
+# base_threading_libthread_la_LIBADD += libmessage_loop.la
+base_threading_libthread_la_LIBADD += base/synchronization/libwaitable_event_posix.la
 
 noinst_LTLIBRARIES += libfile_util.la
 libfile_util_la_SOURCES = base/file_util.h
@@ -393,7 +420,6 @@ libfile_util_la_LIBADD = libplatform_file.la
 noinst_LTLIBRARIES += liblazy_instance.la
 liblazy_instance_la_SOURCES = base/lazy_instance.h
 liblazy_instance_la_SOURCES += base/lazy_instance.cc
-liblazy_instance_la_LIBADD = libat_exit.la
 
 noinst_LTLIBRARIES += libfile_path.la
 libfile_path_la_SOURCES = base/files/file_path.cc
@@ -405,17 +431,17 @@ libmessage_loop_la_SOURCES = base/message_loop.h
 libmessage_loop_la_SOURCES += base/message_loop.cc
 libmessage_loop_la_LIBADD = libtracked_objects.la
 libmessage_loop_la_LIBADD += base/libmessage_pump.la
-libmessage_loop_la_LIBADD += base/librun_loop.la
 libmessage_loop_la_LIBADD += base/libpending_task.la
-libmessage_loop_la_LIBADD += base/debug/libtrace_event_impl.la
 libmessage_loop_la_LIBADD += base/libtracking_info.la
-libmessage_loop_la_LIBADD += base/metrics/libstatistics_recorder.la
-libmessage_loop_la_LIBADD += base/memory/libweak_ptr.la
 libmessage_loop_la_LIBADD += base/libthread_task_runner_handle.la
-libmessage_loop_la_LIBADD += base/metrics/libhistogram.la
 libmessage_loop_la_LIBADD += base/message_loop/libmessage_loop_proxy.la
 libmessage_loop_la_LIBADD += base/message_loop/libmessage_loop_proxy_impl.la
 libmessage_loop_la_LIBADD += base/libtime.la
+libmessage_loop_la_LIBADD += base/librun_loop.la
+libmessage_loop_la_LIBADD += base/metrics/libhistogram.la
+libmessage_loop_la_LIBADD += base/metrics/libstatistics_recorder.la
+libmessage_loop_la_LIBADD += base/debug/libalias.la
+libmessage_loop_la_LIBADD += base/debug/libtrace_event.la
 
 noinst_LTLIBRARIES += base/message_loop/libmessage_loop_proxy.la
 base_message_loop_libmessage_loop_proxy_la_SOURCES = base/message_loop/message_loop_proxy.h
@@ -429,18 +455,22 @@ noinst_LTLIBRARIES += libtracked_objects.la
 libtracked_objects_la_SOURCES = base/tracked_objects.h
 libtracked_objects_la_SOURCES += base/tracked_objects.cc
 libtracked_objects_la_LIBADD = liblazy_instance.la
-libtracked_objects_la_LIBADD += liblock.la
+libtracked_objects_la_LIBADD += base/synchronization/liblock.la
 libtracked_objects_la_LIBADD += liblocation.la
 libtracked_objects_la_LIBADD += libtracked_time.la
 libtracked_objects_la_LIBADD += libthread_local_storage.la
 libtracked_objects_la_LIBADD += base/profiler/libalternate_timer.la
 libtracked_objects_la_LIBADD += base/libprocess_util.la
 
+
 noinst_LTLIBRARIES += libref_counted.la
+
 libref_counted_la_SOURCES = base/memory/ref_counted.h
 libref_counted_la_SOURCES += base/memory/ref_counted.cc
+
 libref_counted_la_LIBADD = libthread_collision_warner.la
-libref_counted_la_LIBADD += libatomic_internals_x86_gcc.la
+libref_counted_la_LIBADD += base/libatomicops.la
+
 
 noinst_LTLIBRARIES += libcallback.la
 libcallback_la_SOURCES = base/callback.h
@@ -459,50 +489,58 @@ libtask_runner_la_SOURCES += base/task_runner.cc
 libtask_runner_la_SOURCES += base/task_runner_util.h
 libtask_runner_la_LIBADD = base/threading/libpost_task_and_reply_impl.la
 
-noinst_LTLIBRARIES += liblock.la
-liblock_la_SOURCES = base/synchronization/lock_impl.h
-liblock_la_SOURCES += base/synchronization/lock_impl_posix.cc
-liblock_la_SOURCES += base/synchronization/lock.h
-liblock_la_SOURCES += base/synchronization/lock.cc
+noinst_LTLIBRARIES += base/synchronization/liblock.la
+base_synchronization_liblock_la_SOURCES = base/synchronization/lock_impl.h
+base_synchronization_liblock_la_SOURCES += base/synchronization/lock_impl_posix.cc
+base_synchronization_liblock_la_SOURCES += base/synchronization/lock.h
+base_synchronization_liblock_la_SOURCES += base/synchronization/lock.cc
 
 noinst_LTLIBRARIES += libsimple_delta.la
 libsimple_delta_la_SOURCES = courgette/simple_delta.h
 libsimple_delta_la_SOURCES += courgette/simple_delta.cc
-libsimple_delta_la_LIBADD = libcourgette_tool.la
+libsimple_delta_la_SOURCES += courgette/courgette.h
+libsimple_delta_la_LIBADD = liblogging.la
+libsimple_delta_la_LIBADD += libbsdiff.la
 
 noinst_LTLIBRARIES += liblogging.la
-liblogging_la_SOURCES = base/logging.h base/logging.cc
-liblogging_la_LIBADD = libcommand_line.la
-liblogging_la_LIBADD += libvlog.la
-liblogging_la_LIBADD += libstring_piece.la
-liblogging_la_LIBADD += libstack_trace.la
-liblogging_la_LIBADD += libalias.la
-liblogging_la_LIBADD += libsafe_strerror_posix.la
-liblogging_la_LIBADD += libbase_switches.la
-liblogging_la_LIBADD += libstring16.la
-liblogging_la_LIBADD += liblock.la
-liblogging_la_LIBADD += libplatform_thread.la
+liblogging_la_SOURCES = base/logging.h
+liblogging_la_SOURCES += base/logging.cc
+liblogging_la_LIBADD =
 liblogging_la_LIBADD += base/debug/libdebugger.la
+liblogging_la_LIBADD += base/debug/libstack_trace.la
+liblogging_la_LIBADD += libutf_string_conversions.la
+liblogging_la_LIBADD += libsafe_strerror_posix.la
+liblogging_la_LIBADD += libvlog.la
+liblogging_la_LIBADD += libbase_switches.la
+liblogging_la_LIBADD += base/debug/libalias.la
+liblogging_la_LIBADD += base/strings/libstring_piece.la
+liblogging_la_LIBADD += base/threading/libplatform_thread.la
 
-noinst_LTLIBRARIES += libcourgette_tool.la
-libcourgette_tool_la_SOURCES = courgette/courgette_tool.cc
-libcourgette_tool_la_LIBADD = libbsdiff.la
+bin_PROGRAMS += courgette/courgette_tool
+courgette_courgette_tool_SOURCES = courgette/courgette_tool.cc
+courgette_courgette_tool_LDADD = libfile_path.la
+courgette_courgette_tool_LDADD += libfile_util.la
+courgette_courgette_tool_LDADD += libdisassembler.la
+courgette_courgette_tool_LDADD += libstreams.la
+courgette_courgette_tool_LDADD += libbsdiff.la
+courgette_courgette_tool_LDADD += libadjustment_method.la
+courgette_courgette_tool_LDADD += libensemble.la
 
 noinst_LTLIBRARIES += libstreams.la
 libstreams_la_SOURCES = courgette/streams.h
 libstreams_la_SOURCES += courgette/streams.cc
 libstreams_la_SOURCES += courgette/region.h
 libstreams_la_LIBADD = libmemory_allocator.la
-libstreams_la_LIBADD += libatomic_internals_x86_gcc.la
 libstreams_la_LIBADD += base/memory/libsingleton.la
-libstreams_la_LIBADD += libat_exit.la
 
-# TESTS += streams_unittest
-# bin_PROGRAMS += streams_unittest
-# streams_unittest_SOURCES = courgette/streams_unittest.cc
-# streams_unittest_LDADD = libsimple_delta.la
-# streams_unittest_LDADD += libstreams.la
-# streams_unittest_LDADD += testing/gtest/src/libgtest.la
+TESTS += streams_unittest
+bin_PROGRAMS += streams_unittest
+streams_unittest_SOURCES = courgette/streams_unittest.cc
+streams_unittest_SOURCES += testing/gtest/src/gtest_main.cc
+streams_unittest_LDADD = libsimple_delta.la
+streams_unittest_LDADD += libstreams.la
+streams_unittest_LDADD += testing/gtest/lib/libgtest.la
+streams_unittest_LDADD += liblogging.la
 
 noinst_LTLIBRARIES += libbsdiff.la
 libbsdiff_la_SOURCES = courgette/third_party/bsdiff.h
@@ -519,10 +557,25 @@ libcommand_line_la_LIBADD = libstring_split.la
 noinst_LTLIBRARIES += libdisassembler.la
 libdisassembler_la_SOURCES = courgette/disassembler.h
 libdisassembler_la_SOURCES += courgette/disassembler.cc
+libdisassembler_la_LIBADD = libassembly_program.la
+libdisassembler_la_LIBADD += libdisassembler_win32_x86.la
+libdisassembler_la_LIBADD += libdisassembler_elf_32_x86.la
+
+noinst_LTLIBRARIES += libdisassembler_win32_x86.la
+libdisassembler_win32_x86_la_SOURCES = courgette/disassembler_win32_x86.h
+libdisassembler_win32_x86_la_SOURCES += courgette/disassembler_win32_x86.cc
+libdisassembler_win32_x86_la_LIBADD = liblogging.la
+
+noinst_LTLIBRARIES += libdisassembler_elf_32_x86.la
+libdisassembler_elf_32_x86_la_SOURCES = courgette/disassembler_elf_32_x86.h
+libdisassembler_elf_32_x86_la_SOURCES += courgette/disassembler_elf_32_x86.cc
+libdisassembler_elf_32_x86_la_LIBADD = liblogging.la
+
 
 noinst_LTLIBRARIES += libassembly_program.la
 libassembly_program_la_SOURCES = courgette/assembly_program.h
 libassembly_program_la_SOURCES += courgette/assembly_program.cc
+libassembly_program_la_LIBADD = libencoded_program.la
 
 noinst_LTLIBRARIES += libstring_number_conversions.la
 libstring_number_conversions_la_SOURCES =
@@ -533,6 +586,7 @@ libstring_number_conversions_la_LIBADD = libdmg_fp.la
 noinst_LTLIBRARIES += libencoded_program.la
 libencoded_program_la_SOURCES = courgette/encoded_program.h
 libencoded_program_la_SOURCES += courgette/encoded_program.cc
+libencoded_program_la_LIBADD = libenvironment.la
 
 noinst_LTLIBRARIES += libadjustment_method.la
 libadjustment_method_la_SOURCES = courgette/adjustment_method.h
@@ -542,7 +596,7 @@ libadjustment_method_la_SOURCES += courgette/adjustment_method_2.cc
 noinst_LTLIBRARIES += libat_exit.la
 libat_exit_la_SOURCES = base/at_exit.cc
 libat_exit_la_SOURCES += base/at_exit.h
-libat_exit_la_LIBADD = liblock.la
+libat_exit_la_LIBADD = base/synchronization/liblock.la
 libat_exit_la_LIBADD += libcallback.la
 
 noinst_LTLIBRARIES += base/libtime.la
@@ -556,6 +610,9 @@ libensemble_la_SOURCES = courgette/ensemble.h
 libensemble_la_SOURCES += courgette/ensemble.cc
 libensemble_la_SOURCES += courgette/ensemble_create.cc
 libensemble_la_SOURCES += courgette/ensemble_apply.cc
+libensemble_la_LIBADD = libdifference_estimator.la
+libensemble_la_LIBADD += libsimple_delta.la
+libensemble_la_LIBADD += libmemory_mapped_file.la
 
 noinst_LTLIBRARIES += libdifference_estimator.la
 libdifference_estimator_la_SOURCES = courgette/difference_estimator.h
@@ -570,8 +627,6 @@ libmemory_allocator_la_SOURCES = courgette/memory_allocator.h
 libmemory_allocator_la_SOURCES += courgette/memory_allocator.cc
 libmemory_allocator_la_LIBADD = libfile_path.la
 libmemory_allocator_la_LIBADD += libplatform_file.la
-libmemory_allocator_la_LIBADD += liblogging.la
-libmemory_allocator_la_LIBADD += base/debug/libdebugger.la
 
 noinst_LTLIBRARIES += libmemory_mapped_file.la
 libmemory_mapped_file_la_SOURCES =
@@ -587,37 +642,41 @@ libplatform_file_la_LIBADD = libthread_local.la
 noinst_LTLIBRARIES += base/libstringprintf.la
 base_libstringprintf_la_SOURCES = base/stringprintf.h
 base_libstringprintf_la_SOURCES += base/stringprintf.cc
+base_libstringprintf_la_LIBADD = base/libstring_util.la
 
 noinst_LTLIBRARIES += libthread_restrictions.la
 libthread_restrictions_la_SOURCES = base/threading/thread_restrictions.h
 libthread_restrictions_la_SOURCES += base/threading/thread_restrictions.cc
 libthread_restrictions_la_LIBADD = liblazy_instance.la
 
-noinst_LTLIBRARIES += libstring_util.la
-libstring_util_la_SOURCES = base/string_util.cc
-libstring_util_la_SOURCES += base/string_util.h
-libstring_util_la_LIBADD = libicu_utf.la
-libstring_util_la_LIBADD += libthread_restrictions.la
-libstring_util_la_LIBADD += libat_exit.la
-libstring_util_la_LIBADD += libatomic_internals_x86_gcc.la
+noinst_LTLIBRARIES += base/libstring_util.la
+base_libstring_util_la_SOURCES = base/string_util.cc
+base_libstring_util_la_SOURCES += base/string_util.h
+base_libstring_util_la_SOURCES += base/string_util_posix.h
+base_libstring_util_la_LIBADD = libicu_utf.la
+base_libstring_util_la_LIBADD += libthread_restrictions.la
+base_libstring_util_la_LIBADD += base/libatomicops.la
+base_libstring_util_la_LIBADD += libstring16.la
+base_libstring_util_la_LIBADD += base/memory/libsingleton.la
 
-noinst_LTLIBRARIES += libstring_piece.la
-libstring_piece_la_SOURCES = base/strings/string_piece.cc
-libstring_piece_la_SOURCES += base/strings/string_piece.h
+noinst_LTLIBRARIES += base/strings/libstring_piece.la
+base_strings_libstring_piece_la_SOURCES = base/strings/string_piece.cc
+base_strings_libstring_piece_la_SOURCES += base/strings/string_piece.h
 
-noinst_LTLIBRARIES += libplatform_thread.la
-libplatform_thread_la_SOURCES =
-libplatform_thread_la_SOURCES += base/threading/platform_thread.h
-libplatform_thread_la_SOURCES += base/threading/platform_thread_posix.cc
-libplatform_thread_la_LIBADD =
-libplatform_thread_la_LIBADD += libtracked_objects.la
-libplatform_thread_la_LIBADD += libthread_id_name_manager.la
+noinst_LTLIBRARIES += base/threading/libplatform_thread.la
+base_threading_libplatform_thread_la_SOURCES =
+base_threading_libplatform_thread_la_SOURCES += base/threading/platform_thread.h
+base_threading_libplatform_thread_la_SOURCES += base/threading/platform_thread_posix.cc
+base_threading_libplatform_thread_la_LIBADD =
+base_threading_libplatform_thread_la_LIBADD += libtracked_objects.la
+base_threading_libplatform_thread_la_LIBADD += libthread_id_name_manager.la
 
 noinst_LTLIBRARIES += libutf_string_conversions.la
 libutf_string_conversions_la_SOURCES = base/utf_string_conversions.cc
 libutf_string_conversions_la_SOURCES += base/utf_string_conversions.h
-libutf_string_conversions_la_LIBADD = libstring_util.la
-libutf_string_conversions_la_LIBADD += libutf_string_conversion_utils.la
+libutf_string_conversions_la_LIBADD = libutf_string_conversion_utils.la
+libutf_string_conversions_la_LIBADD += base/strings/libstring_piece.la
+libutf_string_conversions_la_LIBADD += libstring16.la
 
 noinst_LTLIBRARIES += base/debug/libdebugger.la
 base_debug_libdebugger_la_SOURCES = base/debug/debugger.cc
@@ -637,14 +696,6 @@ libvlog_la_LIBADD = libstring_number_conversions.la
 noinst_LTLIBRARIES += libbase_switches.la
 libbase_switches_la_SOURCES = base/base_switches.h
 libbase_switches_la_SOURCES += base/base_switches.cc
-
-noinst_LTLIBRARIES += libdisassembler_win32_x86.la
-libdisassembler_win32_x86_la_SOURCES = courgette/disassembler_win32_x86.h
-libdisassembler_win32_x86_la_SOURCES += courgette/disassembler_win32_x86.cc
-
-noinst_LTLIBRARIES += libdisassembler_elf_32_x86.la
-libdisassembler_elf_32_x86_la_SOURCES = courgette/disassembler_elf_32_x86.h
-libdisassembler_elf_32_x86_la_SOURCES += courgette/disassembler_elf_32_x86.cc
 
 noinst_LTLIBRARIES += libenvironment.la
 libenvironment_la_SOURCES = base/environment.h
