@@ -84,15 +84,13 @@ AM_CONDITIONAL([HAVE_PTHREADS],[test "x$have_pthreads" == "xyes"])
 AC_SUBST(PTHREAD_CFLAGS)
 AC_SUBST(PTHREAD_LIBS)
 
-
-AC_SUBST(COURGETTE_USE_CRC_LIB)
-
 # Should create two variables DEPS_CFLAGS and DEPS_LIBS that allows us to ...
 PKG_CHECK_MODULES([DEPS], [glib-2.0 >= 2.24.1])
 PKG_CHECK_MODULES([GTK], [gtk+-2.0])
 PKG_CHECK_MODULES([LIBEVENT], [libevent >= 2.0.0])
 PKG_CHECK_MODULES([ZLIB], [zlib])
 PKG_CHECK_MODULES([THRIFT], [thrift-nb])
+PKG_CHECK_MODULES([NSS], [nss])
 PKG_CHECK_MODULES([GFLAGS], [libgflags])
 
 # Checks for header files.
@@ -157,6 +155,7 @@ esac
 
 AC_CONFIG_FILES([Makefile
                  src/Makefile
+                 src/base/Makefile
                  src/crypto/Makefile
                  src/testing/gtest/Makefile
                  ])

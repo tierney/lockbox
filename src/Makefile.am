@@ -8,12 +8,28 @@ bin_PROGRAMS =
 noinst_PROGRAMS =
 noinst_LTLIBRARIES =
 
-EXTRA_DIST = base/base_export.h
+SUBDIRS = base
 
-noinst_LTLIBRARIES += testing/gtest/src/libgtest.la
-testing_gtest_src_libgtest_la_CPPFLAGS = -Itesting/gtest
-testing_gtest_src_libgtest_la_SOURCES = testing/gtest/src/gtest.cc
-testing_gtest_src_libgtest_la_SOURCES += testing/gtest/src/gtest-port.cc
+EXTRA_DIST = base/base_export.h
+EXTRA_DIST += base/basictypes.h
+EXTRA_DIST += base/port.h
+EXTRA_DIST += build/build_config.h
+EXTRA_DIST += base/compiler_specific.h
+EXTRA_DIST += base/memory/scoped_ptr.h
+EXTRA_DIST += base/move.h
+EXTRA_DIST += base/template_util.h
+EXTRA_DIST += base/file_descriptor_posix.h
+
+noinst_LTLIBRARIES += base/librand_util.la
+base_librand_util_la_SOURCES =
+base_librand_util_la_SOURCES += base/rand_util.h
+base_librand_util_la_SOURCES += base/rand_util.cc
+base_librand_util_la_SOURCES += base/rand_util_posix.cc
+
+# noinst_LTLIBRARIES += testing/gtest/src/libgtest.la
+# testing_gtest_src_libgtest_la_CPPFLAGS = -Itesting/gtest
+# testing_gtest_src_libgtest_la_SOURCES = testing/gtest/src/gtest.cc
+# testing_gtest_src_libgtest_la_SOURCES += testing/gtest/src/gtest-port.cc
 
 bin_PROGRAMS += lockbox_main
 lockbox_main_LDADD = $(DEPS_LIBS)
@@ -38,12 +54,12 @@ base_synchronization_libcancellation_flag_la_SOURCES = base/synchronization/canc
 base_synchronization_libcancellation_flag_la_SOURCES += base/synchronization/cancellation_flag.cc
 
 noinst_LTLIBRARIES += base/synchronization/libwaitable_event_posix.la
-base_synchronization_libwaitable_event_posix_la_SOURCES = base/synchronization/waitable_event_posix.h
+base_synchronization_libwaitable_event_posix_la_SOURCES = base/synchronization/waitable_event.h
 base_synchronization_libwaitable_event_posix_la_SOURCES += base/synchronization/waitable_event_posix.cc
 base_synchronization_libwaitable_event_posix_la_LIBADD = base/synchronization/libcondition_variable_posix.la
 
 noinst_LTLIBRARIES += base/synchronization/libcondition_variable_posix.la
-base_synchronization_libcondition_variable_posix_la_SOURCES = base/synchronization/condition_variable_posix.h
+base_synchronization_libcondition_variable_posix_la_SOURCES = base/synchronization/condition_variable.h
 base_synchronization_libcondition_variable_posix_la_SOURCES += base/synchronization/condition_variable_posix.cc
 
 noinst_LTLIBRARIES += base/libthread_task_runner_handle.la
@@ -194,7 +210,7 @@ base_metrics_libhistogram_la_LIBADD += base/metrics/libsample_vector.la
 base_metrics_libhistogram_la_LIBADD += base/libatomicops.la
 base_metrics_libhistogram_la_LIBADD += base/libtime.la
 
-# base_metrics_libhistogram_la_LIBADD += base/metrics/libstatistics_recorder.la
+base_metrics_libhistogram_la_LIBADD += base/metrics/libstatistics_recorder.la
 
 
 
@@ -422,7 +438,8 @@ liblazy_instance_la_SOURCES = base/lazy_instance.h
 liblazy_instance_la_SOURCES += base/lazy_instance.cc
 
 noinst_LTLIBRARIES += libfile_path.la
-libfile_path_la_SOURCES = base/files/file_path.cc
+libfile_path_la_SOURCES = base/files/file_path.h
+libfile_path_la_SOURCES += base/files/file_path.cc
 libfile_path_la_LIBADD = libpickle.la
 libfile_path_la_LIBADD += libsys_string_conversions.la
 
@@ -536,10 +553,11 @@ libstreams_la_LIBADD += base/memory/libsingleton.la
 TESTS += streams_unittest
 bin_PROGRAMS += streams_unittest
 streams_unittest_SOURCES = courgette/streams_unittest.cc
-streams_unittest_SOURCES += testing/gtest/src/gtest_main.cc
+# streams_unittest_SOURCES += testing/gtest/src/gtest_main.cc
 streams_unittest_LDADD = libsimple_delta.la
 streams_unittest_LDADD += libstreams.la
 streams_unittest_LDADD += testing/gtest/lib/libgtest.la
+streams_unittest_LDADD += testing/gtest/lib/libgtest_main.la
 streams_unittest_LDADD += liblogging.la
 
 noinst_LTLIBRARIES += libbsdiff.la
@@ -636,6 +654,7 @@ libmemory_mapped_file_la_SOURCES += base/files/memory_mapped_file_posix.cc
 
 noinst_LTLIBRARIES += libplatform_file.la
 libplatform_file_la_SOURCES = base/platform_file.cc
+libplatform_file_la_SOURCES += base/platform_file.h
 libplatform_file_la_SOURCES += base/platform_file_posix.cc
 libplatform_file_la_LIBADD = libthread_local.la
 
