@@ -182,8 +182,6 @@ lib_LTLIBRARIES = lib/libgtest.la lib/libgtest_main.la
 
 lib_libgtest_la_SOURCES = src/gtest-all.cc
 lib_libgtest_la_LIBADD = $(GFLAGS_LIBS)
-# lib_libgtest_la_LIBADD += $(top_srcdir)/src/libfile_path.la
-# lib_libgtest_la_LIBADD += ../../liblogging.la
 
 pkginclude_HEADERS = \
   include/gtest/gtest-death-test.h \

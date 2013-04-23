@@ -553,7 +553,6 @@ libstreams_la_LIBADD += base/memory/libsingleton.la
 TESTS += streams_unittest
 bin_PROGRAMS += streams_unittest
 streams_unittest_SOURCES = courgette/streams_unittest.cc
-# streams_unittest_SOURCES += testing/gtest/src/gtest_main.cc
 streams_unittest_LDADD = libsimple_delta.la
 streams_unittest_LDADD += libstreams.la
 streams_unittest_LDADD += testing/gtest/lib/libgtest.la
