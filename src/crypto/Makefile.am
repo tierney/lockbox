@@ -81,3 +81,18 @@ libnss_util_la_CXXFLAGS = $(NSS_CFLAGS)
 libnss_util_la_LIBADD = $(NSS_LIBS)
 libnss_util_la_LIBADD += $(top_srcdir)/src/base/metrics/libhistogram.la
 libnss_util_la_LIBADD += $(top_srcdir)/src/libenvironment.la
+
+noinst_LTLIBRARIES += librsa_private_key.la
+librsa_private_key_la_SOURCES = rsa_private_key.h
+librsa_private_key_la_SOURCES += rsa_private_key.cc
+librsa_private_key_la_SOURCES += rsa_private_key_openssl.cc
+librsa_private_key_la_LIBADD = $(top_srcdir)/src/liblogging.la
+librsa_private_key_la_LIBADD += $(top_srcdir)/src/liblocation.la
+librsa_private_key_la_LIBADD += libopenssl_util.la
+
+TESTS += rsa_private_key_unittest
+bin_PROGRAMS += rsa_private_key_unittest
+rsa_private_key_unittest_SOURCES = rsa_private_key_unittest.cc
+rsa_private_key_unittest_LDADD = $(top_srcdir)/src/testing/gtest/lib/libgtest.la
+rsa_private_key_unittest_LDADD += $(top_srcdir)/src/testing/gtest/lib/libgtest_main.la
+rsa_private_key_unittest_LDADD += librsa_private_key.la
