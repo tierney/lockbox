@@ -110,3 +110,15 @@ secure_hash_unittest_SOURCES = secure_hash_unittest.cc
 secure_hash_unittest_LDADD = $(top_srcdir)/src/testing/gtest/lib/libgtest.la
 secure_hash_unittest_LDADD += $(top_srcdir)/src/testing/gtest/lib/libgtest_main.la
 secure_hash_unittest_LDADD += libsecure_hash.la
+
+noinst_LTLIBRARIES += libsha2.la
+libsha2_la_SOURCES = sha2.h
+libsha2_la_SOURCES += sha2.cc
+
+TESTS += sha2_unittest
+bin_PROGRAMS += sha2_unittest
+sha2_unittest_SOURCES = sha2_unittest.cc
+sha2_unittest_LDADD = $(top_srcdir)/src/testing/gtest/lib/libgtest.la
+sha2_unittest_LDADD += $(top_srcdir)/src/testing/gtest/lib/libgtest_main.la
+sha2_unittest_LDADD += libsha2.la
+sha2_unittest_LDADD += libsecure_hash.la
