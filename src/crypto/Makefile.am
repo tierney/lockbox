@@ -96,3 +96,17 @@ rsa_private_key_unittest_SOURCES = rsa_private_key_unittest.cc
 rsa_private_key_unittest_LDADD = $(top_srcdir)/src/testing/gtest/lib/libgtest.la
 rsa_private_key_unittest_LDADD += $(top_srcdir)/src/testing/gtest/lib/libgtest_main.la
 rsa_private_key_unittest_LDADD += librsa_private_key.la
+
+noinst_LTLIBRARIES += libsecure_hash.la
+libsecure_hash_la_SOURCES =
+libsecure_hash_la_SOURCES += secure_hash.h
+libsecure_hash_la_SOURCES += secure_hash_openssl.cc
+libsecure_hash_la_LIBADD = $(top_srcdir)/src/libpickle.la
+libsecure_hash_la_LIBADD += $(top_srcdir)/src/liblogging.la
+
+TESTS += secure_hash_unittest
+bin_PROGRAMS += secure_hash_unittest
+secure_hash_unittest_SOURCES = secure_hash_unittest.cc
+secure_hash_unittest_LDADD = $(top_srcdir)/src/testing/gtest/lib/libgtest.la
+secure_hash_unittest_LDADD += $(top_srcdir)/src/testing/gtest/lib/libgtest_main.la
+secure_hash_unittest_LDADD += libsecure_hash.la
