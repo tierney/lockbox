@@ -94,8 +94,9 @@ PKG_CHECK_MODULES([ZLIB], [zlib])
 PKG_CHECK_MODULES([THRIFT], [thrift-nb])
 PKG_CHECK_MODULES([NSS], [nss])
 PKG_CHECK_MODULES([GFLAGS], [libgflags])
-PKG_CHECK_MODULES([QTCORE], [Qt5Core])
-PKG_CHECK_MODULES([QTBOOTSTRAP], [Qt5Bootstrap])
+PKG_CHECK_MODULES([OPENSSL], [openssl])
+dnl PKG_CHECK_MODULES([QTCORE], [Qt5Core])
+dnl PKG_CHECK_MODULES([QTBOOTSTRAP], [Qt5Bootstrap])
 
 # Checks for header files.
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h fenv.h float.h inttypes.h limits.h locale.h mach/mach.h malloc.h netinet/in.h stddef.h stdint.h stdlib.h string.h sys/ioctl.h sys/param.h sys/socket.h sys/statvfs.h sys/time.h sys/vfs.h unistd.h utime.h wchar.h wctype.h])
@@ -159,6 +160,7 @@ esac
 
 AC_CONFIG_FILES([Makefile
                  src/Makefile
+                 src/file_watcher/Makefile
                  src/base/Makefile
                  src/crypto/Makefile
                  src/testing/gtest/Makefile

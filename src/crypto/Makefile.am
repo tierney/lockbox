@@ -1,4 +1,5 @@
-AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src
+AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src \
+	-I$(top_srcdir)/src/testing/gtest/include
 AM_CPPFLAGS += -DUSE_OPENSSL
 AM_CXXFLAGS = -Wall -Wextra
 
@@ -17,6 +18,7 @@ libencryptor_la_SOURCES = encryptor.h
 libencryptor_la_SOURCES += encryptor.cc
 libencryptor_la_SOURCES += encryptor_openssl.cc
 libencryptor_la_LIBADD = libopenssl_util.la
+libencryptor_la_LIBADD += $(OPENSSL_LIBS)
 
 noinst_LTLIBRARIES += librandom.la
 librandom_la_SOURCES = random.h
@@ -26,6 +28,7 @@ librandom_la_LIBADD = $(top_srcdir)/src/base/librand_util.la
 noinst_LTLIBRARIES += libopenssl_util.la
 libopenssl_util_la_SOURCES = openssl_util.h
 libopenssl_util_la_SOURCES += openssl_util.cc
+libopenssl_util_la_LIBADD = $(OPENSSL_LIBS)
 
 TESTS += random_unittest
 bin_PROGRAMS += random_unittest
@@ -47,6 +50,7 @@ encryptor_unittest_LDADD += libsymmetric_key.la
 noinst_LTLIBRARIES += libsymmetric_key.la
 libsymmetric_key_la_SOURCES = symmetric_key.h
 libsymmetric_key_la_SOURCES += symmetric_key_openssl.cc
+libsymmetric_key_la_LIBADD = $(OPENSSL_LIBS)
 
 TESTS += symmetric_key_unittest
 bin_PROGRAMS += symmetric_key_unittest
@@ -103,6 +107,7 @@ libsecure_hash_la_SOURCES += secure_hash.h
 libsecure_hash_la_SOURCES += secure_hash_openssl.cc
 libsecure_hash_la_LIBADD = $(top_srcdir)/src/libpickle.la
 libsecure_hash_la_LIBADD += $(top_srcdir)/src/liblogging.la
+libsecure_hash_la_LIBADD += $(OPENSSL_LIBS)
 
 TESTS += secure_hash_unittest
 bin_PROGRAMS += secure_hash_unittest

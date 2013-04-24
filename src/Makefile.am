@@ -1,4 +1,5 @@
-AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src
+AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src \
+	-I$(top_srcdir)/src/testing/gtest/include
 AM_CPPFLAGS += -DHAVE_INTTYPES_H -DHAVE_NETINET_IN_H -DCOURGETTE_USE_CRC_LIB \
 	$(DEPS_CFLAGS) $(GTK_CFLAGS)
 AM_CXXFLAGS = -Wall -Wextra
@@ -8,7 +9,7 @@ bin_PROGRAMS =
 noinst_PROGRAMS =
 noinst_LTLIBRARIES =
 
-SUBDIRS = base
+SUBDIRS = file_watcher base
 
 EXTRA_DIST = base/base_export.h
 EXTRA_DIST += base/basictypes.h
@@ -20,10 +21,10 @@ EXTRA_DIST += base/move.h
 EXTRA_DIST += base/template_util.h
 EXTRA_DIST += base/file_descriptor_posix.h
 
-bin_PROGRAMS += qfilesystemwatcher_main
-qfilesystemwatcher_main_SOURCES = qfilesystemwatcher_main.cc
-qfilesystemwatcher_main_CXXFLAGS = $(QTCORE_CFLAGS) -fPIC
-qfilesystemwatcher_main_LDADD = $(QTCORE_LIB) $(QTBOOTSTRAP_LIB)
+# bin_PROGRAMS += qfilesystemwatcher_main
+# qfilesystemwatcher_main_SOURCES = qfilesystemwatcher_main.cc
+# qfilesystemwatcher_main_CXXFLAGS = $(QTCORE_CFLAGS) -fPIC
+# qfilesystemwatcher_main_LDADD = $(QTCORE_LIB) $(QTBOOTSTRAP_LIB)
 
 noinst_LTLIBRARIES += base/librand_util.la
 base_librand_util_la_SOURCES =
@@ -431,15 +432,15 @@ base_files_libfile_path_watcher_la_LIBADD += base/threading/libthread.la
 base_files_libfile_path_watcher_la_LIBADD += base/strings/libstring_piece.la
 base_files_libfile_path_watcher_la_LIBADD += liblogging.la
 
-TESTS += base/files/file_path_watcher_browsertest
-bin_PROGRAMS += base/files/file_path_watcher_browsertest
-base_files_file_path_watcher_browsertest_SOURCES = base/files/file_path_watcher_browsertest.cc
-base_files_file_path_watcher_browsertest_LDADD =
-base_files_file_path_watcher_browsertest_LDADD += base/files/libfile_path_watcher.la
-base_files_file_path_watcher_browsertest_LDADD += base/files/libscoped_temp_dir.la
-base_files_file_path_watcher_browsertest_LDADD += base/libsequenced_task_runner.la
-base_files_file_path_watcher_browsertest_LDADD += $(top_srcdir)/src/testing/gtest/lib/libgtest.la
-base_files_file_path_watcher_browsertest_LDADD += $(top_srcdir)/src/testing/gtest/lib/libgtest_main.la
+# TESTS += base/files/file_path_watcher_browsertest
+# bin_PROGRAMS += base/files/file_path_watcher_browsertest
+# base_files_file_path_watcher_browsertest_SOURCES = base/files/file_path_watcher_browsertest.cc
+# base_files_file_path_watcher_browsertest_LDADD =
+# base_files_file_path_watcher_browsertest_LDADD += base/files/libfile_path_watcher.la
+# base_files_file_path_watcher_browsertest_LDADD += base/files/libscoped_temp_dir.la
+# base_files_file_path_watcher_browsertest_LDADD += base/libsequenced_task_runner.la
+# base_files_file_path_watcher_browsertest_LDADD += $(top_srcdir)/src/testing/gtest/lib/libgtest.la
+# base_files_file_path_watcher_browsertest_LDADD += $(top_srcdir)/src/testing/gtest/lib/libgtest_main.la
 
 noinst_LTLIBRARIES += base/threading/libthread.la
 base_threading_libthread_la_SOURCES = base/threading/thread.h
