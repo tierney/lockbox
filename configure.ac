@@ -29,6 +29,8 @@ AC_PROG_CC
 
 # Checks for libraries.
 
+# AX_HAVE_QT
+
 # First look for Boost, maybe for a specific minimum version:
 BOOST_REQUIRE([1.34])
 # Then look for specific Boost libraries you need:
@@ -92,6 +94,8 @@ PKG_CHECK_MODULES([ZLIB], [zlib])
 PKG_CHECK_MODULES([THRIFT], [thrift-nb])
 PKG_CHECK_MODULES([NSS], [nss])
 PKG_CHECK_MODULES([GFLAGS], [libgflags])
+PKG_CHECK_MODULES([QTCORE], [Qt5Core])
+PKG_CHECK_MODULES([QTBOOTSTRAP], [Qt5Bootstrap])
 
 # Checks for header files.
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h fenv.h float.h inttypes.h limits.h locale.h mach/mach.h malloc.h netinet/in.h stddef.h stdint.h stdlib.h string.h sys/ioctl.h sys/param.h sys/socket.h sys/statvfs.h sys/time.h sys/vfs.h unistd.h utime.h wchar.h wctype.h])

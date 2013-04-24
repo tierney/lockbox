@@ -20,6 +20,11 @@ EXTRA_DIST += base/move.h
 EXTRA_DIST += base/template_util.h
 EXTRA_DIST += base/file_descriptor_posix.h
 
+bin_PROGRAMS += qfilesystemwatcher_main
+qfilesystemwatcher_main_SOURCES = qfilesystemwatcher_main.cc
+qfilesystemwatcher_main_CXXFLAGS = $(QTCORE_CFLAGS) -fPIC
+qfilesystemwatcher_main_LDADD = $(QTCORE_LIB) $(QTBOOTSTRAP_LIB)
+
 noinst_LTLIBRARIES += base/librand_util.la
 base_librand_util_la_SOURCES =
 base_librand_util_la_SOURCES += base/rand_util.h
@@ -34,7 +39,7 @@ base_librand_util_la_SOURCES += base/rand_util_posix.cc
 bin_PROGRAMS += lockbox_main
 lockbox_main_LDADD = $(DEPS_LIBS)
 lockbox_main_SOURCES = lockbox_main.cc
-lockbox_main_LDADD += libfile_path_watcher.la
+lockbox_main_LDADD += base/files/libfile_path_watcher.la
 
 noinst_LTLIBRARIES += base/metrics/libbucket_ranges.la
 base_metrics_libbucket_ranges_la_SOURCES = base/metrics/bucket_ranges.h
@@ -402,22 +407,39 @@ clean-local-check:
 		$(libhash_chain_digestthrift_la_SOURCES) \
 		*.skeleton.cpp
 
+noinst_LTLIBRARIES += base/files/libscoped_temp_dir.la
+base_files_libscoped_temp_dir_la_SOURCES = base/files/scoped_temp_dir.h
+base_files_libscoped_temp_dir_la_SOURCES += base/files/scoped_temp_dir.cc
 
-noinst_LTLIBRARIES += libfile_path_watcher.la
-libfile_path_watcher_la_CPPFLAGS = -I$(top_srcdir)/src $(DEPS_CFLAGS)
-libfile_path_watcher_la_LIBS = $(DEPS_LIBS)
-libfile_path_watcher_la_SOURCES = base/files/file_path_watcher.h
-libfile_path_watcher_la_SOURCES += base/files/file_path_watcher.cc
-libfile_path_watcher_la_SOURCES += base/files/file_path_watcher_@FILE_PATH_WATCHER_SUFFIX@.cc
-libfile_path_watcher_la_LIBADD = base/message_loop/libmessage_loop_proxy.la
-libfile_path_watcher_la_LIBADD += libcallback.la
-libfile_path_watcher_la_LIBADD += libtask_runner.la
-libfile_path_watcher_la_LIBADD += libmessage_loop.la
-libfile_path_watcher_la_LIBADD += libfile_path.la
-libfile_path_watcher_la_LIBADD += libfile_util.la
-libfile_path_watcher_la_LIBADD += base/threading/libthread.la
-libfile_path_watcher_la_LIBADD += base/strings/libstring_piece.la
-libfile_path_watcher_la_LIBADD += liblogging.la
+noinst_LTLIBRARIES += base/libsequenced_task_runner.la
+base_libsequenced_task_runner_la_SOURCES = base/sequenced_task_runner.h
+base_libsequenced_task_runner_la_SOURCES += base/sequenced_task_runner.cc
+
+noinst_LTLIBRARIES += base/files/libfile_path_watcher.la
+base_files_libfile_path_watcher_la_CPPFLAGS = -I$(top_srcdir)/src $(DEPS_CFLAGS)
+base_files_libfile_path_watcher_la_LIBS = $(DEPS_LIBS)
+base_files_libfile_path_watcher_la_SOURCES = base/files/file_path_watcher.h
+base_files_libfile_path_watcher_la_SOURCES += base/files/file_path_watcher.cc
+base_files_libfile_path_watcher_la_SOURCES += base/files/file_path_watcher_@FILE_PATH_WATCHER_SUFFIX@.cc
+base_files_libfile_path_watcher_la_LIBADD = base/message_loop/libmessage_loop_proxy.la
+base_files_libfile_path_watcher_la_LIBADD += libcallback.la
+base_files_libfile_path_watcher_la_LIBADD += libtask_runner.la
+base_files_libfile_path_watcher_la_LIBADD += libmessage_loop.la
+base_files_libfile_path_watcher_la_LIBADD += libfile_path.la
+base_files_libfile_path_watcher_la_LIBADD += libfile_util.la
+base_files_libfile_path_watcher_la_LIBADD += base/threading/libthread.la
+base_files_libfile_path_watcher_la_LIBADD += base/strings/libstring_piece.la
+base_files_libfile_path_watcher_la_LIBADD += liblogging.la
+
+TESTS += base/files/file_path_watcher_browsertest
+bin_PROGRAMS += base/files/file_path_watcher_browsertest
+base_files_file_path_watcher_browsertest_SOURCES = base/files/file_path_watcher_browsertest.cc
+base_files_file_path_watcher_browsertest_LDADD =
+base_files_file_path_watcher_browsertest_LDADD += base/files/libfile_path_watcher.la
+base_files_file_path_watcher_browsertest_LDADD += base/files/libscoped_temp_dir.la
+base_files_file_path_watcher_browsertest_LDADD += base/libsequenced_task_runner.la
+base_files_file_path_watcher_browsertest_LDADD += $(top_srcdir)/src/testing/gtest/lib/libgtest.la
+base_files_file_path_watcher_browsertest_LDADD += $(top_srcdir)/src/testing/gtest/lib/libgtest_main.la
 
 noinst_LTLIBRARIES += base/threading/libthread.la
 base_threading_libthread_la_SOURCES = base/threading/thread.h
