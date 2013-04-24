@@ -11,6 +11,7 @@ noinst_LTLIBRARIES =
 
 SUBDIRS = file_watcher base
 
+
 EXTRA_DIST = base/base_export.h
 EXTRA_DIST += base/basictypes.h
 EXTRA_DIST += base/port.h
@@ -20,6 +21,7 @@ EXTRA_DIST += base/memory/scoped_ptr.h
 EXTRA_DIST += base/move.h
 EXTRA_DIST += base/template_util.h
 EXTRA_DIST += base/file_descriptor_posix.h
+
 
 # bin_PROGRAMS += qfilesystemwatcher_main
 # qfilesystemwatcher_main_SOURCES = qfilesystemwatcher_main.cc
@@ -38,9 +40,12 @@ base_librand_util_la_SOURCES += base/rand_util_posix.cc
 # testing_gtest_src_libgtest_la_SOURCES += testing/gtest/src/gtest-port.cc
 
 bin_PROGRAMS += lockbox_main
-lockbox_main_LDADD = $(DEPS_LIBS)
 lockbox_main_SOURCES = lockbox_main.cc
-lockbox_main_LDADD += base/files/libfile_path_watcher.la
+lockbox_main_LDADD = $(DEPS_LIBS)
+lockbox_main_LDADD += base/libfile_util.la
+lockbox_main_LDADD += crypto/librsa_private_key.la
+lockbox_main_LDADD += $(GFLAGS_LIBS)
+lockbox_main_LDADD += base/threading/libthread.la
 
 noinst_LTLIBRARIES += base/metrics/libbucket_ranges.la
 base_metrics_libbucket_ranges_la_SOURCES = base/metrics/bucket_ranges.h
@@ -108,7 +113,7 @@ base_debug_libtrace_event_la_LIBADD = base/memory/libref_counted_memory.la
 base_debug_libtrace_event_la_LIBADD += base/libstring_util.la
 base_debug_libtrace_event_la_LIBADD += libcallback.la
 base_debug_libtrace_event_la_LIBADD += base/synchronization/libcondition_variable_posix.la
-base_debug_libtrace_event_la_LIBADD += base/threading/libthread.la
+# base_debug_libtrace_event_la_LIBADD += base/threading/libthread.la
 base_debug_libtrace_event_la_LIBADD += base/libtimer.la
 base_debug_libtrace_event_la_LIBADD += base/threading/libplatform_thread.la
 base_debug_libtrace_event_la_LIBADD += base/synchronization/libcancellation_flag.la
@@ -266,7 +271,7 @@ base_libprocess_util_la_LIBADD += libdynamic_annotations.la
 base_libprocess_util_la_LIBADD += base/libprocess.la
 base_libprocess_util_la_LIBADD += base/allocator/libtype_profiler_control.la
 base_libprocess_util_la_LIBADD += base/posix/libfile_descriptor_shuffle.la
-base_libprocess_util_la_LIBADD += libfile_util.la
+base_libprocess_util_la_LIBADD += base/libfile_util.la
 
 noinst_LTLIBRARIES += base/libtimer.la
 base_libtimer_la_SOURCES = base/timer.h
@@ -424,10 +429,10 @@ base_files_libfile_path_watcher_la_SOURCES += base/files/file_path_watcher.cc
 base_files_libfile_path_watcher_la_SOURCES += base/files/file_path_watcher_@FILE_PATH_WATCHER_SUFFIX@.cc
 base_files_libfile_path_watcher_la_LIBADD = base/message_loop/libmessage_loop_proxy.la
 base_files_libfile_path_watcher_la_LIBADD += libcallback.la
-base_files_libfile_path_watcher_la_LIBADD += libtask_runner.la
+base_files_libfile_path_watcher_la_LIBADD += base/libtask_runner.la
 base_files_libfile_path_watcher_la_LIBADD += libmessage_loop.la
 base_files_libfile_path_watcher_la_LIBADD += libfile_path.la
-base_files_libfile_path_watcher_la_LIBADD += libfile_util.la
+base_files_libfile_path_watcher_la_LIBADD += base/libfile_util.la
 base_files_libfile_path_watcher_la_LIBADD += base/threading/libthread.la
 base_files_libfile_path_watcher_la_LIBADD += base/strings/libstring_piece.la
 base_files_libfile_path_watcher_la_LIBADD += liblogging.la
@@ -446,15 +451,15 @@ noinst_LTLIBRARIES += base/threading/libthread.la
 base_threading_libthread_la_SOURCES = base/threading/thread.h
 base_threading_libthread_la_SOURCES += base/threading/thread.cc
 base_threading_libthread_la_LIBADD = base/memory/libweak_ptr.la
-# base_threading_libthread_la_LIBADD += libmessage_loop.la
+base_threading_libthread_la_LIBADD += libmessage_loop.la
 base_threading_libthread_la_LIBADD += base/synchronization/libwaitable_event_posix.la
 
-noinst_LTLIBRARIES += libfile_util.la
-libfile_util_la_SOURCES = base/file_util.h
-libfile_util_la_SOURCES += base/file_util.cc
-libfile_util_la_SOURCES += base/file_util_linux.cc
-libfile_util_la_SOURCES += base/file_util_posix.cc
-libfile_util_la_LIBADD = libplatform_file.la
+noinst_LTLIBRARIES += base/libfile_util.la
+base_libfile_util_la_SOURCES = base/file_util.h
+base_libfile_util_la_SOURCES += base/file_util.cc
+base_libfile_util_la_SOURCES += base/file_util_linux.cc
+base_libfile_util_la_SOURCES += base/file_util_posix.cc
+base_libfile_util_la_LIBADD = libplatform_file.la
 
 noinst_LTLIBRARIES += liblazy_instance.la
 liblazy_instance_la_SOURCES = base/lazy_instance.h
@@ -504,12 +509,11 @@ libtracked_objects_la_LIBADD += base/libprocess_util.la
 
 
 noinst_LTLIBRARIES += libref_counted.la
-
 libref_counted_la_SOURCES = base/memory/ref_counted.h
 libref_counted_la_SOURCES += base/memory/ref_counted.cc
-
 libref_counted_la_LIBADD = libthread_collision_warner.la
 libref_counted_la_LIBADD += base/libatomicops.la
+libref_counted_la_LIBADD += base/libtask_runner.la
 
 
 noinst_LTLIBRARIES += libcallback.la
@@ -523,11 +527,11 @@ libcallback_la_LIBADD = libref_counted.la
 noinst_LTLIBRARIES += liblocation.la
 liblocation_la_SOURCES = base/location.h base/location.cc
 
-noinst_LTLIBRARIES += libtask_runner.la
-libtask_runner_la_SOURCES = base/task_runner.h
-libtask_runner_la_SOURCES += base/task_runner.cc
-libtask_runner_la_SOURCES += base/task_runner_util.h
-libtask_runner_la_LIBADD = base/threading/libpost_task_and_reply_impl.la
+noinst_LTLIBRARIES += base/libtask_runner.la
+base_libtask_runner_la_SOURCES = base/task_runner.h
+base_libtask_runner_la_SOURCES += base/task_runner.cc
+base_libtask_runner_la_SOURCES += base/task_runner_util.h
+base_libtask_runner_la_LIBADD = base/threading/libpost_task_and_reply_impl.la
 
 noinst_LTLIBRARIES += base/synchronization/liblock.la
 base_synchronization_liblock_la_SOURCES = base/synchronization/lock_impl.h
@@ -559,7 +563,7 @@ liblogging_la_LIBADD += base/threading/libplatform_thread.la
 bin_PROGRAMS += courgette/courgette_tool
 courgette_courgette_tool_SOURCES = courgette/courgette_tool.cc
 courgette_courgette_tool_LDADD = libfile_path.la
-courgette_courgette_tool_LDADD += libfile_util.la
+courgette_courgette_tool_LDADD += base/libfile_util.la
 courgette_courgette_tool_LDADD += libdisassembler.la
 courgette_courgette_tool_LDADD += libstreams.la
 courgette_courgette_tool_LDADD += libbsdiff.la
