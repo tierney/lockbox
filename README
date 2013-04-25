@@ -31,3 +31,14 @@ Major components
     o Use python watchdog in order to generate events.
 
     o Chromium interface may work on Linux...
+
+Dependencies
+
+
+libboost-dev libboost-test-dev libboost-program-options-dev libevent-dev automake libtool flex bison pkg-config g++ libssl-dev libnss3-dev libgtk2.0-dev libglib2.0-dev
+
+thrift
+
+libgflags-dev
+
+autoconf

@@ -9,7 +9,7 @@ bin_PROGRAMS =
 noinst_PROGRAMS =
 noinst_LTLIBRARIES =
 
-SUBDIRS = file_watcher base
+SUBDIRS = crypto file_watcher base
 
 
 EXTRA_DIST = base/base_export.h
@@ -46,6 +46,14 @@ lockbox_main_LDADD += base/libfile_util.la
 lockbox_main_LDADD += crypto/librsa_private_key.la
 lockbox_main_LDADD += $(GFLAGS_LIBS)
 lockbox_main_LDADD += base/threading/libthread.la
+lockbox_main_LDADD += libclient_initialization.la
+lockbox_main_LDADD += base/files/libfile_path_watcher.la
+lockbox_main_LDADD += base/librun_loop.la
+lockbox_main_LDADD += base/synchronization/libwaitable_event.la
+
+noinst_LTLIBRARIES += libclient_initialization.la
+libclient_initialization_la_SOURCES = client_initialization.h
+libclient_initialization_la_SOURCES += client_initialization.cc
 
 noinst_LTLIBRARIES += base/metrics/libbucket_ranges.la
 base_metrics_libbucket_ranges_la_SOURCES = base/metrics/bucket_ranges.h
@@ -64,10 +72,10 @@ noinst_LTLIBRARIES += base/synchronization/libcancellation_flag.la
 base_synchronization_libcancellation_flag_la_SOURCES = base/synchronization/cancellation_flag.h
 base_synchronization_libcancellation_flag_la_SOURCES += base/synchronization/cancellation_flag.cc
 
-noinst_LTLIBRARIES += base/synchronization/libwaitable_event_posix.la
-base_synchronization_libwaitable_event_posix_la_SOURCES = base/synchronization/waitable_event.h
-base_synchronization_libwaitable_event_posix_la_SOURCES += base/synchronization/waitable_event_posix.cc
-base_synchronization_libwaitable_event_posix_la_LIBADD = base/synchronization/libcondition_variable_posix.la
+noinst_LTLIBRARIES += base/synchronization/libwaitable_event.la
+base_synchronization_libwaitable_event_la_SOURCES = base/synchronization/waitable_event.h
+base_synchronization_libwaitable_event_la_SOURCES += base/synchronization/waitable_event_posix.cc
+base_synchronization_libwaitable_event_la_LIBADD = base/synchronization/libcondition_variable_posix.la
 
 noinst_LTLIBRARIES += base/synchronization/libcondition_variable_posix.la
 base_synchronization_libcondition_variable_posix_la_SOURCES = base/synchronization/condition_variable.h
@@ -140,7 +148,7 @@ base_libtracking_info_la_SOURCES += base/tracking_info.cc
 noinst_LTLIBRARIES += base/libmessage_pump_default.la
 base_libmessage_pump_default_la_SOURCES = base/message_pump_default.cc
 base_libmessage_pump_default_la_SOURCES += base/message_pump_default.h
-base_libmessage_pump_default_la_LIBADD = base/synchronization/libwaitable_event_posix.la
+base_libmessage_pump_default_la_LIBADD = base/synchronization/libwaitable_event.la
 
 noinst_LTLIBRARIES += base/libmessage_pump_glib.la
 base_libmessage_pump_glib_la_SOURCES = base/message_pump_glib.cc
@@ -452,7 +460,7 @@ base_threading_libthread_la_SOURCES = base/threading/thread.h
 base_threading_libthread_la_SOURCES += base/threading/thread.cc
 base_threading_libthread_la_LIBADD = base/memory/libweak_ptr.la
 base_threading_libthread_la_LIBADD += libmessage_loop.la
-base_threading_libthread_la_LIBADD += base/synchronization/libwaitable_event_posix.la
+base_threading_libthread_la_LIBADD += base/synchronization/libwaitable_event.la
 
 noinst_LTLIBRARIES += base/libfile_util.la
 base_libfile_util_la_SOURCES = base/file_util.h

@@ -1,6 +1,40 @@
 #include <bzlib.h>
+#include <zlib.h>
 
 namespace lockbox {
+
+// Model for the use of zlib.h to compress data.
+// void UniquePosition::ToProto(sync_pb::UniquePosition* proto) const {
+//   proto->Clear();
+//   if (bytes_.size() < kCompressBytesThreshold) {
+//     // If it's small, then just write it.  This is the common case.
+//     proto->set_value(bytes_);
+//   } else {
+//     // We've got a large one.  Compress it.
+//     proto->set_uncompressed_length(bytes_.size());
+//     std::string* compressed = proto->mutable_compressed_value();
+//
+//     uLongf compressed_len = compressBound(bytes_.size());
+//     compressed->resize(compressed_len);
+//     int result = compress(reinterpret_cast<Bytef*>(string_as_array(compressed)),
+//              &compressed_len,
+//              reinterpret_cast<const Bytef*>(bytes_.data()),
+//              bytes_.size());
+//     if (result != Z_OK) {
+//       NOTREACHED() << "Failed to compress position: " << result;
+//       // Maybe we can write an uncompressed version?
+//       proto->Clear();
+//       proto->set_value(bytes_);
+//     } else if (compressed_len >= bytes_.size()) {
+//       // Oops, we made it bigger.  Just write the uncompressed version instead.
+//       proto->Clear();
+//       proto->set_value(bytes_);
+//     } else {
+//       // Success!  Don't forget to adjust the string's length.
+//       compressed->resize(compressed_len);
+//     }
+//   }
+// }
 
 // static
 // This implementation is based on the Firefox MetricsService implementation.
