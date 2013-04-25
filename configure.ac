@@ -87,7 +87,7 @@ AC_SUBST(PTHREAD_CFLAGS)
 AC_SUBST(PTHREAD_LIBS)
 
 # Should create two variables DEPS_CFLAGS and DEPS_LIBS that allows us to ...
-PKG_CHECK_MODULES([DEPS], [glib-2.0 >= 2.24.1])
+PKG_CHECK_MODULES([GLIB], [glib-2.0 >= 2.24.1])
 PKG_CHECK_MODULES([GTK], [gtk+-2.0])
 PKG_CHECK_MODULES([LIBEVENT], [libevent >= 2.0.0])
 PKG_CHECK_MODULES([ZLIB], [zlib])
