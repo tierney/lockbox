@@ -300,9 +300,9 @@ CLEANFILES = core
 # One-Definition Rule.
 
 install-exec-local:
-	echo "'make install' is dangerous and not supported. Instead, see README for how to integrate Google Test into your build system."
-	false
+	echo "'make install' is dangerous and not supported for gtest. Instead, see README for how to integrate Google Test into your build system."
+# false
 
 install-data-local:
-	echo "'make install' is dangerous and not supported. Instead, see README for how to integrate Google Test into your build system."
-	false
+	echo "'make install' is dangerous and not supported for gtest. Instead, see README for how to integrate Google Test into your build system."
+# false

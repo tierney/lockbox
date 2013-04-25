@@ -7,7 +7,7 @@ AC_CONFIG_SRCDIR([src/lockbox_main.cc])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([build-aux])
 
-AC_CONFIG_HEADERS([build-aux/config.h])
+AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([testing/gtest/scripts/gtest-config],
                 [chmod +x testing/gtest/scripts/gtest-config])
 AM_SILENT_RULES([yes])
@@ -29,13 +29,12 @@ AC_PROG_CC
 
 # Checks for libraries.
 
-# AX_HAVE_QT
-
 # First look for Boost, maybe for a specific minimum version:
 BOOST_REQUIRE([1.34])
 # Then look for specific Boost libraries you need:
 BOOST_THREADS
 
+# Thrift (serialization and rpc library).
 AC_ARG_WITH([thrift-libdir],
         [AS_HELP_STRING([--with-thrift-libdir=LIB_DIR],
         [location of the protocol buffers libraries, defaults to /usr/lib])],
@@ -95,8 +94,6 @@ PKG_CHECK_MODULES([THRIFT], [thrift-nb])
 PKG_CHECK_MODULES([NSS], [nss])
 PKG_CHECK_MODULES([GFLAGS], [libgflags])
 PKG_CHECK_MODULES([OPENSSL], [openssl])
-dnl PKG_CHECK_MODULES([QTCORE], [Qt5Core])
-dnl PKG_CHECK_MODULES([QTBOOTSTRAP], [Qt5Bootstrap])
 
 # Checks for header files.
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h fenv.h float.h inttypes.h limits.h locale.h mach/mach.h malloc.h netinet/in.h stddef.h stdint.h stdlib.h string.h sys/ioctl.h sys/param.h sys/socket.h sys/statvfs.h sys/time.h sys/vfs.h unistd.h utime.h wchar.h wctype.h])

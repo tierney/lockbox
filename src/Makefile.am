@@ -1,4 +1,5 @@
-AM_CPPFLAGS = -I$(top_srcdir)/src/testing/gtest/include -I$(top_srcdir)
+AM_CPPFLAGS = -I$(top_srcdir)/testing/gtest/include
+AM_CPPFLAGS += -I$(top_srcdir) -I$(top_builddir)
 AM_CPPFLAGS += -DHAVE_INTTYPES_H -DHAVE_NETINET_IN_H
 AM_CXXFLAGS = -Wall -Wextra
 
@@ -13,13 +14,13 @@ bin_PROGRAMS += lockbox_main
 lockbox_main_SOURCES = lockbox_main.cc
 lockbox_main_LDADD =
 lockbox_main_LDADD += $(GFLAGS_LIBS)
-lockbox_main_LDADD += $(top_srcdir)/base/libfile_util.la
-lockbox_main_LDADD += $(top_srcdir)/crypto/librsa_private_key.la
-lockbox_main_LDADD += $(top_srcdir)/base/threading/libthread.la
+lockbox_main_LDADD += $(top_builddir)/base/libfile_util.la
+lockbox_main_LDADD += $(top_builddir)/crypto/librsa_private_key.la
+lockbox_main_LDADD += $(top_builddir)/base/threading/libthread.la
 lockbox_main_LDADD += libclient_initialization.la
-lockbox_main_LDADD += $(top_srcdir)/base/files/libfile_path_watcher.la
-lockbox_main_LDADD += $(top_srcdir)/base/librun_loop.la
-lockbox_main_LDADD += $(top_srcdir)/base/synchronization/libwaitable_event.la
+lockbox_main_LDADD += $(top_builddir)/base/files/libfile_path_watcher.la
+lockbox_main_LDADD += $(top_builddir)/base/librun_loop.la
+lockbox_main_LDADD += $(top_builddir)/base/synchronization/libwaitable_event.la
 
 noinst_LTLIBRARIES += libclient_initialization.la
 libclient_initialization_la_SOURCES = client_initialization.h
@@ -81,5 +82,5 @@ clean-local-check:
 bin_PROGRAMS += delta_encoding_main
 delta_encoding_main_SOURCES = delta_encoding_main.cc
 delta_encoding_main_LDADD =
-delta_encoding_main_LDADD += $(top_srcdir)/courgette/libsimple_delta.la
-delta_encoding_main_LDADD += $(top_srcdir)/courgette/libstreams.la
+delta_encoding_main_LDADD += $(top_builddir)/courgette/libsimple_delta.la
+delta_encoding_main_LDADD += $(top_builddir)/courgette/libstreams.la

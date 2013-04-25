@@ -1,17 +1,37 @@
 SUBDIRS =
 DEFAULT_INCLUDES =
-AM_CPPFLAGS = -I$(top_srcdir)
+# AM_CPPFLAGS = -I$(builddir) -I$(top_srcdir)
+AM_CPPFLAGS = -I$(top_srcdir) -I$(top_builddir)
+AM_CFLAGS = -I$(top_srcdir)
 
-EXTRA_DIST = base_export.h
+EXTRA_DIST =
+EXTRA_DIST += auto_reset.h
+EXTRA_DIST += base_export.h
 EXTRA_DIST += basictypes.h
-EXTRA_DIST += port.h
 EXTRA_DIST += compiler_specific.h
+EXTRA_DIST += file_descriptor_posix.h
+EXTRA_DIST += format_macros.h
 EXTRA_DIST += memory/scoped_ptr.h
 EXTRA_DIST += move.h
+EXTRA_DIST += native_library.h
+EXTRA_DIST += port.h
+EXTRA_DIST += stl_util.h
+EXTRA_DIST += sys_byteorder.h
 EXTRA_DIST += template_util.h
-EXTRA_DIST += file_descriptor_posix.h
+EXTRA_DIST += tuple.h
 
 noinst_LTLIBRARIES =
+
+noinst_LTLIBRARIES += profiler/libscoped_profile.la
+profiler_libscoped_profile_la_SOURCES = profiler/scoped_profile.h
+profiler_libscoped_profile_la_SOURCES += profiler/scoped_profile.cc
+
+noinst_LTLIBRARIES += libbind.la
+libbind_la_SOURCES = bind.h
+libbind_la_SOURCES += bind_internal.h
+libbind_la_SOURCES += bind_helpers.h
+libbind_la_SOURCES += bind_helpers.cc
+libbind_la_SOURCES += memory/raw_scoped_refptr_mismatch_checker.h
 
 noinst_LTLIBRARIES += libtime.la
 libtime_la_SOURCES = time.h
@@ -22,6 +42,9 @@ libtime_la_LIBADD = third_party/nspr/libprtime.la
 noinst_LTLIBRARIES += third_party/nspr/libprtime.la
 third_party_nspr_libprtime_la_SOURCES = third_party/nspr/prtime.h
 third_party_nspr_libprtime_la_SOURCES += third_party/nspr/prtime.cc
+third_party_nspr_libprtime_la_SOURCES += third_party/nspr/prtypes.h
+third_party_nspr_libprtime_la_SOURCES += third_party/nspr/prcpucfg.h
+third_party_nspr_libprtime_la_SOURCES += third_party/nspr/prcpucfg_linux.h
 
 noinst_LTLIBRARIES += librand_util.la
 librand_util_la_SOURCES =
@@ -57,7 +80,7 @@ synchronization_libcondition_variable_posix_la_SOURCES += synchronization/condit
 noinst_LTLIBRARIES += libthread_task_runner_handle.la
 libthread_task_runner_handle_la_SOURCES = thread_task_runner_handle.h
 libthread_task_runner_handle_la_SOURCES += thread_task_runner_handle.cc
-
+libthread_task_runner_handle_la_SOURCES += single_thread_task_runner.h
 
 noinst_LTLIBRARIES += metrics/libsample_map.la
 metrics_libsample_map_la_SOURCES = metrics/sample_map.h
@@ -68,18 +91,21 @@ metrics_libhistogram_samples_la_SOURCES = metrics/histogram_samples.h
 metrics_libhistogram_samples_la_SOURCES += metrics/histogram_samples.cc
 
 noinst_LTLIBRARIES += threading/libthread_checker_impl.la
-threading_libthread_checker_impl_la_SOURCES = threading/thread_checker_impl.h
+threading_libthread_checker_impl_la_SOURCES = threading/thread_checker.h
+threading_libthread_checker_impl_la_SOURCES += threading/thread_checker_impl.h
 threading_libthread_checker_impl_la_SOURCES += threading/thread_checker_impl.cc
 
 
 noinst_LTLIBRARIES += libvalues.la
 libvalues_la_SOURCES = values.h
 libvalues_la_SOURCES += values.cc
+libvalues_la_SOURCES += float_util.h
 
 noinst_LTLIBRARIES += metrics/libstatistics_recorder.la
 metrics_libstatistics_recorder_la_SOURCES = metrics/statistics_recorder.h
 metrics_libstatistics_recorder_la_SOURCES += metrics/statistics_recorder.cc
-
+metrics_libstatistics_recorder_la_SOURCES += gtest_prod_util.h
+metrics_libstatistics_recorder_la_SOURCES += debug/leak_annotations.h
 
 noinst_LTLIBRARIES += debug/libtrace_event.la
 debug_libtrace_event_la_SOURCES = debug/trace_event.h
@@ -187,6 +213,7 @@ json_libjson_reader_la_LIBADD += json/libjson_parser.la
 
 noinst_LTLIBRARIES += threading/libpost_task_and_reply_impl.la
 threading_libpost_task_and_reply_impl_la_SOURCES = threading/post_task_and_reply_impl.cc
+threading_libpost_task_and_reply_impl_la_SOURCES += threading/post_task_and_reply_impl.h
 threading_libpost_task_and_reply_impl_la_LIBADD = message_loop/libmessage_loop_proxy.la
 
 noinst_LTLIBRARIES += metrics/libhistogram.la
@@ -240,7 +267,10 @@ third_party_dynamic_annotations_libdynamic_annotations_la_SOURCES += third_party
 noinst_LTLIBRARIES += libprocess_util.la
 libprocess_util_la_SOURCES = process_util.h
 libprocess_util_la_SOURCES += process_util.cc
+libprocess_util_la_SOURCES += files/dir_reader_posix.h
+libprocess_util_la_SOURCES += files/dir_reader_linux.h
 libprocess_util_la_SOURCES += process_util_posix.cc
+libprocess_util_la_SOURCES += strings/string_tokenizer.h
 libprocess_util_la_SOURCES += process_util_linux.cc
 libprocess_util_la_LIBADD = libcommand_line.la
 libprocess_util_la_LIBADD += threading/libthread_restrictions.la
@@ -320,7 +350,7 @@ libstring16_la_SOURCES += string16.cc
 noinst_LTLIBRARIES += third_party/dmg_fp/libdmg_fp.la
 third_party_dmg_fp_libdmg_fp_la_SOURCES = third_party/dmg_fp/g_fmt.cc
 third_party_dmg_fp_libdmg_fp_la_SOURCES += third_party/dmg_fp/dtoa.cc
-
+third_party_dmg_fp_libdmg_fp_la_SOURCES += third_party/dmg_fp/dmg_fp.h
 
 noinst_LTLIBRARIES += strings/libstring_split.la
 strings_libstring_split_la_SOURCES = strings/string_split.h
@@ -345,6 +375,7 @@ files_libscoped_temp_dir_la_SOURCES += files/scoped_temp_dir.cc
 noinst_LTLIBRARIES += libsequenced_task_runner.la
 libsequenced_task_runner_la_SOURCES = sequenced_task_runner.h
 libsequenced_task_runner_la_SOURCES += sequenced_task_runner.cc
+libsequenced_task_runner_la_SOURCES += sequenced_task_runner_helpers.h
 
 noinst_LTLIBRARIES += files/libfile_path_watcher.la
 files_libfile_path_watcher_la_SOURCES = files/file_path_watcher.h
@@ -369,15 +400,71 @@ threading_libthread_la_LIBADD += synchronization/libwaitable_event.la
 
 noinst_LTLIBRARIES += libfile_util.la
 libfile_util_la_SOURCES = file_util.h
+libfile_util_la_SOURCES += posix/eintr_wrapper.h
 libfile_util_la_SOURCES += file_util.cc
 libfile_util_la_SOURCES += file_util_linux.cc
 libfile_util_la_SOURCES += file_util_posix.cc
 libfile_util_la_CXXFLAGS = $(GLIB_CFLAGS)
 libfile_util_la_LIBADD = libplatform_file.la
 
+noinst_LTLIBRARIES += nix/libxdg_util.la
+nix_libxdg_util_la_SOURCES = nix/xdg_util.h
+nix_libxdg_util_la_SOURCES += nix/xdg_util.cc
+
+noinst_LTLIBRARIES += third_party/xdg_user_dirs/libxdg_user_dir_lookup.la
+third_party_xdg_user_dirs_libxdg_user_dir_lookup_la_SOURCES = third_party/xdg_user_dirs/xdg_user_dir_lookup.h
+third_party_xdg_user_dirs_libxdg_user_dir_lookup_la_SOURCES += third_party/xdg_user_dirs/xdg_user_dir_lookup.cc
+
+noinst_LTLIBRARIES += third_party/xdg_mime/libxdgmimealias.la
+third_party_xdg_mime_libxdgmimealias_la_SOURCES = third_party/xdg_mime/xdgmimealias.c
+third_party_xdg_mime_libxdgmimealias_la_SOURCES += third_party/xdg_mime/xdgmimealias.h
+
+noinst_LTLIBRARIES += third_party/xdg_mime/libxdgmime.la
+third_party_xdg_mime_libxdgmime_la_SOURCES = third_party/xdg_mime/xdgmime.c
+third_party_xdg_mime_libxdgmime_la_SOURCES += third_party/xdg_mime/xdgmime.h
+
+noinst_LTLIBRARIES += third_party/xdg_mime/libxdgmimecache.la
+third_party_xdg_mime_libxdgmimecache_la_SOURCES = third_party/xdg_mime/xdgmimecache.c
+third_party_xdg_mime_libxdgmimecache_la_SOURCES += third_party/xdg_mime/xdgmimecache.h
+
+noinst_LTLIBRARIES += third_party/xdg_mime/libxdgmimeglob.la
+third_party_xdg_mime_libxdgmimeglob_la_SOURCES = third_party/xdg_mime/xdgmimeglob.c
+third_party_xdg_mime_libxdgmimeglob_la_SOURCES += third_party/xdg_mime/xdgmimeglob.h
+
+noinst_LTLIBRARIES += third_party/xdg_mime/libxdgmimeicon.la
+third_party_xdg_mime_libxdgmimeicon_la_SOURCES = third_party/xdg_mime/xdgmimeicon.c
+third_party_xdg_mime_libxdgmimeicon_la_SOURCES += third_party/xdg_mime/xdgmimeicon.h
+
+noinst_LTLIBRARIES += third_party/xdg_mime/libxdgmimeint.la
+third_party_xdg_mime_libxdgmimeint_la_SOURCES = third_party/xdg_mime/xdgmimeint.c
+third_party_xdg_mime_libxdgmimeint_la_SOURCES += third_party/xdg_mime/xdgmimeint.h
+
+noinst_LTLIBRARIES += third_party/xdg_mime/libxdgmimemagic.la
+third_party_xdg_mime_libxdgmimemagic_la_SOURCES = third_party/xdg_mime/xdgmimemagic.c
+third_party_xdg_mime_libxdgmimemagic_la_SOURCES += third_party/xdg_mime/xdgmimemagic.h
+
+noinst_LTLIBRARIES += third_party/xdg_mime/libxdgmimeparent.la
+third_party_xdg_mime_libxdgmimeparent_la_SOURCES = third_party/xdg_mime/xdgmimeparent.c
+third_party_xdg_mime_libxdgmimeparent_la_SOURCES += third_party/xdg_mime/xdgmimeparent.h
+
+noinst_LTLIBRARIES += nix/libmime_util_xdg.la
+nix_libmime_util_xdg_la_SOURCES = nix/mime_util_xdg.h
+nix_libmime_util_xdg_la_SOURCES += nix/mime_util_xdg.cc
+
+noinst_LTLIBRARIES += libbase_paths.la
+libbase_paths_la_SOURCES = base_paths.h
+libbase_paths_la_SOURCES += base_paths.cc
+libbase_paths_la_SOURCES += base_paths_posix.h
+libbase_paths_la_SOURCES += base_paths_posix.cc
+
+noinst_LTLIBRARIES += libpath_service.la
+libpath_service_la_SOURCES = path_service.h
+libpath_service_la_SOURCES += path_service.cc
+
 noinst_LTLIBRARIES += liblazy_instance.la
 liblazy_instance_la_SOURCES = lazy_instance.h
 liblazy_instance_la_SOURCES += lazy_instance.cc
+liblazy_instance_la_SOURCES += memory/aligned_memory.h
 
 noinst_LTLIBRARIES += files/libfile_path.la
 files_libfile_path_la_SOURCES = files/file_path.h
@@ -388,6 +475,7 @@ files_libfile_path_la_LIBADD += strings/libsys_string_conversions.la
 noinst_LTLIBRARIES += libmessage_loop.la
 libmessage_loop_la_SOURCES = message_loop.h
 libmessage_loop_la_SOURCES += message_loop.cc
+libmessage_loop_la_SOURCES += message_loop_proxy.h
 libmessage_loop_la_LIBADD = libtracked_objects.la
 libmessage_loop_la_LIBADD += libmessage_pump.la
 libmessage_loop_la_LIBADD += libpending_task.la
@@ -413,6 +501,8 @@ message_loop_libmessage_loop_proxy_impl_la_SOURCES += message_loop/message_loop_
 noinst_LTLIBRARIES += libtracked_objects.la
 libtracked_objects_la_SOURCES = tracked_objects.h
 libtracked_objects_la_SOURCES += tracked_objects.cc
+libtracked_objects_la_SOURCES += third_party/valgrind/memcheck.h
+libtracked_objects_la_SOURCES += third_party/valgrind/valgrind.h
 libtracked_objects_la_LIBADD = liblazy_instance.la
 libtracked_objects_la_LIBADD += synchronization/liblock.la
 libtracked_objects_la_LIBADD += liblocation.la
@@ -421,10 +511,10 @@ libtracked_objects_la_LIBADD += threading/libthread_local_storage.la
 libtracked_objects_la_LIBADD += profiler/libalternate_timer.la
 libtracked_objects_la_LIBADD += libprocess_util.la
 
-
 noinst_LTLIBRARIES += memory/libref_counted.la
 memory_libref_counted_la_SOURCES = memory/ref_counted.h
 memory_libref_counted_la_SOURCES += memory/ref_counted.cc
+memory_libref_counted_la_SOURCES += atomic_ref_count.h
 memory_libref_counted_la_LIBADD = threading/libthread_collision_warner.la
 memory_libref_counted_la_LIBADD += libatomicops.la
 memory_libref_counted_la_LIBADD += libtask_runner.la
@@ -433,9 +523,10 @@ memory_libref_counted_la_LIBADD += libtask_runner.la
 noinst_LTLIBRARIES += libcallback.la
 libcallback_la_SOURCES = callback.h
 libcallback_la_SOURCES += callback_forward.h
-libcallback_la_SOURCES += cancelable_callback.h
+libcallback_la_SOURCES += callback_internal.h
 libcallback_la_SOURCES += callback_internal.cc
 libcallback_la_SOURCES += callback_helpers.h
+libcallback_la_SOURCES += cancelable_callback.h
 libcallback_la_LIBADD = memory/libref_counted.la
 
 noinst_LTLIBRARIES += liblocation.la
@@ -474,6 +565,7 @@ libcommand_line_la_LIBADD = strings/libstring_split.la
 
 noinst_LTLIBRARIES += strings/libstring_number_conversions.la
 strings_libstring_number_conversions_la_SOURCES =
+strings_libstring_number_conversions_la_SOURCES += string_number_conversions.h
 strings_libstring_number_conversions_la_SOURCES += strings/string_number_conversions.h
 strings_libstring_number_conversions_la_SOURCES += strings/string_number_conversions.cc
 strings_libstring_number_conversions_la_LIBADD = third_party/dmg_fp/libdmg_fp.la
