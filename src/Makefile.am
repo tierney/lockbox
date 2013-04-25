@@ -10,7 +10,7 @@ noinst_PROGRAMS =
 noinst_LTLIBRARIES =
 
 LEVELDB_CFLAGS = -I$(top_builddir)/leveldb/include
-LEVELDB_BIN_LIBS = $(top_builddir)/leveldb/libleveldb.a
+LEVELDB_BIN_LIBS = $(top_builddir)/leveldb/libleveldb.a -lsnappy
 
 bin_PROGRAMS += lockbox_main
 lockbox_main_SOURCES = lockbox_main.cc
@@ -118,6 +118,7 @@ clean-local-check:
 		$(libuserthrift_la_SOURCES) \
 		$(libhash_chain_digestthrift_la_SOURCES) \
 		*.skeleton.cpp
+
 
 # Delta encoding pieces.
 bin_PROGRAMS += delta_encoding_main

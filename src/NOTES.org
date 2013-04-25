@@ -16,6 +16,60 @@
 
 ** top_dir_snaps_TDN
 
+
+History too? See the latest snapshot at the end of the list?
+
 ** top_dir_data_TDN
 
 ** top_dir_fptrs_TDN
+
+* New User Notes
+
+struct auth {
+  1: email
+  2: password
+  3: nonce
+}
+
+** Register Email with a UID
+
+UID <- register_email(auth)
+
+bcrypt hashing of password.
+
+** Register UID's devices.
+
+bool <- register_device(auth, device)
+
+** Register TDN with user_top_dir.
+
+tdn <- register_tdn(auth)
+
+Locally, store the tdn to local_path mapping. Future uploads pertaining to the
+directory will be uploaded with the tdn.
+
+
+* New File
+
+** Detect file change.
+
+** Determine new or modified (if delete, ignore)
+
+** Lock in the cloud.
+
+** Process locally.
+
+** Send to storage provider.
+
+
+* New Device
+
+** Register device and user name.
+
+** Upload the device
+
+*** Server adds the TDNs to the device sync list.
+
+** Check for pending updates.
+
+** Pull the snapshots per TDN, then apply forward pointers.
