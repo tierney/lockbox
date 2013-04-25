@@ -8,8 +8,8 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([build-aux])
 
 AC_CONFIG_HEADERS([build-aux/config.h])
-AC_CONFIG_FILES([src/testing/gtest/scripts/gtest-config],
-                [chmod +x src/testing/gtest/scripts/gtest-config])
+AC_CONFIG_FILES([testing/gtest/scripts/gtest-config],
+                [chmod +x testing/gtest/scripts/gtest-config])
 AM_SILENT_RULES([yes])
 
 # Initialize Automake with various options. We require at least v1.9, prevent
@@ -158,11 +158,12 @@ case $host_os in
         ;;
 esac
 
-AC_CONFIG_FILES([Makefile
-                 src/base/Makefile
+AC_CONFIG_FILES([testing/gtest/Makefile
+                 base/Makefile
+                 courgette/Makefile
+                 crypto/Makefile
                  src/Makefile
                  src/file_watcher/Makefile
-                 src/crypto/Makefile
-                 src/testing/gtest/Makefile
+                 Makefile
                  ])
 AC_OUTPUT

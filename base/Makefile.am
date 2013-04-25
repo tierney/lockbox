@@ -1,6 +1,6 @@
 SUBDIRS =
-DEFAULT_INCLUDES = 
-AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src
+DEFAULT_INCLUDES =
+AM_CPPFLAGS = -I$(top_srcdir)
 
 EXTRA_DIST = base_export.h
 EXTRA_DIST += basictypes.h
@@ -347,8 +347,6 @@ libsequenced_task_runner_la_SOURCES = sequenced_task_runner.h
 libsequenced_task_runner_la_SOURCES += sequenced_task_runner.cc
 
 noinst_LTLIBRARIES += files/libfile_path_watcher.la
-files_libfile_path_watcher_la_CPPFLAGS = -I$(top_srcdir)/src 
-
 files_libfile_path_watcher_la_SOURCES = files/file_path_watcher.h
 files_libfile_path_watcher_la_SOURCES += files/file_path_watcher.cc
 files_libfile_path_watcher_la_SOURCES += files/file_path_watcher_@FILE_PATH_WATCHER_SUFFIX@.cc
@@ -361,16 +359,6 @@ files_libfile_path_watcher_la_LIBADD += libfile_util.la
 files_libfile_path_watcher_la_LIBADD += threading/libthread.la
 files_libfile_path_watcher_la_LIBADD += strings/libstring_piece.la
 files_libfile_path_watcher_la_LIBADD += liblogging.la
-
-# TESTS += files/file_path_watcher_browsertest
-# bin_PROGRAMS += files/file_path_watcher_browsertest
-# files_file_path_watcher_browsertest_SOURCES = files/file_path_watcher_browsertest.cc
-# files_file_path_watcher_browsertest_LDADD =
-# files_file_path_watcher_browsertest_LDADD += files/libfile_path_watcher.la
-# files_file_path_watcher_browsertest_LDADD += files/libscoped_temp_dir.la
-# files_file_path_watcher_browsertest_LDADD += libsequenced_task_runner.la
-# files_file_path_watcher_browsertest_LDADD += $(top_srcdir)/src/testing/gtest/lib/libgtest.la
-# files_file_path_watcher_browsertest_LDADD += $(top_srcdir)/src/testing/gtest/lib/libgtest_main.la
 
 noinst_LTLIBRARIES += threading/libthread.la
 threading_libthread_la_SOURCES = threading/thread.h
@@ -569,5 +557,3 @@ libbase_switches_la_SOURCES += base_switches.cc
 noinst_LTLIBRARIES += libenvironment.la
 libenvironment_la_SOURCES = environment.h
 libenvironment_la_SOURCES += environment.cc
-
-
