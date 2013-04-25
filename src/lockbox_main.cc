@@ -72,21 +72,11 @@ class LockboxFileWatcher :
     completion->Signal();
   }
 
-  // base::FilePathWatcher* Watch(const base::FilePath& watch_path,
-  //                              const base::FilePathWatcher::Callback& callback) {
-  //   CHECK(!callback.is_null());
-
-  //   base::FilePathWatcher* watcher(new base::FilePathWatcher);
-  //   if (!watcher->Watch(watch_path, false /* recursive */, callback)) {
-  //     delete watcher;
-  //     return NULL;
-  //   }
-  //   return watcher;
-  // }
 
   void HandleFileWatchNotification(const base::FilePath& path,
                                    bool got_error) {
-    std::cout << path.value() << std::endl;
+    std::string message(got_error ? " error" : " ok");
+    std::cout << path.value() << message << std::endl;
   }
 
  private:
