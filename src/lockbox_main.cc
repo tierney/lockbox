@@ -43,6 +43,10 @@ class LockboxFileWatcher :
     CHECK(file_thread_.StartWithOptions(options));
   }
 
+  void WaitForEvents() {
+    loop_.Run();
+  }
+
   bool SetupWatch(const base::FilePath& target,
                   base::FilePathWatcher* watcher) {
     base::WaitableEvent completion(false, false);
@@ -68,17 +72,17 @@ class LockboxFileWatcher :
     completion->Signal();
   }
 
-  base::FilePathWatcher* Watch(const base::FilePath& watch_path,
-                               const base::FilePathWatcher::Callback& callback) {
-    CHECK(!callback.is_null());
+  // base::FilePathWatcher* Watch(const base::FilePath& watch_path,
+  //                              const base::FilePathWatcher::Callback& callback) {
+  //   CHECK(!callback.is_null());
 
-    base::FilePathWatcher* watcher(new base::FilePathWatcher);
-    if (!watcher->Watch(watch_path, false /* recursive */, callback)) {
-      delete watcher;
-      return NULL;
-    }
-    return watcher;
-  }
+  //   base::FilePathWatcher* watcher(new base::FilePathWatcher);
+  //   if (!watcher->Watch(watch_path, false /* recursive */, callback)) {
+  //     delete watcher;
+  //     return NULL;
+  //   }
+  //   return watcher;
+  // }
 
   void HandleFileWatchNotification(const base::FilePath& path,
                                    bool got_error) {
@@ -86,6 +90,7 @@ class LockboxFileWatcher :
   }
 
  private:
+  MessageLoop loop_;
   base::Thread file_thread_;
   base::FilePathWatcher::Callback file_watcher_callback_;
 
@@ -110,10 +115,14 @@ int main(int argc, char** argv) {
   CHECK(lockbox_thread->StartWithOptions(thread_options));
 
   base::FilePath watch_path(FLAGS_sync_dir);
+  base::FilePathWatcher fpw;
   lockbox::LockboxFileWatcher fw;
-  fw.Watch(watch_path,
-           base::Bind(&lockbox::LockboxFileWatcher::HandleFileWatchNotification,
-                      &fw));
+  fw.Init();
+  fw.SetupWatch(base::FilePath(FLAGS_sync_dir), &fpw);
+
+  // fw.Watch(watch_path,
+  //          base::Bind(&lockbox::LockboxFileWatcher::HandleFileWatchNotification,
+  //                     &fw));
 
   // lockbox::FileWatcher fw;
   // fw.Start();
