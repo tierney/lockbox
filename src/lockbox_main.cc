@@ -86,7 +86,7 @@ class LockboxFileWatcher :
 
   void HandleFileWatchNotification(const base::FilePath& path,
                                    bool got_error) {
-    CHECK(false) << "WE DID IT!!";
+    std::cout << path.value() << std::endl;
   }
 
  private:
