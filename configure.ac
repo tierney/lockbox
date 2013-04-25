@@ -26,7 +26,7 @@ AC_PROG_GREP
 AC_PROG_EGREP
 AC_PROG_CXX
 AC_PROG_CC
-
+AX_CXX_COMPILE_STDCXX_11
 # Checks for libraries.
 
 # First look for Boost, maybe for a specific minimum version:
@@ -159,6 +159,7 @@ AC_CONFIG_FILES([testing/gtest/Makefile
                  base/Makefile
                  courgette/Makefile
                  crypto/Makefile
+                 file_watcher/Makefile
                  src/Makefile
                  Makefile
                  ])
