@@ -159,9 +159,9 @@ case $host_os in
 esac
 
 AC_CONFIG_FILES([Makefile
+                 src/base/Makefile
                  src/Makefile
                  src/file_watcher/Makefile
-                 src/base/Makefile
                  src/crypto/Makefile
                  src/testing/gtest/Makefile
                  ])

@@ -36,14 +36,14 @@ random_unittest_SOURCES = random_unittest.cc
 random_unittest_LDADD = $(top_srcdir)/src/testing/gtest/lib/libgtest.la
 random_unittest_LDADD += $(top_srcdir)/src/testing/gtest/lib/libgtest_main.la
 random_unittest_LDADD += librandom.la
-random_unittest_LDADD += $(top_srcdir)/src/liblogging.la
+random_unittest_LDADD += $(top_srcdir)/src/base/liblogging.la
 
 TESTS += encryptor_unittest
 bin_PROGRAMS += encryptor_unittest
 encryptor_unittest_SOURCES = encryptor_unittest.cc
 encryptor_unittest_LDADD = $(top_srcdir)/src/testing/gtest/lib/libgtest.la
 encryptor_unittest_LDADD += $(top_srcdir)/src/testing/gtest/lib/libgtest_main.la
-encryptor_unittest_LDADD += $(top_srcdir)/src/liblogging.la
+encryptor_unittest_LDADD += $(top_srcdir)/src/base/liblogging.la
 encryptor_unittest_LDADD += libencryptor.la
 encryptor_unittest_LDADD += libsymmetric_key.la
 
@@ -57,7 +57,7 @@ bin_PROGRAMS += symmetric_key_unittest
 symmetric_key_unittest_SOURCES = symmetric_key_unittest.cc
 symmetric_key_unittest_LDADD = $(top_srcdir)/src/testing/gtest/lib/libgtest.la
 symmetric_key_unittest_LDADD += $(top_srcdir)/src/testing/gtest/lib/libgtest_main.la
-symmetric_key_unittest_LDADD += $(top_srcdir)/src/liblogging.la
+symmetric_key_unittest_LDADD += $(top_srcdir)/src/base/liblogging.la
 symmetric_key_unittest_LDADD += libsymmetric_key.la
 symmetric_key_unittest_LDADD += libencryptor.la
 
@@ -68,14 +68,14 @@ libopenpgp_symmetric_encryption_la_CXXFLAGS = $(NSS_CFLAGS)
 libopenpgp_symmetric_encryption_la_LIBADD = $(NSS_LIBS)
 libopenpgp_symmetric_encryption_la_LIBADD += libnss_util.la
 libopenpgp_symmetric_encryption_la_LIBADD += librandom.la
-libopenpgp_symmetric_encryption_la_LIBADD += $(top_srcdir)/src/liblogging.la
+libopenpgp_symmetric_encryption_la_LIBADD += $(top_srcdir)/src/base/liblogging.la
 
 TESTS += openpgp_symmetric_encryption_unittest
 bin_PROGRAMS += openpgp_symmetric_encryption_unittest
 openpgp_symmetric_encryption_unittest_SOURCES = openpgp_symmetric_encryption_unittest.cc
 openpgp_symmetric_encryption_unittest_LDADD = $(top_srcdir)/src/testing/gtest/lib/libgtest.la
 openpgp_symmetric_encryption_unittest_LDADD += $(top_srcdir)/src/testing/gtest/lib/libgtest_main.la
-openpgp_symmetric_encryption_unittest_LDADD += $(top_srcdir)/src/liblogging.la
+openpgp_symmetric_encryption_unittest_LDADD += $(top_srcdir)/src/base/liblogging.la
 openpgp_symmetric_encryption_unittest_LDADD += libopenpgp_symmetric_encryption.la
 
 noinst_LTLIBRARIES += libnss_util.la
@@ -84,14 +84,14 @@ libnss_util_la_SOURCES += nss_util.cc
 libnss_util_la_CXXFLAGS = $(NSS_CFLAGS)
 libnss_util_la_LIBADD = $(NSS_LIBS)
 libnss_util_la_LIBADD += $(top_srcdir)/src/base/metrics/libhistogram.la
-libnss_util_la_LIBADD += $(top_srcdir)/src/libenvironment.la
+libnss_util_la_LIBADD += $(top_srcdir)/src/base/libenvironment.la
 
 noinst_LTLIBRARIES += librsa_private_key.la
 librsa_private_key_la_SOURCES = rsa_private_key.h
 librsa_private_key_la_SOURCES += rsa_private_key.cc
 librsa_private_key_la_SOURCES += rsa_private_key_openssl.cc
-librsa_private_key_la_LIBADD = $(top_srcdir)/src/liblogging.la
-librsa_private_key_la_LIBADD += $(top_srcdir)/src/liblocation.la
+librsa_private_key_la_LIBADD = $(top_srcdir)/src/base/liblogging.la
+librsa_private_key_la_LIBADD += $(top_srcdir)/src/base/liblocation.la
 librsa_private_key_la_LIBADD += libopenssl_util.la
 
 TESTS += rsa_private_key_unittest
@@ -105,8 +105,8 @@ noinst_LTLIBRARIES += libsecure_hash.la
 libsecure_hash_la_SOURCES =
 libsecure_hash_la_SOURCES += secure_hash.h
 libsecure_hash_la_SOURCES += secure_hash_openssl.cc
-libsecure_hash_la_LIBADD = $(top_srcdir)/src/libpickle.la
-libsecure_hash_la_LIBADD += $(top_srcdir)/src/liblogging.la
+libsecure_hash_la_LIBADD = $(top_srcdir)/src/base/libpickle.la
+libsecure_hash_la_LIBADD += $(top_srcdir)/src/base/liblogging.la
 libsecure_hash_la_LIBADD += $(OPENSSL_LIBS)
 
 TESTS += secure_hash_unittest
