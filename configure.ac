@@ -160,7 +160,6 @@ AC_CONFIG_FILES([testing/gtest/Makefile
                  courgette/Makefile
                  crypto/Makefile
                  src/Makefile
-                 src/file_watcher/Makefile
                  Makefile
                  ])
 AC_OUTPUT

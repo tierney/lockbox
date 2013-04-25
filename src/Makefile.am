@@ -8,8 +8,6 @@ bin_PROGRAMS =
 noinst_PROGRAMS =
 noinst_LTLIBRARIES =
 
-SUBDIRS = file_watcher
-
 bin_PROGRAMS += lockbox_main
 lockbox_main_SOURCES = lockbox_main.cc
 lockbox_main_LDADD =
