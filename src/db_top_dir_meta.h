@@ -18,7 +18,15 @@ class TopDirMetaDB {
 
   virtual ~TopDirMetaDB();
 
+  // Used to start tracking an appropriate database name. |top_dir| is appended
+  // as a directory name to the |db_location_base_| for the location of the
+  // tracked database.
+  bool Track(const string& top_dir);
+
  private:
+  // Get directory database.
+  leveldb::DB* GetTopDirDB(const string& top_dir);
+
   // Database location used for connecting to leveldb.
   string db_location_base_;
 
