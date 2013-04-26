@@ -10,7 +10,7 @@ noinst_PROGRAMS =
 noinst_LTLIBRARIES =
 
 LEVELDB_CFLAGS = -I$(top_builddir)/leveldb/include
-LEVELDB_LIBS = $(top_builddir)/leveldb/libleveldb.a
+LEVELDB_BIN_LIBS = $(top_builddir)/leveldb/libleveldb.a
 
 bin_PROGRAMS += lockbox_main
 lockbox_main_SOURCES = lockbox_main.cc
@@ -47,7 +47,7 @@ user_device_queue_main_SOURCES = user_device_queue_main.cc
 user_device_queue_main_CXXFLAGS = -static
 user_device_queue_main_CXXFLAGS += $(GFLAGS_CFLAGS)
 user_device_queue_main_CXXFLAGS += $(LEVELDB_CFLAGS)
-user_device_queue_main_LDADD = $(LEVELDB_LIBS)
+user_device_queue_main_LDADD = $(LEVELDB_BIN_LIBS)
 user_device_queue_main_LDADD += $(GFLAGS_LIBS)
 user_device_queue_main_LDADD += $(top_builddir)/base/libstringprintf.la
 user_device_queue_main_LDADD += $(top_builddir)/base/liblogging.la
@@ -62,19 +62,8 @@ db_email_user_test_LDADD += libdb_email_user.la
 db_email_user_test_LDADD += $(top_builddir)/base/files/libfile_path.la
 db_email_user_test_LDADD += $(top_builddir)/base/liblogging.la
 db_email_user_test_LDADD += libleveldb_util.la
-db_email_user_test_LDADD += $(LEVELDB_LIBS)
+db_email_user_test_LDADD += $(LEVELDB_BIN_LIBS)
 
-noinst_LTLIBRARIES += libleveldb_util.la
-libleveldb_util_la_CXXFLAGS = $(LEVELDB_CFLAGS)
-libleveldb_util_la_SOURCES = leveldb_util.h
-libleveldb_util_la_SOURCES += leveldb_util.cc
-libleveldb_util_la_LIBADD = $(LEVELDB_LIBS)
-
-noinst_LTLIBRARIES += libdb_email_user.la
-libdb_email_user_la_CXXFLAGS = $(LEVELDB_CFLAGS)
-libdb_email_user_la_SOURCES = db_email_user.h
-libdb_email_user_la_SOURCES += db_email_user.cc
-# libdb_email_user_la_LIBADD = libleveldb_base.la
 
 bin_PROGRAMS += server
 server_SOURCES = UserStorage_server.cpp
@@ -130,8 +119,65 @@ clean-local-check:
 		$(libhash_chain_digestthrift_la_SOURCES) \
 		*.skeleton.cpp
 
+# Delta encoding pieces.
 bin_PROGRAMS += delta_encoding_main
 delta_encoding_main_SOURCES = delta_encoding_main.cc
 delta_encoding_main_LDADD =
 delta_encoding_main_LDADD += $(top_builddir)/courgette/libsimple_delta.la
 delta_encoding_main_LDADD += $(top_builddir)/courgette/libstreams.la
+
+# Database pieces.
+noinst_LTLIBRARIES += libleveldb_util.la
+libleveldb_util_la_CXXFLAGS = $(LEVELDB_CFLAGS)
+libleveldb_util_la_SOURCES = leveldb_util.h
+libleveldb_util_la_SOURCES += leveldb_util.cc
+
+noinst_LTLIBRARIES += libdb_email_user.la
+libdb_email_user_la_CXXFLAGS = $(LEVELDB_CFLAGS)
+libdb_email_user_la_SOURCES = db_email_user.h
+libdb_email_user_la_SOURCES += db_email_user.cc
+
+noinst_LTLIBRARIES += libdb_user_device.la
+libdb_user_device_la_CXXFLAGS = $(LEVELDB_CFLAGS)
+libdb_user_device_la_SOURCES = db_user_device.h
+libdb_user_device_la_SOURCES += db_user_device.cc
+
+noinst_LTLIBRARIES += libdb_device_sync.la
+libdb_device_sync_la_CXXFLAGS = $(LEVELDB_CFLAGS)
+libdb_device_sync_la_SOURCES = db_device_sync.h
+libdb_device_sync_la_SOURCES += db_device_sync.cc
+
+noinst_LTLIBRARIES += libdb_user_top_dir.la
+libdb_user_top_dir_la_CXXFLAGS = $(LEVELDB_CFLAGS)
+libdb_user_top_dir_la_SOURCES = db_user_top_dir.h
+libdb_user_top_dir_la_SOURCES += db_user_top_dir.cc
+
+noinst_LTLIBRARIES += libdb_email_key.la
+libdb_email_key_la_CXXFLAGS = $(LEVELDB_CFLAGS)
+libdb_email_key_la_SOURCES = db_email_key.h
+libdb_email_key_la_SOURCES += db_email_key.cc
+
+noinst_LTLIBRARIES += libdb_top_dir_meta.la
+libdb_top_dir_meta_la_CXXFLAGS = $(LEVELDB_CFLAGS)
+libdb_top_dir_meta_la_SOURCES = db_top_dir_meta.h
+libdb_top_dir_meta_la_SOURCES += db_top_dir_meta.cc
+
+noinst_LTLIBRARIES += libdb_top_dir_relpath_lock.la
+libdb_top_dir_relpath_lock_la_CXXFLAGS = $(LEVELDB_CFLAGS)
+libdb_top_dir_relpath_lock_la_SOURCES = db_top_dir_relpath_lock.h
+libdb_top_dir_relpath_lock_la_SOURCES += db_top_dir_relpath_lock.cc
+
+noinst_LTLIBRARIES += libdb_top_dir_snaps.la
+libdb_top_dir_snaps_la_CXXFLAGS = $(LEVELDB_CFLAGS)
+libdb_top_dir_snaps_la_SOURCES = db_top_dir_snaps.h
+libdb_top_dir_snaps_la_SOURCES += db_top_dir_snaps.cc
+
+noinst_LTLIBRARIES += libdb_top_dir_data.la
+libdb_top_dir_data_la_CXXFLAGS = $(LEVELDB_CFLAGS)
+libdb_top_dir_data_la_SOURCES = db_top_dir_data.h
+libdb_top_dir_data_la_SOURCES += db_top_dir_data.cc
+
+noinst_LTLIBRARIES += libdb_top_dir_fptrs.la
+libdb_top_dir_fptrs_la_CXXFLAGS = $(LEVELDB_CFLAGS)
+libdb_top_dir_fptrs_la_SOURCES = db_top_dir_fptrs.h
+libdb_top_dir_fptrs_la_SOURCES += db_top_dir_fptrs.cc

@@ -5,9 +5,7 @@ namespace lockbox {
 
 EmailUserDB::EmailUserDB(const string& db_location)
     : db_location_(db_location) {
-
   db_ = OpenDB(db_location);
-
 }
 
 EmailUserDB::~EmailUserDB() {

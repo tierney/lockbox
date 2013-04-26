@@ -1,0 +1,21 @@
+* Database notes
+
+** email_user
+
+** user_device
+
+** device_sync
+
+** user_top_dir
+
+** email_key
+
+** top_dir_meta_TDN
+
+** top_dir_relpath_lock_TDN
+
+** top_dir_snaps_TDN
+
+** top_dir_data_TDN
+
+** top_dir_fptrs_TDN
