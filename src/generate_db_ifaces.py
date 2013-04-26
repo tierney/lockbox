@@ -62,7 +62,7 @@ def main(argv):
              ('device_sync', 'DeviceSync'),
              ('user_top_dir', 'UserTopDir'),
              ('email_key', 'EmailKey'),
-             ('top_dir_meta', 'TopDirMeta'),
+             # ('top_dir_meta', 'TopDirMeta'),
              ('top_dir_relpath_lock', 'TopDirRelpathLock'),
              ('top_dir_snaps', 'TopDirSnaps'),
              ('top_dir_data', 'TopDirData'),
