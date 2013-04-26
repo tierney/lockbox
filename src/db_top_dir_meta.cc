@@ -1,7 +1,8 @@
 #include "db_top_dir_meta.h"
-#include "leveldb_util.h"
+
 #include "base/stl_util.h"
 #include "base/stringprintf.h"
+#include "leveldb_util.h"
 
 namespace lockbox {
 

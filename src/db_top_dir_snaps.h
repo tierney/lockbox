@@ -1,27 +1,37 @@
 #pragma once
 
+#include <map>
 #include <string>
 
 #include "base/basictypes.h"
 #include "base/logging.h"
 #include "leveldb/db.h"
 
+using std::map;
 using std::string;
 
 namespace lockbox {
 
 class TopDirSnapsDB {
  public:
-  explicit TopDirSnapsDB(const string& db_location);
+  explicit TopDirSnapsDB(const string& db_location_base);
 
   virtual ~TopDirSnapsDB();
 
+  // Used to start tracking an appropriate database name. |top_dir| is appended
+  // as a directory name to the |db_location_base_| for the location of the
+  // tracked database.
+  bool Track(const string& top_dir);
+
  private:
-  // Pointer the database. Must be deleted when we destroy this context.
-  leveldb::DB* db_;
+  // Get directory database.
+  leveldb::DB* GetTopDirDB(const string& top_dir);
 
   // Database location used for connecting to leveldb.
-  string db_location_;
+  string db_location_base_;
+
+  // Map between the top directory name and the database objects.
+  map<string, leveldb::DB*> top_dir_db_;
 };
 
 } // namespace lockbox

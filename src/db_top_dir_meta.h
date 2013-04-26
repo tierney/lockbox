@@ -7,8 +7,8 @@
 #include "base/logging.h"
 #include "leveldb/db.h"
 
-using std::string;
 using std::map;
+using std::string;
 
 namespace lockbox {
 
