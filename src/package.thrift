@@ -1,4 +1,4 @@
-namespace cpp lockbox;
+namespace cpp lockbox
 
 enum PackageType {
   SNAPSHOT,
@@ -12,15 +12,15 @@ struct LocalPackage {
   4: optional string contents,
 }
 
+struct HybridCrypto {
+  1: required string data,
+  2: optional map<string, string> user_enc_session,
+}
+
 struct RemotePackage {
   1: required string base_abs_path,
   2: required HybridCrypto path,
   3: required HybridCrypto data,
-}
-
-struct HybridCrypto {
-  1: required string data,
-  2: optional map<string, string> user_enc_session,
 }
 
 struct PathLock {
@@ -37,7 +37,7 @@ struct Updates {
   3: optional list<HybridCrypto> updates,
 }
 
-service Package Exchange {
+service PackageExchange {
   bool lock(1:PathLock lock),
   bool upload(1:LocalPackage pkg),
   bool download(),

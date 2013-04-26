@@ -68,56 +68,33 @@ db_email_user_test_LDADD += $(LEVELDB_BIN_LIBS)
 bin_PROGRAMS += server
 server_SOURCES = UserStorage_server.cpp
 server_LDADD =
-server_LDADD += libuserthrift.la
-server_LDADD += -lthrift -lthriftnb -levent -lpthread -lc
+server_LDADD += libuser_thrift.la
+server_LDADD += $(THRIFT_LIBS)
+server_LDADD += $(LIBEVENT_LIBS)
+server_LDADD += $(PTHREAD_LIBS)
 server_LDADD += $(BOOST_THREAD_LIBS)
 
 
 bin_PROGRAMS += client
 client_SOURCES = UserStorage_client.cpp
 client_LDADD =
-client_LDADD += libuserthrift.la
-client_LDADD += -lthrift
+client_LDADD += libuser_thrift.la
+client_LDADD += $(THRIFT_LIBS)
 
 
 # thrift compiler command. Note that the --out value for the output
 # directory.
 THRIFT_BUILD = $(THRIFT) --gen cpp --out . $<
 
+####
+# Remember to run the generate_thrift_automake.py script once we add a .thrift
+# file OR a new service to an existing .thrift file.
 
-noinst_LTLIBRARIES += libuserthrift.la
-libuserthrift_la_SOURCES =
-libuserthrift_la_SOURCES += UserStorage.cpp
-libuserthrift_la_SOURCES += UserStorage.h
-libuserthrift_la_SOURCES += user_constants.cpp
-libuserthrift_la_SOURCES += user_types.cpp
-libuserthrift_la_SOURCES += user_constants.h
-libuserthrift_la_SOURCES += user_types.h
-
-$(libuserthrift_la_SOURCES): $(srcdir)/user.thrift
-	$(THRIFT_BUILD)
-
-
-noinst_LTLIBRARIES += libhash_chain_digestthrift.la
-libhash_chain_digestthrift_la_SOURCES =
-libhash_chain_digestthrift_la_SOURCES += VersionExchange.cpp
-libhash_chain_digestthrift_la_SOURCES += VersionExchange.h
-libhash_chain_digestthrift_la_SOURCES += hash_chain_digest_constants.cpp
-libhash_chain_digestthrift_la_SOURCES += hash_chain_digest_constants.h
-libhash_chain_digestthrift_la_SOURCES += hash_chain_digest_types.cpp
-libhash_chain_digestthrift_la_SOURCES += hash_chain_digest_types.h
-
-$(libhash_chain_digestthrift_la_SOURCES): $(srcdir)/hash_chain_digest.thrift
-	$(THRIFT_BUILD)
-
-
-clean-local: clean-local-check
-.PHONY: clean-local-check
-clean-local-check:
-	-rm -rf \
-		$(libuserthrift_la_SOURCES) \
-		$(libhash_chain_digestthrift_la_SOURCES) \
-		*.skeleton.cpp
+# AM_MAKEFLAGS = -W$(top_srcdir)/src/thrift.mk
+# $(top_srcdir)/src/thrift.mk:
+# 	./generate_thrift_automake.py *.thrift > thrift.mk
+####
+include thrift.mk
 
 
 # Delta encoding pieces.

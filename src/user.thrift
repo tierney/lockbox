@@ -18,13 +18,13 @@ struct Device {
 
 service Registration {
   // Returns the UID.
-  i64 User(1:UserAuth user),
+  i64 RegisterUser(1:UserAuth user),
 
   // Returns the Device ID.
-  i64 Device(1:UserAuth user, 2:Device device),
+  i64 RegisterDevice(1:UserAuth user, 2:Device device),
 
   // Returns the top directory's GUID.
-  i64 TopDir(1:UserAuth user),
+  i64 RegisterTopDir(1:UserAuth user),
 }
 
 service UserStorage {
