@@ -2,7 +2,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/testing/gtest/include
 AM_CPPFLAGS += -I$(top_srcdir) -I$(top_builddir)
 AM_CPPFLAGS += -DHAVE_INTTYPES_H -DHAVE_NETINET_IN_H
 AM_CXXFLAGS = -Wall -Wextra
-AM_LDFLAGS = -L$(top_builddir)
+AM_LDFLAGS = -L$(top_builddir) -static
 
 TESTS =
 bin_PROGRAMS =
@@ -26,6 +26,12 @@ lockbox_main_LDADD += libclient_initialization.la
 lockbox_main_LDADD += libfile_watcher.la
 lockbox_main_LDADD += libnegotiator.la
 
+# noinst_LTLIBRARIES += libleveldb_base.la
+# libleveldb_base_la_SOURCES = leveldb_base.h
+# libleveldb_base_la_SOURCES += leveldb_base.cc
+# libleveldb_base_la_CXXFLAGS = $(LEVELDB_CFLAGS)
+# libleveldb_base_la_LIBADD = $(LEVELDB_LIBS)
+
 noinst_LTLIBRARIES += libclient_initialization.la
 libclient_initialization_la_SOURCES = client_initialization.h
 libclient_initialization_la_SOURCES += client_initialization.cc
@@ -46,6 +52,29 @@ user_device_queue_main_LDADD += $(GFLAGS_LIBS)
 user_device_queue_main_LDADD += $(top_builddir)/base/libstringprintf.la
 user_device_queue_main_LDADD += $(top_builddir)/base/liblogging.la
 
+TESTS += db_email_user_test
+bin_PROGRAMS += db_email_user_test
+db_email_user_test_SOURCES = db_email_user_test.cc
+db_email_user_test_CXXFLAGS = $(LEVELDB_CFLAGS)
+db_email_user_test_LDADD = $(top_builddir)/testing/gtest/lib/libgtest.la
+db_email_user_test_LDADD += $(top_builddir)/testing/gtest/lib/libgtest_main.la
+db_email_user_test_LDADD += libdb_email_user.la
+db_email_user_test_LDADD += $(top_builddir)/base/files/libfile_path.la
+db_email_user_test_LDADD += $(top_builddir)/base/liblogging.la
+db_email_user_test_LDADD += libleveldb_util.la
+db_email_user_test_LDADD += $(LEVELDB_LIBS)
+
+noinst_LTLIBRARIES += libleveldb_util.la
+libleveldb_util_la_CXXFLAGS = $(LEVELDB_CFLAGS)
+libleveldb_util_la_SOURCES = leveldb_util.h
+libleveldb_util_la_SOURCES += leveldb_util.cc
+libleveldb_util_la_LIBADD = $(LEVELDB_LIBS)
+
+noinst_LTLIBRARIES += libdb_email_user.la
+libdb_email_user_la_CXXFLAGS = $(LEVELDB_CFLAGS)
+libdb_email_user_la_SOURCES = db_email_user.h
+libdb_email_user_la_SOURCES += db_email_user.cc
+# libdb_email_user_la_LIBADD = libleveldb_base.la
 
 bin_PROGRAMS += server
 server_SOURCES = UserStorage_server.cpp

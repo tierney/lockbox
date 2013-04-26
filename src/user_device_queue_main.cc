@@ -3,6 +3,7 @@
 
 #include "leveldb/db.h"
 #include "gflags/gflags.h"
+#include "base/logging.h"
 #include "base/stringprintf.h"
 
 using std::string;
@@ -35,7 +36,7 @@ int main(int argc, char** argv) {
   leveldb::Options options;
   options.create_if_missing = true;
   leveldb::Status status = leveldb::DB::Open(options, "/tmp/testdb", &db);
-  assert(status.ok());
+  CHECK(status.ok());
 
   return 0;
 }
