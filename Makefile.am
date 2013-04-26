@@ -6,7 +6,7 @@ EXTRA_DIST += build/build_config.h
 
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = testing/gtest base courgette crypto file_watcher src
+SUBDIRS = testing/gtest leveldb-1.9.0 base courgette crypto file_watcher src
 
 aclocal_DATA = m4/boost.m4
 
