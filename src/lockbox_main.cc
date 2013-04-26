@@ -25,21 +25,14 @@ DEFINE_string(email, "", "User's email address.");
 
 namespace lockbox {
 
-
-} // namespace lockbox
-
-int main(int argc, char** argv) {
-  google::ParseCommandLineFlags(&argc, &argv, false);
-  base::AtExitManager exit_manager;
-
-
+void BlockingFileWatcherStart() {
   lockbox::LocalInitialization init_driver(FLAGS_sync_dir);
   init_driver.Run();
 
-  base::Thread* lockbox_thread = new base::Thread("Lockbox Thread");
-  base::Thread::Options thread_options;
-  thread_options.message_loop_type = MessageLoop::TYPE_IO;
-  CHECK(lockbox_thread->StartWithOptions(thread_options));
+  // base::Thread* lockbox_thread = new base::Thread("Lockbox Thread");
+  // base::Thread::Options thread_options;
+  // thread_options.message_loop_type = MessageLoop::TYPE_IO;
+  // CHECK(lockbox_thread->StartWithOptions(thread_options));
 
   base::hash_map<std::string, base::FilePathWatcher*> path_watchers;
   base::FilePath watch_path(FLAGS_sync_dir);
@@ -50,6 +43,18 @@ int main(int argc, char** argv) {
   fw.Init();
   fw.SetupWatch(base::FilePath(FLAGS_sync_dir), &fpw);
   fw.WaitForEvents();
+}
+
+} // namespace lockbox
+
+int main(int argc, char** argv) {
+  google::ParseCommandLineFlags(&argc, &argv, false);
+  base::AtExitManager exit_manager;
+
+  // Calls the example code above so that we can start monitoring a directory.
+  // lockbox::BlockingFileWatcherStart();
+
+
 
   return 0;
 }
