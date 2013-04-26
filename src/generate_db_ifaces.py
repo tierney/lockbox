@@ -135,23 +135,23 @@ libdb_%(fname)s_la_SOURCES += db_%(fname)s.cc
 """
 
 def main(argv):
-  # print "BE VERY CAREFUL -- you must look at the code."
-  # return 0
+  print "BE VERY CAREFUL -- you must look at the code."
+  return 0
   classes = [
     # ('user_device', 'UserDevice'),
     # ('device_sync', 'DeviceSync'),
     # ('user_top_dir', 'UserTopDir'),
     # ('email_key', 'EmailKey'),
-    ('top_dir_meta', 'TopDirMeta'),
-    ('top_dir_relpath_lock', 'TopDirRelpathLock'),
-    ('top_dir_snaps', 'TopDirSnaps'),
-    ('top_dir_data', 'TopDirData'),
-    ('top_dir_fptrs', 'TopDirFptrs')]
+    # ('top_dir_meta', 'TopDirMeta'),
+    # ('top_dir_relpath_lock', 'TopDirRelpathLock'),
+    # ('top_dir_snaps', 'TopDirSnaps'),
+    # ('top_dir_data', 'TopDirData'),
+    # ('top_dir_fptrs', 'TopDirFptrs')]
   for fname, klass in classes:
     # Create the .h and .cc files.
-    with open('db_' + fname + '.h','w') as fh:
+    with open('db_' + fname + '.gen.h','w') as fh:
       fh.write(kHeaderTDNBase % {'klass': klass, 'fname': fname})
-    with open('db_' + fname + '.cc','w') as fh:
+    with open('db_' + fname + '.gen.cc','w') as fh:
       fh.write(kImplTDNBase % {'klass': klass, 'fname': fname})
 
     # Generate the automake contents.
