@@ -2,11 +2,15 @@ AM_CPPFLAGS = -I$(top_srcdir)/testing/gtest/include
 AM_CPPFLAGS += -I$(top_srcdir) -I$(top_builddir)
 AM_CPPFLAGS += -DHAVE_INTTYPES_H -DHAVE_NETINET_IN_H
 AM_CXXFLAGS = -Wall -Wextra
+AM_LDFLAGS = -L$(top_builddir)
 
 TESTS =
 bin_PROGRAMS =
 noinst_PROGRAMS =
 noinst_LTLIBRARIES =
+
+LEVELDB_CFLAGS = -I$(top_builddir)/leveldb/include
+LEVELDB_LIBS = $(top_builddir)/leveldb/libleveldb.a
 
 bin_PROGRAMS += lockbox_main
 lockbox_main_SOURCES = lockbox_main.cc
@@ -31,6 +35,17 @@ libfile_watcher_la_SOURCES = file_watcher.h
 
 noinst_LTLIBRARIES += libnegotiator.la
 libnegotiator_la_SOURCES = negotiator.h
+
+bin_PROGRAMS += user_device_queue_main
+user_device_queue_main_SOURCES = user_device_queue_main.cc
+user_device_queue_main_CXXFLAGS = -static
+user_device_queue_main_CXXFLAGS += $(GFLAGS_CFLAGS)
+user_device_queue_main_CXXFLAGS += $(LEVELDB_CFLAGS)
+user_device_queue_main_LDADD = $(LEVELDB_LIBS)
+user_device_queue_main_LDADD += $(GFLAGS_LIBS)
+user_device_queue_main_LDADD += $(top_builddir)/base/libstringprintf.la
+user_device_queue_main_LDADD += $(top_builddir)/base/liblogging.la
+
 
 bin_PROGRAMS += server
 server_SOURCES = UserStorage_server.cpp
