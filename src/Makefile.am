@@ -66,9 +66,9 @@ db_email_user_test_LDADD += $(LEVELDB_BIN_LIBS)
 
 
 bin_PROGRAMS += server
-server_SOURCES = UserStorage_server.cpp
+server_SOURCES = server.cc
 server_LDADD =
-server_LDADD += libuser_thrift.la
+server_LDADD += liblockbox_thrift.la
 server_LDADD += $(THRIFT_LIBS)
 server_LDADD += $(LIBEVENT_LIBS)
 server_LDADD += $(PTHREAD_LIBS)
@@ -76,9 +76,9 @@ server_LDADD += $(BOOST_THREAD_LIBS)
 
 
 bin_PROGRAMS += client
-client_SOURCES = UserStorage_client.cpp
+client_SOURCES = client.cc
 client_LDADD =
-client_LDADD += libuser_thrift.la
+client_LDADD += liblockbox_thrift.la
 client_LDADD += $(THRIFT_LIBS)
 
 

@@ -1,4 +1,4 @@
-#include "UserStorage.h"
+#include "LockboxService.h"
 
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TBufferTransports.h>
@@ -18,11 +18,14 @@ int main(int argc, char **argv) {
   boost::shared_ptr<TTransport> transport(new TFramedTransport(socket));
   boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
 
-  lockbox::UserProfile profile;
-  lockbox::UserStorageClient client(protocol);
+  lockbox::LockboxServiceClient client(protocol);
   for (int i = 0; i < 100000; i++) {
     transport->open();
-    client.store(profile);
+    lockbox::UserAuth auth;
+    auth.email = "me@you.com";
+    auth.password = "password";
+
+    client.RegisterUser(auth);
     transport->close();
   }
 
