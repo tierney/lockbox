@@ -1,16 +1,32 @@
 #include "lockbox_service_handler.h"
 
+#include "base/strings/string_number_conversions.h"
+
 namespace lockbox {
 
-LockboxServiceHandler::LockboxServiceHandler() {
+LockboxServiceHandler::LockboxServiceHandler(DBManager* manager)
+    : manager_(manager) {
   // Your initialization goes here
+
+
 }
 
 UserID LockboxServiceHandler::RegisterUser(const UserAuth& user) {
   // Your implementation goes here
   printf("RegisterUser\n");
 
-  //
+  DBManager::Options options(LockboxDatabase::EMAIL_USER);
+  string value;
+  manager_->Get(options, user.email, &value);
+  if (!value.empty()) {
+    LOG(INFO) << "User already registered.";
+    return -1;
+  }
+
+  UserID uid = num_users_.Increment();
+  string uid_to_persist = base::IntToString(uid);
+  manager_->Put(options, user.email, uid_to_persist);
+  return uid;
 }
 
 DeviceID LockboxServiceHandler::RegisterDevice(const UserAuth& user) {

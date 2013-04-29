@@ -63,6 +63,7 @@ bool DBManager::Get(const Options& options,
                     const string& key,
                     string* value) {
   CHECK(options.type != LockboxDatabase::UNKNOWN);
+  CHECK(options.type != LockboxDatabase::TOP_DIR_PLACEHOLDER);
   if (options.type > LockboxDatabase::TOP_DIR_PLACEHOLDER) {
     CHECK(!options.name.empty());
   }
@@ -76,6 +77,7 @@ bool DBManager::Put(const Options& options,
                     const string& key,
                     const string& value) {
   CHECK(options.type != LockboxDatabase::UNKNOWN);
+  CHECK(options.type != LockboxDatabase::TOP_DIR_PLACEHOLDER);
   if (options.type > LockboxDatabase::TOP_DIR_PLACEHOLDER) {
     CHECK(!options.name.empty());
   }
@@ -86,10 +88,28 @@ bool DBManager::Put(const Options& options,
 }
 
 bool DBManager::Track(const Options& options) {
+  CHECK(options.type > LockboxDatabase::TOP_DIR_PLACEHOLDER);
+  CHECK(!options.name.empty());
+
   string new_key = GenKey(options);
   CHECK(!ContainsKey(db_map_, new_key));
   db_map_[new_key] = OpenDB(GenPath(db_location_base_, options));
   return true;
+}
+
+uint64_t DBManager::CountEntries(const Options& options) {
+  CHECK(options.type != LockboxDatabase::UNKNOWN);
+  CHECK(options.type != LockboxDatabase::TOP_DIR_PLACEHOLDER);
+  if (options.type > LockboxDatabase::TOP_DIR_PLACEHOLDER) {
+    CHECK(!options.name.empty());
+  }
+  leveldb::DB* db = db_map_.find(GenKey(options))->second;
+  leveldb::Iterator* it = db->NewIterator(leveldb::ReadOptions());
+  uint64_t count = 0;
+  for (it->SeekToFirst(); it->Valid(); it->Next()) {
+    count++;
+  }
+  return count;
 }
 
 } // namespace lockbox

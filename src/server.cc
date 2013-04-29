@@ -43,17 +43,8 @@ int main(int argc, char **argv) {
 
   lockbox::DBManager manager("/tmp");
 
-  // Example for how to create a new top_dir directory.
-  lockbox::DBManager::Options options;
-  options.type = lockbox::LockboxDatabase::TOP_DIR_META;
-  CreateGUIDString(&(options.name));
-  manager.Track(options);
-
-  manager.Put(lockbox::DBManager::Options(
-      lockbox::LockboxDatabase::USER_TOP_DIR, )
-
   shared_ptr<lockbox::LockboxServiceHandler> handler(
-      new lockbox::LockboxServiceHandler(// &counter
+      new lockbox::LockboxServiceHandler(&manager
                                          ));
   shared_ptr<TProcessor> processor(
       new lockbox::LockboxServiceProcessor(handler));

@@ -2,13 +2,14 @@
 
 namespace lockbox {
 
-void Counter::Increment() {
+int64_t Counter::Increment() {
   boost::upgrade_lock<boost::shared_mutex> lock(mutex_);
   boost::upgrade_to_unique_lock<boost::shared_mutex> unique_lock(lock);
   ++count_;
+  return count_;
 }
 
-int Counter::Get() {
+int64_t Counter::Get() {
   boost::shared_lock<boost::shared_mutex> lock(mutex_);
   return count_;
 }

@@ -1,12 +1,15 @@
 #pragma once
 
 #include "LockboxService.h"
+#include "counter.h"
+#include "db_manager.h"
 
 namespace lockbox {
 
 class LockboxServiceHandler : virtual public LockboxServiceIf {
  public:
-  LockboxServiceHandler();
+  // Does not take ownershi of |manager|.
+  LockboxServiceHandler(DBManager* manager);
 
   UserID RegisterUser(const UserAuth& user);
 
@@ -31,6 +34,12 @@ class LockboxServiceHandler : virtual public LockboxServiceIf {
   void GetLatestVersion(VersionInfo& _return,
                         const UserAuth& requestor,
                         const std::string& receiver_email);
+ private:
+  DBManager* manager_;
+
+  Counter num_users_;
+  Counter num_devices_;
+  Counter num_top_dirs_;
 };
 
 } // namespace lockbox

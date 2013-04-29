@@ -71,7 +71,9 @@ libguid_creator_la_SOURCES += guid_creator.cc
 noinst_LTLIBRARIES += liblockbox_service_handler.la
 liblockbox_service_handler_la_SOURCES = lockbox_service_handler.h
 liblockbox_service_handler_la_SOURCES += lockbox_service_handler.cc
+liblockbox_service_handler_la_CXXFLAGS = $(LEVELDB_CFLAGS)
 liblockbox_service_handler_la_LIBADD = liblockbox_thrift.la
+liblockbox_service_handler_la_LIBADD += libdb_manager.la
 
 bin_PROGRAMS += server
 server_SOURCES = server.cc
@@ -80,6 +82,7 @@ server_LDADD =
 server_LDADD += liblockbox_service_handler.la
 server_LDADD += liblockbox_thrift.la
 server_LDADD += libdb_manager.la
+server_LDADD += libcounter.la
 server_LDADD += libguid_creator.la
 server_LDADD += $(top_builddir)/crypto/librandom.la
 server_LDADD += $(LEVELDB_BIN_LIBS)

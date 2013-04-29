@@ -1,3 +1,16 @@
+// Database manager class for Lockbox.
+//
+//  // Example for how to create a new top_dir directory.
+//  lockbox::DBManager::Options options;
+//  options.type = lockbox::LockboxDatabase::TOP_DIR_META;
+//  CreateGUIDString(&(options.name));
+//  manager.Track(options);
+//
+//  string new_top_dir;
+//  CreateGUIDString(&new_top_dir);
+//  manager.Put(options, "name_key", "name_value");
+//
+
 #pragma once
 
 #include <map>
@@ -18,6 +31,8 @@ class DBManager {
   struct Options {
     Options() : type(LockboxDatabase::UNKNOWN), name("") {}
 
+    Options(LockboxDatabase::type type) : type(type), name("") {}
+
     Options(LockboxDatabase::type type, const string& name)
         : type(type), name(name) {}
 
@@ -37,9 +52,13 @@ class DBManager {
 
   bool Track(const Options& options);
 
+  uint64_t CountEntries(const Options& options);
+
  private:
   string db_location_base_;
   map<string, leveldb::DB*> db_map_;
+
+  DISALLOW_COPY_AND_ASSIGN(DBManager);
 };
 
 } // namespace lockbox

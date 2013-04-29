@@ -1,5 +1,6 @@
 #pragma once
 
+#include "base/basictypes.h"
 #include <boost/thread.hpp>
 
 namespace lockbox {
@@ -9,9 +10,9 @@ class Counter {
 
   ~Counter() {}
 
-  void Increment();
+  int64_t Increment();
 
-  int Get();
+  int64_t Get();
 
  private:
   int count_;
