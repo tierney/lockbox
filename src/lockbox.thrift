@@ -73,6 +73,23 @@ struct VersionInfo {
   2: optional HashChainDigestHistory history
 }
 
+# Database names.
+enum LockboxDatabase {
+  EMAIL_USER = 0,
+  USER_DEVICE,
+  DEVICE_SYNC,
+  EMAIL_KEY,
+  USER_TOP_DIR,
+
+  TOP_DIR_PLACEHOLDER,
+
+  TOP_DIR_META,
+  TOP_DIR_RELPATH_LOCK,
+  TOP_DIR_SNAPSHOTS,
+  TOP_DIR_DATA,
+  TOP_DIR_FPTRS,
+}
+
 # Unifying Service
 #
 service LockboxService {

@@ -1,5 +1,7 @@
 #include "LockboxService.h"
 
+#include "lockbox_service_handler.h"
+
 #include <ctime>
 
 #include <thrift/protocol/TBinaryProtocol.h>
@@ -21,61 +23,6 @@ using apache::thrift::concurrency::PosixThreadFactory;
 using boost::shared_ptr;
 
 namespace lockbox {
-
-class LockboxServiceHandler : virtual public LockboxServiceIf {
- public:
-  LockboxServiceHandler() {
-    // Your initialization goes here
-  }
-
-  UserID RegisterUser(const UserAuth& user) {
-    // Your implementation goes here
-    printf("RegisterUser\n");
-
-    //
-  }
-
-  DeviceID RegisterDevice(const UserAuth& user) {
-    // Your implementation goes here
-    printf("RegisterDevice\n");
-  }
-
-  TopDirID RegisterTopDir(const UserAuth& user) {
-    // Your implementation goes here
-    printf("RegisterTopDir\n");
-  }
-
-  bool LockRelPath(const PathLock& lock) {
-    // Your implementation goes here
-    printf("LockRelPath\n");
-  }
-
-  int64_t UploadPackage(const LocalPackage& pkg) {
-    // Your implementation goes here
-    printf("UploadPackage\n");
-  }
-
-  void DownloadPackage(LocalPackage& _return, const DownloadRequest& req) {
-    // Your implementation goes here
-    printf("DownloadPackage\n");
-  }
-
-  void PollForUpdates(Updates& _return, const UserAuth& auth, const DeviceID device) {
-    // Your implementation goes here
-    printf("PollForUpdates\n");
-  }
-
-  void Send(const UserAuth& sender, const std::string& receiver_email, const VersionInfo& vinfo) {
-    // Your implementation goes here
-    printf("Send\n");
-  }
-
-  void GetLatestVersion(VersionInfo& _return, const UserAuth& requestor, const std::string& receiver_email) {
-    // Your implementation goes here
-    printf("GetLatestVersion\n");
-  }
-
-};
 
 } // namespace lockbox
 
