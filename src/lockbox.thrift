@@ -75,7 +75,8 @@ struct VersionInfo {
 
 # Database names.
 enum LockboxDatabase {
-  EMAIL_USER = 0,
+  UNKNOWN = 0
+  EMAIL_USER,
   USER_DEVICE,
   DEVICE_SYNC,
   EMAIL_KEY,

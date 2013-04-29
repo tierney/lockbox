@@ -4,6 +4,7 @@
 
 #include "base/files/file_path.h"
 #include "base/stl_util.h"
+#include "base/logging.h"
 
 using base::FilePath;
 
@@ -14,11 +15,13 @@ namespace {
 // Creates pathhs of the name /a/path/to/the/dest/THIS_IS_A_TYPE/OPTIONS_NAME.
 string GenPath(const string& base, const DBManager::Options& options) {
   FilePath fp(base);
-  fp.Append(_LockboxDatabase_VALUES_TO_NAMES.find(options.type)->second);
+  string type_name = _LockboxDatabase_VALUES_TO_NAMES.find(options.type)->second;
+  LOG(INFO) << "GenPath() type_name " << type_name;
+  FilePath appended_fp(fp.Append(type_name));
   if (!options.name.empty()) {
-    fp.Append(options.name);
+    return appended_fp.Append(options.name).value();
   }
-  return fp.value();
+  return appended_fp.value();
 }
 
 // Creates keys of the name THIS_IS_A_TYPE and THIS_IS_A_TYPEOPTIONS_NAME.
@@ -33,8 +36,8 @@ string GenKey(const DBManager::Options& options) {
 
 } // namespace
 
-DBManager::DBManager(const string& db_location)
-    : db_location_base_(db_location) {
+DBManager::DBManager(const string& db_location_base)
+    : db_location_base_(db_location_base) {
 
   for (auto& iter : _LockboxDatabase_VALUES_TO_NAMES) {
     LockboxDatabase::type val = static_cast<LockboxDatabase::type>(iter.first);
@@ -47,7 +50,8 @@ DBManager::DBManager(const string& db_location)
     options.type = val;
     string key = GenKey(options);
 
-    db_map_[key] = OpenDB(GenPath(db_location, options));
+    string path = GenPath(db_location_base, options);
+    db_map_[key] = OpenDB(path);
   }
 }
 
@@ -58,6 +62,11 @@ DBManager::~DBManager() {
 bool DBManager::Get(const Options& options,
                     const string& key,
                     string* value) {
+  CHECK(options.type != LockboxDatabase::UNKNOWN);
+  if (options.type > LockboxDatabase::TOP_DIR_PLACEHOLDER) {
+    CHECK(!options.name.empty());
+  }
+
   leveldb::DB* db = db_map_.find(GenKey(options))->second;
   leveldb::Status s = db->Get(leveldb::ReadOptions(), key, value);
   return s.ok();
@@ -66,6 +75,11 @@ bool DBManager::Get(const Options& options,
 bool DBManager::Put(const Options& options,
                     const string& key,
                     const string& value) {
+  CHECK(options.type != LockboxDatabase::UNKNOWN);
+  if (options.type > LockboxDatabase::TOP_DIR_PLACEHOLDER) {
+    CHECK(!options.name.empty());
+  }
+
   leveldb::DB* db = db_map_.find(GenKey(options))->second;
   leveldb::Status s = db->Put(leveldb::WriteOptions(), key, value);
   return s.ok();

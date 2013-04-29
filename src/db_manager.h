@@ -16,13 +16,18 @@ namespace lockbox {
 class DBManager {
  public:
   struct Options {
+    Options() : type(LockboxDatabase::UNKNOWN), name("") {}
+
+    Options(LockboxDatabase::type type, const string& name)
+        : type(type), name(name) {}
+
     LockboxDatabase::type type;
 
     // Used by TopDir databases in order to locate the database.
     string name;
   };
 
-  explicit DBManager(const string& db_location);
+  explicit DBManager(const string& db_location_base);
 
   virtual ~DBManager();
 

@@ -12,6 +12,10 @@
 #include <thrift/concurrency/PosixThreadFactory.h>
 #include <thrift/server/TNonblockingServer.h>
 #include "counter.h"
+#include "db_manager.h"
+
+#include "crypto/random.h"
+#include "guid_creator.h"
 
 using namespace ::apache::thrift;
 using namespace ::apache::thrift::protocol;
@@ -37,10 +41,22 @@ int main(int argc, char **argv) {
   const int port = atoi(argv[1]);
   const int num_threads = atoi(argv[2]);
 
+  lockbox::DBManager manager("/tmp");
+
+  // Example for how to create a new top_dir directory.
+  lockbox::DBManager::Options options;
+  options.type = lockbox::LockboxDatabase::TOP_DIR_META;
+  CreateGUIDString(&(options.name));
+  manager.Track(options);
+
+  manager.Put(lockbox::DBManager::Options(
+      lockbox::LockboxDatabase::USER_TOP_DIR, )
+
   shared_ptr<lockbox::LockboxServiceHandler> handler(
       new lockbox::LockboxServiceHandler(// &counter
                                          ));
-  shared_ptr<TProcessor> processor(new lockbox::LockboxServiceProcessor(handler));
+  shared_ptr<TProcessor> processor(
+      new lockbox::LockboxServiceProcessor(handler));
   shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
 
   // Setup for the server that instantiates |num_threads| to handle requests.

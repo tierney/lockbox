@@ -30,7 +30,7 @@ lockbox_main_LDADD += libnegotiator.la
 # libleveldb_base_la_SOURCES = leveldb_base.h
 # libleveldb_base_la_SOURCES += leveldb_base.cc
 # libleveldb_base_la_CXXFLAGS = $(LEVELDB_CFLAGS)
-# libleveldb_base_la_LIBADD = $(LEVELDB_LIBS)
+# libleveldb_base_la_LIBADD = $(LEVELDB_BIN_LIBS)
 
 noinst_LTLIBRARIES += libclient_initialization.la
 libclient_initialization_la_SOURCES = client_initialization.h
@@ -64,6 +64,9 @@ user_device_queue_main_LDADD += $(top_builddir)/base/liblogging.la
 # db_email_user_test_LDADD += libleveldb_util.la
 # db_email_user_test_LDADD += $(LEVELDB_BIN_LIBS)
 
+noinst_LTLIBRARIES += libguid_creator.la
+libguid_creator_la_SOURCES = guid_creator.h
+libguid_creator_la_SOURCES += guid_creator.cc
 
 noinst_LTLIBRARIES += liblockbox_service_handler.la
 liblockbox_service_handler_la_SOURCES = lockbox_service_handler.h
@@ -72,9 +75,17 @@ liblockbox_service_handler_la_LIBADD = liblockbox_thrift.la
 
 bin_PROGRAMS += server
 server_SOURCES = server.cc
+server_CXXFLAGS = $(LEVELDB_CFLAGS)
 server_LDADD =
 server_LDADD += liblockbox_service_handler.la
 server_LDADD += liblockbox_thrift.la
+server_LDADD += libdb_manager.la
+server_LDADD += libguid_creator.la
+server_LDADD += $(top_builddir)/crypto/librandom.la
+server_LDADD += $(LEVELDB_BIN_LIBS)
+server_LDADD += libleveldb_util.la
+server_LDADD += $(top_builddir)/base/files/libfile_path.la
+server_LDADD += $(top_builddir)/base/liblogging.la
 server_LDADD += $(THRIFT_LIBS)
 server_LDADD += $(LIBEVENT_LIBS)
 server_LDADD += $(PTHREAD_LIBS)
@@ -129,6 +140,7 @@ noinst_LTLIBRARIES += libleveldb_util.la
 libleveldb_util_la_CXXFLAGS = $(LEVELDB_CFLAGS)
 libleveldb_util_la_SOURCES = leveldb_util.h
 libleveldb_util_la_SOURCES += leveldb_util.cc
+libleveldb_util_la_LIBADD = $(top_builddir)/base/libfile_util.la
 
 # noinst_LTLIBRARIES += libdb_email_user.la
 # libdb_email_user_la_CXXFLAGS = $(LEVELDB_CFLAGS)
