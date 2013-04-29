@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
   lockbox::UserAuth auth;
   auth.email = "me@you.com";
   auth.password = "password";
-  client.RegisterUser(auth);
+  std::cout << "UID " << client.RegisterUser(auth) << std::endl;
 
 
 
