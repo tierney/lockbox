@@ -3,6 +3,7 @@
 #include "leveldb_util.h"
 
 #include "base/files/file_path.h"
+#include "base/strings/string_number_conversions.h"
 #include "base/stl_util.h"
 #include "base/logging.h"
 
@@ -39,6 +40,7 @@ string GenKey(const DBManager::Options& options) {
 DBManager::DBManager(const string& db_location_base)
     : db_location_base_(db_location_base) {
 
+  // Setting the base database pointers.
   for (auto& iter : _LockboxDatabase_VALUES_TO_NAMES) {
     LockboxDatabase::type val = static_cast<LockboxDatabase::type>(iter.first);
 
@@ -53,6 +55,8 @@ DBManager::DBManager(const string& db_location_base)
     string path = GenPath(db_location_base, options);
     db_map_[key] = OpenDB(path);
   }
+  // Set the counters for the ID-valued databases.
+
 }
 
 DBManager::~DBManager() {
@@ -95,6 +99,23 @@ bool DBManager::Track(const Options& options) {
   CHECK(!ContainsKey(db_map_, new_key));
   db_map_[new_key] = OpenDB(GenPath(db_location_base_, options));
   return true;
+}
+
+uint64_t DBManager::MaxID(const Options& options) {
+  CHECK(options.type == LockboxDatabase::EMAIL_USER ||
+        options.type == LockboxDatabase::USER_DEVICE ||
+        options.type == LockboxDatabase::USER_TOP_DIR);
+  leveldb::DB* db = db_map_.find(GenKey(options))->second;
+  leveldb::Iterator* it = db->NewIterator(leveldb::ReadOptions());
+  uint64_t max = 0;
+  for (it->SeekToFirst(); it->Valid(); it->Next()) {
+    uint64_t val = 0;
+    CHECK(base::StringToUint64(it->value().ToString(), &val));
+    if (max < val) {
+      max = val;
+    }
+  }
+  return max;
 }
 
 uint64_t DBManager::CountEntries(const Options& options) {

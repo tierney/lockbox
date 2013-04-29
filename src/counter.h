@@ -14,8 +14,10 @@ class Counter {
 
   int64_t Get();
 
+  void Set(uint64_t val);
+
  private:
-  int count_;
+  uint64_t count_;
   boost::shared_mutex mutex_;
 };
 

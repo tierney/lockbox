@@ -52,6 +52,8 @@ class DBManager {
 
   bool Track(const Options& options);
 
+  uint64_t MaxID(const Options& options);
+
   uint64_t CountEntries(const Options& options);
 
  private:

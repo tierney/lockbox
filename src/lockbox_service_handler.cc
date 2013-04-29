@@ -6,8 +6,12 @@ namespace lockbox {
 
 LockboxServiceHandler::LockboxServiceHandler(DBManager* manager)
     : manager_(manager) {
-  // Your initialization goes here
+  CHECK(manager);
 
+
+  // Set counters to max UID observed.
+  DBManager::Options options(LockboxDatabase::EMAIL_USER);
+  manager_->MaxID(options);
 
 }
 

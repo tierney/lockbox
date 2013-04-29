@@ -14,4 +14,8 @@ int64_t Counter::Get() {
   return count_;
 }
 
+void Counter::Set(uint64_t value) {
+  count_ = value;
+}
+
 } // namespace lockbox
