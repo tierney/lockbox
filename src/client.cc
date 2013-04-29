@@ -4,6 +4,13 @@
 
 namespace lockbox {
 
+class Client {
+ public:
+
+ private:
+
+};
+
 } // namespace lockbox
 
 int main(int argc, char **argv) {
