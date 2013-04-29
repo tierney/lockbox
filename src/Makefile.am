@@ -104,6 +104,13 @@ delta_encoding_main_LDADD =
 delta_encoding_main_LDADD += $(top_builddir)/courgette/libsimple_delta.la
 delta_encoding_main_LDADD += $(top_builddir)/courgette/libstreams.la
 
+# Counter helper library.
+noinst_LTLIBRARIES += libcounter.la
+libcounter_la_SOURCES =
+libcounter_la_SOURCES += counter.h
+libcounter_la_SOURCES += counter.cc
+libcounter_la_LIBADD = $(BOOST_THREAD_LIBS)
+
 # Database pieces.
 noinst_LTLIBRARIES += libleveldb_util.la
 libleveldb_util_la_CXXFLAGS = $(LEVELDB_CFLAGS)

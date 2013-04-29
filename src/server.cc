@@ -1,4 +1,7 @@
 #include "LockboxService.h"
+
+#include <ctime>
+
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/server/TSimpleServer.h>
 #include <thrift/transport/TServerSocket.h>
@@ -6,9 +9,7 @@
 #include <thrift/concurrency/ThreadManager.h>
 #include <thrift/concurrency/PosixThreadFactory.h>
 #include <thrift/server/TNonblockingServer.h>
-
-#include <boost/thread.hpp>
-#include <ctime>
+#include "counter.h"
 
 using namespace ::apache::thrift;
 using namespace ::apache::thrift::protocol;
@@ -21,28 +22,6 @@ using boost::shared_ptr;
 
 namespace lockbox {
 
-class Counter {
- public:
-  Counter() : count_(0) {}
-
-  ~Counter() {}
-
-  void inc() {
-    boost::upgrade_lock<boost::shared_mutex> lock(mutex_);
-    boost::upgrade_to_unique_lock<boost::shared_mutex> unique_lock(lock);
-    ++count_;
-  }
-
-  int get() {
-    boost::shared_lock<boost::shared_mutex> lock(mutex_);
-    return count_;
-  }
-
- private:
-  int count_;
-  boost::shared_mutex mutex_;
-};
-
 class LockboxServiceHandler : virtual public LockboxServiceIf {
  public:
   LockboxServiceHandler() {
@@ -52,6 +31,8 @@ class LockboxServiceHandler : virtual public LockboxServiceIf {
   UserID RegisterUser(const UserAuth& user) {
     // Your implementation goes here
     printf("RegisterUser\n");
+
+    //
   }
 
   DeviceID RegisterDevice(const UserAuth& user) {

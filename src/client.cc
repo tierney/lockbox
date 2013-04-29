@@ -1,12 +1,10 @@
 #include "LockboxService.h"
 
-#include <thrift/transport/TSocket.h>
-#include <thrift/transport/TBufferTransports.h>
-#include <thrift/protocol/TBinaryProtocol.h>
+#include "remote_execute.h"
 
-using namespace apache::thrift;
-using namespace apache::thrift::protocol;
-using namespace apache::thrift::transport;
+namespace lockbox {
+
+} // namespace lockbox
 
 int main(int argc, char **argv) {
   if (argc != 3) {
@@ -14,20 +12,17 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  boost::shared_ptr<TSocket> socket(new TSocket(argv[1], atoi(argv[2])));
-  boost::shared_ptr<TTransport> transport(new TFramedTransport(socket));
-  boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+  lockbox::ConnInfo conn_info(argv[1], atoi(argv[2]));
+  lockbox::LockboxClient<lockbox::UserID, const lockbox::UserAuth&>::Type
+      register_user(conn_info, &lockbox::LockboxServiceClient::RegisterUser);
+  lockbox::LockboxClient<lockbox::DeviceID, const lockbox::UserAuth&>::Type
+      register_device(conn_info, &lockbox::LockboxServiceClient::RegisterDevice);
 
-  lockbox::LockboxServiceClient client(protocol);
-  for (int i = 0; i < 100000; i++) {
-    transport->open();
-    lockbox::UserAuth auth;
-    auth.email = "me@you.com";
-    auth.password = "password";
 
-    client.RegisterUser(auth);
-    transport->close();
-  }
+  lockbox::UserAuth auth;
+  auth.email = "me@you.com";
+  auth.password = "password";
+  register_user.Run(auth);
 
   return 0;
 }
