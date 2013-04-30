@@ -2,8 +2,8 @@ namespace cpp lockbox
 
 # Basic authentication.
 struct UserAuth {
-  1: string email,
-  2: string password,
+  1: required string email,
+  2: required string password,
 }
 
 typedef i64 DeviceID
@@ -41,9 +41,10 @@ struct DownloadRequest {
 }
 
 struct PathLock {
-  1: required i64 top_dir_id,
-  2: required string user,
+  1: required UserAuth user,
+  2: required i64 top_dir_id,
   3: required i32 seconds_requested,
+  4: optional string rel_path;
 }
 
 # When a user requests an update list for files to fetch, this is the list that
@@ -104,7 +105,9 @@ service LockboxService {
   TopDirID RegisterTopDir(1:UserAuth user),
 
   # Grab lock on rel path for the TDN.
-  bool LockRelPath(1:PathLock lock),
+  bool AcquireLockRelPath(1:PathLock lock),
+
+  void ReleaseLockRelPath(1:PathLock lock),
 
   i64 UploadPackage(1:LocalPackage pkg),
 

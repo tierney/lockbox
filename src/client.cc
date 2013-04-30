@@ -1,33 +1,13 @@
-#include "LockboxService.h"
+#include <string>
 
-#include "remote_execute.h"
+#include "client.h"
+#include "LockboxService.h"
+#include "lockbox_types.h"
+
+using std::string;
 
 namespace lockbox {
 
-class Client {
- public:
-  explicit Client(const ConnInfo& conn_info) :
-      conn_info_(conn_info),
-      register_user_(conn_info, &LockboxServiceClient::RegisterUser),
-      register_device_(conn_info, &LockboxServiceClient::RegisterDevice) {
- }
-
-  virtual ~Client() {
-  }
-
-  UserID RegisterUser(const UserAuth& auth) {
-    return register_user_.Run(auth);
-  }
-
-  DeviceID RegisterDevice(const UserAuth& auth) {
-    return register_device_.Run(auth);
-  }
-
- private:
-  ConnInfo conn_info_;
-  LockboxClient<UserID, const UserAuth&>::Type register_user_;
-  LockboxClient<DeviceID, const UserAuth&>::Type register_device_;
-};
 
 } // namespace lockbox
 
@@ -37,15 +17,28 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  lockbox::ConnInfo conn_info(argv[1], atoi(argv[2]));
+  lockbox::Client::ConnInfo conn_info(argv[1], atoi(argv[2]));
   lockbox::Client client(conn_info);
 
   lockbox::UserAuth auth;
-  auth.email = "me@you.com";
+  auth.email = "me2@you.com";
   auth.password = "password";
-  std::cout << "UID " << client.RegisterUser(auth) << std::endl;
 
+  lockbox::UserID user_id =
+      client.Exec<lockbox::UserID, const lockbox::UserAuth&>(
+          &lockbox::LockboxServiceClient::RegisterUser,
+          auth);
+  lockbox::DeviceID device_id =
+      client.Exec<lockbox::DeviceID, const lockbox::UserAuth&>(
+          &lockbox::LockboxServiceClient::RegisterDevice,
+          auth);
+  lockbox::TopDirID top_dir_id =
+      client.Exec<lockbox::TopDirID, const lockbox::UserAuth&>(
+          &lockbox::LockboxServiceClient::RegisterTopDir,
+          auth);
 
-
+  std::cout << "UID " << user_id << std::endl;
+  std::cout << "DeviceID " << device_id << std::endl;
+  std::cout << "TopDirID " << top_dir_id << std::endl;
   return 0;
 }

@@ -17,7 +17,8 @@ class LockboxServiceHandler : virtual public LockboxServiceIf {
 
   TopDirID RegisterTopDir(const UserAuth& user);
 
-  bool LockRelPath(const PathLock& lock);
+  bool AcquireLockRelPath(const PathLock& lock);
+  void ReleaseLockRelPath(const PathLock& lock);
 
   int64_t UploadPackage(const LocalPackage& pkg);
 
@@ -36,10 +37,6 @@ class LockboxServiceHandler : virtual public LockboxServiceIf {
                         const std::string& receiver_email);
  private:
   DBManager* manager_;
-
-  Counter num_users_;
-  Counter num_devices_;
-  Counter num_top_dirs_;
 };
 
 } // namespace lockbox

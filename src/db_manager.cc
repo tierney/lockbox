@@ -4,8 +4,11 @@
 
 #include "base/files/file_path.h"
 #include "base/strings/string_number_conversions.h"
+#include "base/strings/string_split.h"
 #include "base/stl_util.h"
 #include "base/logging.h"
+#include "leveldb/write_batch.h"
+#include "leveldb/db.h"
 
 using base::FilePath;
 
@@ -39,7 +42,6 @@ string GenKey(const DBManager::Options& options) {
 
 DBManager::DBManager(const string& db_location_base)
     : db_location_base_(db_location_base) {
-
   // Setting the base database pointers.
   for (auto& iter : _LockboxDatabase_VALUES_TO_NAMES) {
     LockboxDatabase::type val = static_cast<LockboxDatabase::type>(iter.first);
@@ -55,8 +57,11 @@ DBManager::DBManager(const string& db_location_base)
     string path = GenPath(db_location_base, options);
     db_map_[key] = OpenDB(path);
   }
-  // Set the counters for the ID-valued databases.
 
+  // Set the counters for the ID-valued databases.
+  num_users_.Set(MaxID(Options(LockboxDatabase::EMAIL_USER)));
+  num_devices_.Set(MaxID(Options(LockboxDatabase::USER_DEVICE)));
+  num_top_dirs_.Set(MaxID(Options(LockboxDatabase::USER_TOP_DIR)));
 }
 
 DBManager::~DBManager() {
@@ -91,8 +96,53 @@ bool DBManager::Put(const Options& options,
   return s.ok();
 }
 
+bool DBManager::Update(const Options& options,
+                       const string& key,
+                       const string& new_value) {
+  CHECK(options.type != LockboxDatabase::UNKNOWN);
+  CHECK(options.type != LockboxDatabase::TOP_DIR_PLACEHOLDER);
+  if (options.type > LockboxDatabase::TOP_DIR_PLACEHOLDER) {
+    CHECK(!options.name.empty());
+  }
+  leveldb::DB* db = db_map_.find(GenKey(options))->second;
+
+  std::string value;
+  leveldb::Status s = db->Get(leveldb::ReadOptions(), key, &value);
+  CHECK(s.ok() || s.IsNotFound());
+  LOG(INFO) << "Update before " << value;
+  if (!value.empty()) {
+    value.append(",");
+  }
+  value.append(new_value);
+  db->Put(leveldb::WriteOptions(), key, value);
+
+  // TODO(tierney): Remove once we've tested the code.
+  value.clear();
+  s = db->Get(leveldb::ReadOptions(), key, &value);
+  CHECK(s.ok());
+  LOG(INFO) << "Update after " << value;
+  return true;
+}
+
+bool DBManager::NewTopDir(const Options& options) {
+  CHECK(options.type == LockboxDatabase::TOP_DIR_PLACEHOLDER);
+  CHECK(!options.name.empty());
+  Options new_options(options.type, options.name);
+  for (auto& iter : _LockboxDatabase_VALUES_TO_NAMES) {
+    if (iter.first <= LockboxDatabase::TOP_DIR_PLACEHOLDER) {
+      continue;
+    }
+    new_options.type = static_cast<LockboxDatabase::type>(iter.first);
+
+    // Call the function that setup up the database and store a pointer in the
+    // appropriate places.
+    CHECK(Track(new_options));
+  }
+}
+
 bool DBManager::Track(const Options& options) {
-  CHECK(options.type > LockboxDatabase::TOP_DIR_PLACEHOLDER);
+  CHECK(options.type > LockboxDatabase::TOP_DIR_PLACEHOLDER)
+      << _LockboxDatabase_VALUES_TO_NAMES.find(options.type)->second;
   CHECK(!options.name.empty());
 
   string new_key = GenKey(options);
@@ -110,9 +160,17 @@ uint64_t DBManager::MaxID(const Options& options) {
   uint64_t max = 0;
   for (it->SeekToFirst(); it->Valid(); it->Next()) {
     uint64_t val = 0;
-    CHECK(base::StringToUint64(it->value().ToString(), &val));
-    if (max < val) {
-      max = val;
+    std::vector<string> split;
+    base::SplitString(it->value().ToString(), ',', &split);
+    for (auto& iter : split) {
+      if (iter.empty()) {
+        continue;
+      }
+      CHECK(base::StringToUint64(iter, &val)) << iter << " "
+                                              << it->value().ToString();
+      if (max < val) {
+        max = val;
+      }
     }
   }
   return max;
@@ -131,6 +189,18 @@ uint64_t DBManager::CountEntries(const Options& options) {
     count++;
   }
   return count;
+}
+
+uint64_t DBManager::GetNextUserID() {
+  return num_users_.Increment();
+}
+
+uint64_t DBManager::GetNextDeviceID() {
+  return num_devices_.Increment();
+}
+
+uint64_t DBManager::GetNextTopDirID() {
+  return num_top_dirs_.Increment();
 }
 
 } // namespace lockbox

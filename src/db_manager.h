@@ -20,6 +20,7 @@
 #include "base/logging.h"
 #include "leveldb/db.h"
 #include "lockbox_types.h"
+#include "counter.h"
 
 using std::map;
 using std::string;
@@ -31,7 +32,7 @@ class DBManager {
   struct Options {
     Options() : type(LockboxDatabase::UNKNOWN), name("") {}
 
-    Options(LockboxDatabase::type type) : type(type), name("") {}
+    explicit Options(LockboxDatabase::type type) : type(type), name("") {}
 
     Options(LockboxDatabase::type type, const string& name)
         : type(type), name(name) {}
@@ -50,15 +51,29 @@ class DBManager {
 
   bool Put(const Options& options, const string& key, const string& value);
 
+  bool Update(const Options& options,
+              const string& key,
+              const string& new_value);
+
+  bool NewTopDir(const Options& options);
+
   bool Track(const Options& options);
 
   uint64_t MaxID(const Options& options);
 
   uint64_t CountEntries(const Options& options);
 
+  uint64_t GetNextUserID();
+  uint64_t GetNextDeviceID();
+  uint64_t GetNextTopDirID();
+
  private:
   string db_location_base_;
   map<string, leveldb::DB*> db_map_;
+
+  Counter num_users_;
+  Counter num_devices_;
+  Counter num_top_dirs_;
 
   DISALLOW_COPY_AND_ASSIGN(DBManager);
 };
