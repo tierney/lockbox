@@ -33,6 +33,7 @@ AX_CXX_COMPILE_STDCXX_11
 BOOST_REQUIRE([1.34])
 # Then look for specific Boost libraries you need:
 BOOST_THREADS
+BOOST_SYSTEM
 
 # Thrift (serialization and rpc library).
 AC_ARG_WITH([thrift-libdir],

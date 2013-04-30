@@ -27,6 +27,7 @@ lockbox_main_LDADD += $(top_builddir)/base/synchronization/libwaitable_event.la
 lockbox_main_LDADD += libclient_initialization.la
 lockbox_main_LDADD += libfile_watcher.la
 lockbox_main_LDADD += libnegotiator.la
+lockbox_main_LDADD += $(BOOST_SYSTEM_LIBS)
 
 # noinst_LTLIBRARIES += libleveldb_base.la
 # libleveldb_base_la_SOURCES = leveldb_base.h
