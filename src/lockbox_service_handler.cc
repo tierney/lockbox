@@ -63,12 +63,13 @@ TopDirID LockboxServiceHandler::RegisterTopDir(const UserAuth& user) {
   return top_dir_id;
 }
 
-bool LockboxServiceHandler::AcquireLockRelPath(const PathLock& lock) {
+void LockboxServiceHandler::AcquireLockRelPath(PathLockResponse& _return,
+                                               const PathLockRequest& lock) {
   // Your implementation goes here
   printf("LockRelPath\n");
 }
 
-void LockboxServiceHandler::ReleaseLockRelPath(const PathLock& lock) {
+void LockboxServiceHandler::ReleaseLockRelPath(const PathLockRequest& lock) {
 
 }
 

@@ -44,10 +44,12 @@ struct PathLockRequest {
   1: required UserAuth user,
   2: required i64 top_dir_id,
   3: optional i32 seconds_requested,
-  4: optional string rel_path;
+  4: optional string rel_path,
 }
 
 struct PathLockResponse {
+  1: required bool acquired,
+  2: optional list<string> users,
 }
 
 # When a user requests an update list for files to fetch, this is the list that
@@ -126,7 +128,7 @@ service LockboxService {
   TopDirID RegisterTopDir(1:UserAuth user),
 
   # Grab lock on rel path for the TDN.
-  bool AcquireLockRelPath(1:PathLockRequest lock),
+  PathLockResponse AcquireLockRelPath(1:PathLockRequest lock),
 
   void ReleaseLockRelPath(1:PathLockRequest lock),
 

@@ -17,8 +17,9 @@ class LockboxServiceHandler : virtual public LockboxServiceIf {
 
   TopDirID RegisterTopDir(const UserAuth& user);
 
-  bool AcquireLockRelPath(const PathLock& lock);
-  void ReleaseLockRelPath(const PathLock& lock);
+  void AcquireLockRelPath(PathLockResponse& _return,
+                          const PathLockRequest& lock);
+  void ReleaseLockRelPath(const PathLockRequest& lock);
 
   int64_t UploadPackage(const LocalPackage& pkg);
 
