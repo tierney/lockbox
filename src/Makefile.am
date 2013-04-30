@@ -96,11 +96,15 @@ server_LDADD += $(LIBEVENT_LIBS)
 server_LDADD += $(PTHREAD_LIBS)
 server_LDADD += $(BOOST_THREAD_LIBS)
 
+noinst_LTLIBRARIES += libfile_util.la
+libfile_util_la_SOURCES = file_util.h
+libfile_util_la_SOURCES += file_util.cc
 
 bin_PROGRAMS += client
 client_SOURCES = client.cc
 client_LDADD =
 client_LDADD += liblockbox_thrift.la
+client_LDADD += libfile_util.la
 client_LDADD += $(THRIFT_LIBS)
 client_LDADD += libdb_manager_client.la
 client_LDADD += libfile_watcher_thread.la

@@ -6,6 +6,7 @@
 #include "file_watcher_thread.h"
 #include "db_manager_client.h"
 #include "base/file_util.h"
+#include "file_util.h"
 
 using std::string;
 
@@ -23,7 +24,9 @@ int main(int argc, char **argv) {
   lockbox::Client::ConnInfo conn_info(argv[1], atoi(argv[2]));
   lockbox::Client client(conn_info);
 
-  lockbox::DBManagerClient client_db("/tmp");
+  string home_dir(lockbox::GetHomeDirectory());
+  lockbox::DBManagerClient client_db(home_dir.append("/.lockbox"));
+
   // See if the databases are already full of interesting data.
 
   // Use the top dir locations to seed the watcher.
