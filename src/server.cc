@@ -12,7 +12,7 @@
 #include <thrift/concurrency/PosixThreadFactory.h>
 #include <thrift/server/TNonblockingServer.h>
 #include "counter.h"
-#include "db_manager.h"
+#include "db_manager_server.h"
 
 #include "crypto/random.h"
 #include "guid_creator.h"

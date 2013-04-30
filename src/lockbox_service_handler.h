@@ -2,7 +2,7 @@
 
 #include "LockboxService.h"
 #include "counter.h"
-#include "db_manager.h"
+#include "db_manager_server.h"
 
 namespace lockbox {
 
