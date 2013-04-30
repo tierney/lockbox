@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
   // options.type = lockbox::ClientDB::CLIENT_DATA;
   // string value;
 
-
+  for (int i = 0; i < 10; i++) {
   lockbox::RSAPEM rsa;
   string priv;
   string pub;
@@ -64,7 +64,7 @@ int main(int argc, char **argv) {
   string dec;
   rsa.PrivateDecrypt(priv, enc, &dec);
   LOG(INFO) << dec;
-
+    }
   return 0;
 
 

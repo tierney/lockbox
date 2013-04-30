@@ -46,10 +46,14 @@ class RSAWrapper {
 
 class RSAPEM {
  public:
-  static void Generate(const string& passphrase,
-                       string* priv_pem, string* pub_pem);
-  static void PublicEncrypt(const string& pem, const string& input, string* output);
-  static void PrivateDecrypt(const string& pem, const string& input, string* output);
+  RSAPEM();
+
+  virtual ~RSAPEM();
+
+  void Generate(const string& passphrase,
+                string* priv_pem, string* pub_pem);
+  void PublicEncrypt(const string& pem, const string& input, string* output);
+  void PrivateDecrypt(const string& pem, const string& input, string* output);
 };
 
 // class ReadError : public std::exception
