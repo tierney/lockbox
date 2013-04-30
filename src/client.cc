@@ -3,6 +3,8 @@
 #include "client.h"
 #include "LockboxService.h"
 #include "lockbox_types.h"
+#include "file_watcher_thread.h"
+#include "db_manager_client.h"
 
 using std::string;
 
@@ -19,6 +21,10 @@ int main(int argc, char **argv) {
 
   lockbox::Client::ConnInfo conn_info(argv[1], atoi(argv[2]));
   lockbox::Client client(conn_info);
+
+  lockbox::DBManagerClient client_db("/tmp");
+  lockbox::FileWatcherThread file_watcher(&client_db);
+  file_watcher.Start();
 
   lockbox::UserAuth auth;
   auth.email = "me2@you.com";
@@ -40,5 +46,6 @@ int main(int argc, char **argv) {
   std::cout << "UID " << user_id << std::endl;
   std::cout << "DeviceID " << device_id << std::endl;
   std::cout << "TopDirID " << top_dir_id << std::endl;
+  file_watcher.Join();
   return 0;
 }

@@ -1,7 +1,10 @@
+LEVELDB_CFLAGS = -I$(top_builddir)/leveldb/include
+
 AM_CPPFLAGS = -I$(top_srcdir)/testing/gtest/include
-AM_CPPFLAGS += -I$(top_srcdir) -I$(top_builddir)
+AM_CPPFLAGS += -I$(top_srcdir) -I$(top_builddir) $(LEVELDB_CFLAGS)
 AM_CPPFLAGS += -DHAVE_INTTYPES_H -DHAVE_NETINET_IN_H
-AM_CXXFLAGS = -Wall -Wextra
+AM_CFLAGS = -Wall -Wextra -g -O0
+AM_CXXFLAGS = -Wall -Wextra -g -O0
 AM_LDFLAGS = -L$(top_builddir) -static
 
 TESTS =
@@ -9,7 +12,6 @@ bin_PROGRAMS =
 noinst_PROGRAMS =
 noinst_LTLIBRARIES =
 
-LEVELDB_CFLAGS = -I$(top_builddir)/leveldb/include
 LEVELDB_BIN_LIBS = $(top_builddir)/leveldb/libleveldb.a -lsnappy
 
 bin_PROGRAMS += lockbox_main
@@ -100,7 +102,11 @@ client_SOURCES = client.cc
 client_LDADD =
 client_LDADD += liblockbox_thrift.la
 client_LDADD += $(THRIFT_LIBS)
-
+client_LDADD += libdb_manager_client.la
+client_LDADD += libfile_watcher_thread.la
+client_LDADD += libleveldb_util.la
+client_LDADD += $(LEVELDB_BIN_LIBS)
+client_LDADD += $(BOOST_THREAD_LIBS)
 
 # thrift compiler command. Note that the --out value for the output
 # directory.
@@ -124,6 +130,11 @@ delta_encoding_main_LDADD =
 delta_encoding_main_LDADD += $(top_builddir)/courgette/libsimple_delta.la
 delta_encoding_main_LDADD += $(top_builddir)/courgette/libstreams.la
 
+noinst_LTLIBRARIES += libfile_watcher_thread.la
+libfile_watcher_thread_la_SOURCES = file_watcher_thread.h
+libfile_watcher_thread_la_SOURCES += file_watcher_thread.cc
+libfile_watcher_thread_la_LIBADD = $(top_builddir)/file_watcher/libfile_watcher.la
+
 # Counter helper library.
 noinst_LTLIBRARIES += libcounter.la
 libcounter_la_SOURCES =
@@ -132,12 +143,31 @@ libcounter_la_SOURCES += counter.cc
 libcounter_la_LIBADD = $(BOOST_THREAD_LIBS)
 
 # Database pieces.
+noinst_LTLIBRARIES += libdb_manager.la
+libdb_manager_la_CXXFLAGS = $(LEVELDB_CFLAGS)
+libdb_manager_la_SOURCES = db_manager.h
+libdb_manager_la_SOURCES += db_manager.cc
+libdb_manager_la_LIBADD = libleveldb_util.la
+libdb_manager_la_LIBADD += liblockbox_thrift.la
+
+noinst_LTLIBRARIES += libdb_manager_client.la
+libdb_manager_client_la_CXXFLAGS = $(LEVELDB_CFLAGS)
+libdb_manager_client_la_SOURCES = db_manager_client.h
+libdb_manager_client_la_SOURCES += db_manager_client.cc
+libdb_manager_client_la_LIBADD =
+libdb_manager_client_la_LIBADD += $(top_builddir)/base/libfile_util.la
+libdb_manager_client_la_LIBADD += $(top_builddir)/base/liblogging.la
+libdb_manager_client_la_LIBADD += libleveldb_util.la
+libdb_manager_client_la_LIBADD += liblockbox_thrift.la
+libdb_manager_client_la_LIBADD += libdb_manager.la
+
 noinst_LTLIBRARIES += libdb_manager_server.la
 libdb_manager_server_la_CXXFLAGS = $(LEVELDB_CFLAGS)
 libdb_manager_server_la_SOURCES = db_manager_server.h
 libdb_manager_server_la_SOURCES += db_manager_server.cc
 libdb_manager_server_la_LIBADD = libleveldb_util.la
 libdb_manager_server_la_LIBADD += liblockbox_thrift.la
+libdb_manager_server_la_LIBADD += libdb_manager.la
 
 noinst_LTLIBRARIES += libleveldb_util.la
 libleveldb_util_la_CXXFLAGS = $(LEVELDB_CFLAGS)

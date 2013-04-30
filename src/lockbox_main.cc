@@ -16,6 +16,7 @@
 #include "base/synchronization/waitable_event.h"
 #include "base/platform_file.h"
 
+#include "file_watcher_thread.h"
 #include "file_watcher.h"
 #include "client_initialization.h"
 
@@ -53,8 +54,6 @@ int main(int argc, char** argv) {
 
   // Calls the example code above so that we can start monitoring a directory.
   // lockbox::BlockingFileWatcherStart();
-
-
 
   return 0;
 }

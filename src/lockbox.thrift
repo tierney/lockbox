@@ -77,6 +77,7 @@ struct VersionInfo {
 # Database names.
 enum ServerDB {
   UNKNOWN = 0
+
   EMAIL_USER,
   USER_DEVICE,
   DEVICE_SYNC,
@@ -99,7 +100,9 @@ enum ClientDB {
   EMAIL_KEYS,
   CLIENT_DATA,
 
-  RELPATHS_TDN,
+  TOP_DIR_PLACEHOLDER,
+
+  RELPATHS,
   UPDATE_QUEUE_SERVER,
   UPDATE_QUEUE_CLIENT,
   FILE_CHANGES,

@@ -9,7 +9,7 @@ namespace lockbox {
 class LockboxServiceHandler : virtual public LockboxServiceIf {
  public:
   // Does not take ownershi of |manager|.
-  LockboxServiceHandler(DBManager* manager);
+  LockboxServiceHandler(DBManagerServer* manager);
 
   UserID RegisterUser(const UserAuth& user);
 
@@ -36,7 +36,7 @@ class LockboxServiceHandler : virtual public LockboxServiceIf {
                         const UserAuth& requestor,
                         const std::string& receiver_email);
  private:
-  DBManager* manager_;
+  DBManagerServer* manager_;
 };
 
 } // namespace lockbox

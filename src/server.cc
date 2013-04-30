@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
   const int port = atoi(argv[1]);
   const int num_threads = atoi(argv[2]);
 
-  lockbox::DBManager manager("/tmp");
+  lockbox::DBManagerServer manager("/tmp");
 
   shared_ptr<lockbox::LockboxServiceHandler> handler(
       new lockbox::LockboxServiceHandler(&manager

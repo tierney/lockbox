@@ -49,7 +49,7 @@ class FileWatcher : public base::RefCountedThreadSafe<FileWatcher> {
   }
 
   bool RemoveWatch() {
-    return true;
+    return false;
   }
 
   void SetupWatchCallback(const base::FilePath& target,
@@ -66,6 +66,8 @@ class FileWatcher : public base::RefCountedThreadSafe<FileWatcher> {
 
   void HandleFileWatchNotification(const base::FilePath& path,
                                    bool got_error) {
+    // TODO(tierney): Add the file path to the queue of generated events given
+    // the timestamp and the affected file path.
     std::string message(got_error ? " error" : " ok");
     std::cout << path.value() << message << std::endl;
     negotiator_->QueueFile(path.value());
