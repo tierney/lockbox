@@ -5,6 +5,7 @@
 #include "lockbox_types.h"
 #include "file_watcher_thread.h"
 #include "db_manager_client.h"
+#include "base/file_util.h"
 
 using std::string;
 
@@ -23,8 +24,16 @@ int main(int argc, char **argv) {
   lockbox::Client client(conn_info);
 
   lockbox::DBManagerClient client_db("/tmp");
+  // See if the databases are already full of interesting data.
+
+  // Use the top dir locations to seed the watcher.
+
+
+  map<int, lockbox::FileWatcherThread*> top_dir_watchers;
   lockbox::FileWatcherThread file_watcher(&client_db);
   file_watcher.Start();
+  file_watcher.AddDirectory("/home/tierney/Lockbox", true /* recursive */);
+
 
   lockbox::UserAuth auth;
   auth.email = "me2@you.com";
@@ -46,6 +55,9 @@ int main(int argc, char **argv) {
   std::cout << "UID " << user_id << std::endl;
   std::cout << "DeviceID " << device_id << std::endl;
   std::cout << "TopDirID " << top_dir_id << std::endl;
-  file_watcher.Join();
+
+  while (true) {
+    sleep(1);
+  }
   return 0;
 }

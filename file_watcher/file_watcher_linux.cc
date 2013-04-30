@@ -77,15 +77,12 @@ namespace FW
                                      bool recursive) {
 		int wd = inotify_add_watch (mFD, directory.c_str(),
 			IN_CLOSE_WRITE | IN_MOVED_TO | IN_CREATE | IN_MOVED_FROM | IN_DELETE);
-		if (wd < 0)
-		{
-			if(errno == ENOENT)
+		if (wd < 0) {
+			if(errno == ENOENT) {
 				throw FileNotFoundException(directory);
-			else
+			} else {
 				throw Exception(strerror(errno));
-
-//			fprintf (stderr, "Error: %s\n", strerror(errno));
-//			return -1;
+      }
 		}
 
 		WatchStruct* pWatch = new WatchStruct();
@@ -99,14 +96,11 @@ namespace FW
 	}
 
 	//--------
-	void FileWatcherLinux::removeWatch(const String& directory)
-	{
+	void FileWatcherLinux::removeWatch(const String& directory) {
 		WatchMap::iterator iter = mWatches.begin();
 		WatchMap::iterator end = mWatches.end();
-		for(; iter != end; ++iter)
-		{
-			if(directory == iter->second->mDirName)
-			{
+		for(; iter != end; ++iter) {
+			if(directory == iter->second->mDirName) {
 				removeWatch(iter->first);
 				return;
 			}
@@ -114,8 +108,7 @@ namespace FW
 	}
 
 	//--------
-	void FileWatcherLinux::removeWatch(WatchID watchid)
-	{
+	void FileWatcherLinux::removeWatch(WatchID watchid) {
 		WatchMap::iterator iter = mWatches.find(watchid);
 
 		if(iter == mWatches.end())

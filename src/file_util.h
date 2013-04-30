@@ -1,5 +1,6 @@
 #pragma once
-
+#include "base/files/file_path.h"
+#include "base/platform_file.h"
 namespace lockbox {
 
 bool IsDirectory(const base::FilePath& fpath) {

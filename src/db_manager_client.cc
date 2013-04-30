@@ -1,9 +1,29 @@
 #include "db_manager_client.h"
 
+#include "leveldb_util.h"
 namespace lockbox {
 
 DBManagerClient::DBManagerClient(const string& db_location_base)
     : DBManager(db_location_base, _ClientDB_VALUES_TO_NAMES) {
+  for (auto& iter : _ClientDB_VALUES_TO_NAMES) {
+    ClientDB::type val = static_cast<ClientDB::type>(iter.first);
+    if (val == ClientDB::UNKNOWN) {
+      continue;
+    }
+
+    if (val >= ClientDB::TOP_DIR_PLACEHOLDER) {
+      break;
+    }
+
+    Options options;
+    LOG(INFO) << "Type to open " << val;
+    options.type = val;
+    string key = DBManager::GenKey(options);
+    LOG(INFO) << "Type to open " << key;
+
+    string path = DBManager::GenPath(db_location_base, options);
+    db_map_[key] = OpenDB(path);
+  }
 }
 
 DBManagerClient::~DBManagerClient() {
