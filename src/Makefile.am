@@ -73,7 +73,7 @@ liblockbox_service_handler_la_SOURCES = lockbox_service_handler.h
 liblockbox_service_handler_la_SOURCES += lockbox_service_handler.cc
 liblockbox_service_handler_la_CXXFLAGS = $(LEVELDB_CFLAGS)
 liblockbox_service_handler_la_LIBADD = liblockbox_thrift.la
-liblockbox_service_handler_la_LIBADD += libdb_manager.la
+liblockbox_service_handler_la_LIBADD += libdb_manager_server.la
 
 bin_PROGRAMS += server
 server_SOURCES = server.cc
@@ -81,7 +81,7 @@ server_CXXFLAGS = $(LEVELDB_CFLAGS)
 server_LDADD =
 server_LDADD += liblockbox_service_handler.la
 server_LDADD += liblockbox_thrift.la
-server_LDADD += libdb_manager.la
+server_LDADD += libdb_manager_server.la
 server_LDADD += libcounter.la
 server_LDADD += libguid_creator.la
 server_LDADD += $(top_builddir)/crypto/librandom.la
@@ -132,12 +132,12 @@ libcounter_la_SOURCES += counter.cc
 libcounter_la_LIBADD = $(BOOST_THREAD_LIBS)
 
 # Database pieces.
-noinst_LTLIBRARIES += libdb_manager.la
-libdb_manager_la_CXXFLAGS = $(LEVELDB_CFLAGS)
-libdb_manager_la_SOURCES = db_manager.h
-libdb_manager_la_SOURCES += db_manager.cc
-libdb_manager_la_LIBADD = libleveldb_util.la
-libdb_manager_la_LIBADD += liblockbox_thrift.la
+noinst_LTLIBRARIES += libdb_manager_server.la
+libdb_manager_server_la_CXXFLAGS = $(LEVELDB_CFLAGS)
+libdb_manager_server_la_SOURCES = db_manager_server.h
+libdb_manager_server_la_SOURCES += db_manager_server.cc
+libdb_manager_server_la_LIBADD = libleveldb_util.la
+libdb_manager_server_la_LIBADD += liblockbox_thrift.la
 
 noinst_LTLIBRARIES += libleveldb_util.la
 libleveldb_util_la_CXXFLAGS = $(LEVELDB_CFLAGS)
