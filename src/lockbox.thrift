@@ -63,7 +63,7 @@ struct Updates {
 # This should best match the C++ openssl expectation that we export to a
 # vector<uint8>.
 struct PublicKey {
-  1: required list<byte> key,
+  1: required string key,
 }
 
 # Hash Chain Digests. Follows the methodology outlined by Jinyuan Li.
