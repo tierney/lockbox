@@ -15,16 +15,18 @@ namespace lockbox {
 class FileEventQueueHandler {
  public:
   // Does not take ownership of |dbm|
-  explicit FileEventQueueHandler(DBManagerClient* dbm);
+  explicit FileEventQueueHandler(const string& top_dir, DBManagerClient* dbm);
 
   virtual ~FileEventQueueHandler();
 
   void Run();
 
  private:
+  void PrepareMaps(const string& top_dir_path);
+
   DBMangerClient* dbm_;
   boost::thread* thread_;
-  int top_dir_id_;
+  const string top_dir_id_;
 
   map<string, string> path_hashes_;
   map<string, time_t> path_mtime_;

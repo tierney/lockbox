@@ -40,11 +40,14 @@ struct DownloadRequest {
   3: required string pkg_name,
 }
 
-struct PathLock {
+struct PathLockRequest {
   1: required UserAuth user,
   2: required i64 top_dir_id,
-  3: required i32 seconds_requested,
+  3: optional i32 seconds_requested,
   4: optional string rel_path;
+}
+
+struct PathLockResponse {
 }
 
 # When a user requests an update list for files to fetch, this is the list that
@@ -86,7 +89,7 @@ enum ServerDB {
 
   TOP_DIR_PLACEHOLDER,
 
-  TOP_DIR_META,
+  TOP_DIR_META, // Who's sharing the data "EDITORS".
   TOP_DIR_RELPATH_LOCK,
   TOP_DIR_SNAPSHOTS,
   TOP_DIR_DATA,
@@ -123,9 +126,9 @@ service LockboxService {
   TopDirID RegisterTopDir(1:UserAuth user),
 
   # Grab lock on rel path for the TDN.
-  bool AcquireLockRelPath(1:PathLock lock),
+  bool AcquireLockRelPath(1:PathLockRequest lock),
 
-  void ReleaseLockRelPath(1:PathLock lock),
+  void ReleaseLockRelPath(1:PathLockRequest lock),
 
   i64 UploadPackage(1:LocalPackage pkg),
 
