@@ -75,7 +75,7 @@ struct VersionInfo {
 }
 
 # Database names.
-enum LockboxDatabase {
+enum ServerDB {
   UNKNOWN = 0
   EMAIL_USER,
   USER_DEVICE,
@@ -90,6 +90,19 @@ enum LockboxDatabase {
   TOP_DIR_SNAPSHOTS,
   TOP_DIR_DATA,
   TOP_DIR_FPTRS,
+}
+
+enum ClientDB {
+  UNKNOWN = 0,
+
+  TOP_DIR_LOCATION,
+  EMAIL_KEYS,
+  CLIENT_DATA,
+
+  RELPATHS_TDN,
+  UPDATE_QUEUE_SERVER,
+  UPDATE_QUEUE_CLIENT,
+  FILE_CHANGES,
 }
 
 # Unifying Service

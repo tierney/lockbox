@@ -2,7 +2,7 @@
 //
 //  // Example for how to create a new top_dir directory.
 //  lockbox::DBManager::Options options;
-//  options.type = lockbox::LockboxDatabase::TOP_DIR_META;
+//  options.type = lockbox::ServerDB::TOP_DIR_META;
 //  CreateGUIDString(&(options.name));
 //  manager.Track(options);
 //
@@ -30,14 +30,14 @@ namespace lockbox {
 class DBManager {
  public:
   struct Options {
-    Options() : type(LockboxDatabase::UNKNOWN), name("") {}
+    Options() : type(ServerDB::UNKNOWN), name("") {}
 
-    explicit Options(LockboxDatabase::type type) : type(type), name("") {}
+    explicit Options(ServerDB::type type) : type(type), name("") {}
 
-    Options(LockboxDatabase::type type, const string& name)
+    Options(ServerDB::type type, const string& name)
         : type(type), name(name) {}
 
-    LockboxDatabase::type type;
+    ServerDB::type type;
 
     // Used by TopDir databases in order to locate the database.
     string name;

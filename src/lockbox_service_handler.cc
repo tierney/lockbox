@@ -13,7 +13,7 @@ UserID LockboxServiceHandler::RegisterUser(const UserAuth& user) {
   // Your implementation goes here
   printf("RegisterUser\n");
 
-  DBManager::Options options(LockboxDatabase::EMAIL_USER);
+  DBManager::Options options(ServerDB::EMAIL_USER);
   string value;
   manager_->Get(options, user.email, &value);
   if (!value.empty()) {
@@ -30,7 +30,7 @@ UserID LockboxServiceHandler::RegisterUser(const UserAuth& user) {
 DeviceID LockboxServiceHandler::RegisterDevice(const UserAuth& user) {
   // Your implementation goes here
   printf("RegisterDevice\n");
-  DBManager::Options options(LockboxDatabase::USER_DEVICE);
+  DBManager::Options options(ServerDB::USER_DEVICE);
   string value;
   DeviceID device_id = manager_->GetNextDeviceID();
   string device_id_to_persist = base::IntToString(device_id);
@@ -44,7 +44,7 @@ DeviceID LockboxServiceHandler::RegisterDevice(const UserAuth& user) {
 TopDirID LockboxServiceHandler::RegisterTopDir(const UserAuth& user) {
   // Your implementation goes here
   printf("RegisterTopDir\n");
-  DBManager::Options options(LockboxDatabase::USER_TOP_DIR);
+  DBManager::Options options(ServerDB::USER_TOP_DIR);
   string value;
   TopDirID top_dir_id = manager_->GetNextTopDirID();
   string top_dir_id_to_persist = base::IntToString(top_dir_id);
@@ -52,7 +52,7 @@ TopDirID LockboxServiceHandler::RegisterTopDir(const UserAuth& user) {
   CHECK(manager_->Update(options, user.email, top_dir_id_to_persist));
 
   // TODO(tierney): Should create additional top_dir database here.
-  options.type = LockboxDatabase::TOP_DIR_PLACEHOLDER;
+  options.type = ServerDB::TOP_DIR_PLACEHOLDER;
   options.name = top_dir_id_to_persist;
   CHECK(manager_->NewTopDir(options));
   return top_dir_id;

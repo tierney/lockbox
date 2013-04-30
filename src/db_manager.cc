@@ -19,7 +19,7 @@ namespace {
 // Creates pathhs of the name /a/path/to/the/dest/THIS_IS_A_TYPE/OPTIONS_NAME.
 string GenPath(const string& base, const DBManager::Options& options) {
   FilePath fp(base);
-  string type_name = _LockboxDatabase_VALUES_TO_NAMES.find(options.type)->second;
+  string type_name = _ServerDB_VALUES_TO_NAMES.find(options.type)->second;
   LOG(INFO) << "GenPath() type_name " << type_name;
   FilePath appended_fp(fp.Append(type_name));
   if (!options.name.empty()) {
@@ -31,7 +31,7 @@ string GenPath(const string& base, const DBManager::Options& options) {
 // Creates keys of the name THIS_IS_A_TYPE and THIS_IS_A_TYPEOPTIONS_NAME.
 string GenKey(const DBManager::Options& options) {
   string key;
-  key = _LockboxDatabase_VALUES_TO_NAMES.find(options.type)->second;
+  key = _ServerDB_VALUES_TO_NAMES.find(options.type)->second;
   if (!options.name.empty()) {
     key.append(options.name);
   }
@@ -43,10 +43,10 @@ string GenKey(const DBManager::Options& options) {
 DBManager::DBManager(const string& db_location_base)
     : db_location_base_(db_location_base) {
   // Setting the base database pointers.
-  for (auto& iter : _LockboxDatabase_VALUES_TO_NAMES) {
-    LockboxDatabase::type val = static_cast<LockboxDatabase::type>(iter.first);
+  for (auto& iter : _ServerDB_VALUES_TO_NAMES) {
+    ServerDB::type val = static_cast<ServerDB::type>(iter.first);
 
-    if (val >= LockboxDatabase::TOP_DIR_PLACEHOLDER) {
+    if (val >= ServerDB::TOP_DIR_PLACEHOLDER) {
       break;
     }
 
@@ -59,9 +59,9 @@ DBManager::DBManager(const string& db_location_base)
   }
 
   // Set the counters for the ID-valued databases.
-  num_users_.Set(MaxID(Options(LockboxDatabase::EMAIL_USER)));
-  num_devices_.Set(MaxID(Options(LockboxDatabase::USER_DEVICE)));
-  num_top_dirs_.Set(MaxID(Options(LockboxDatabase::USER_TOP_DIR)));
+  num_users_.Set(MaxID(Options(ServerDB::EMAIL_USER)));
+  num_devices_.Set(MaxID(Options(ServerDB::USER_DEVICE)));
+  num_top_dirs_.Set(MaxID(Options(ServerDB::USER_TOP_DIR)));
 }
 
 DBManager::~DBManager() {
@@ -71,9 +71,9 @@ DBManager::~DBManager() {
 bool DBManager::Get(const Options& options,
                     const string& key,
                     string* value) {
-  CHECK(options.type != LockboxDatabase::UNKNOWN);
-  CHECK(options.type != LockboxDatabase::TOP_DIR_PLACEHOLDER);
-  if (options.type > LockboxDatabase::TOP_DIR_PLACEHOLDER) {
+  CHECK(options.type != ServerDB::UNKNOWN);
+  CHECK(options.type != ServerDB::TOP_DIR_PLACEHOLDER);
+  if (options.type > ServerDB::TOP_DIR_PLACEHOLDER) {
     CHECK(!options.name.empty());
   }
 
@@ -85,9 +85,9 @@ bool DBManager::Get(const Options& options,
 bool DBManager::Put(const Options& options,
                     const string& key,
                     const string& value) {
-  CHECK(options.type != LockboxDatabase::UNKNOWN);
-  CHECK(options.type != LockboxDatabase::TOP_DIR_PLACEHOLDER);
-  if (options.type > LockboxDatabase::TOP_DIR_PLACEHOLDER) {
+  CHECK(options.type != ServerDB::UNKNOWN);
+  CHECK(options.type != ServerDB::TOP_DIR_PLACEHOLDER);
+  if (options.type > ServerDB::TOP_DIR_PLACEHOLDER) {
     CHECK(!options.name.empty());
   }
 
@@ -99,9 +99,9 @@ bool DBManager::Put(const Options& options,
 bool DBManager::Update(const Options& options,
                        const string& key,
                        const string& new_value) {
-  CHECK(options.type != LockboxDatabase::UNKNOWN);
-  CHECK(options.type != LockboxDatabase::TOP_DIR_PLACEHOLDER);
-  if (options.type > LockboxDatabase::TOP_DIR_PLACEHOLDER) {
+  CHECK(options.type != ServerDB::UNKNOWN);
+  CHECK(options.type != ServerDB::TOP_DIR_PLACEHOLDER);
+  if (options.type > ServerDB::TOP_DIR_PLACEHOLDER) {
     CHECK(!options.name.empty());
   }
   leveldb::DB* db = db_map_.find(GenKey(options))->second;
@@ -125,14 +125,14 @@ bool DBManager::Update(const Options& options,
 }
 
 bool DBManager::NewTopDir(const Options& options) {
-  CHECK(options.type == LockboxDatabase::TOP_DIR_PLACEHOLDER);
+  CHECK(options.type == ServerDB::TOP_DIR_PLACEHOLDER);
   CHECK(!options.name.empty());
   Options new_options(options.type, options.name);
-  for (auto& iter : _LockboxDatabase_VALUES_TO_NAMES) {
-    if (iter.first <= LockboxDatabase::TOP_DIR_PLACEHOLDER) {
+  for (auto& iter : _ServerDB_VALUES_TO_NAMES) {
+    if (iter.first <= ServerDB::TOP_DIR_PLACEHOLDER) {
       continue;
     }
-    new_options.type = static_cast<LockboxDatabase::type>(iter.first);
+    new_options.type = static_cast<ServerDB::type>(iter.first);
 
     // Call the function that setup up the database and store a pointer in the
     // appropriate places.
@@ -141,8 +141,8 @@ bool DBManager::NewTopDir(const Options& options) {
 }
 
 bool DBManager::Track(const Options& options) {
-  CHECK(options.type > LockboxDatabase::TOP_DIR_PLACEHOLDER)
-      << _LockboxDatabase_VALUES_TO_NAMES.find(options.type)->second;
+  CHECK(options.type > ServerDB::TOP_DIR_PLACEHOLDER)
+      << _ServerDB_VALUES_TO_NAMES.find(options.type)->second;
   CHECK(!options.name.empty());
 
   string new_key = GenKey(options);
@@ -152,9 +152,9 @@ bool DBManager::Track(const Options& options) {
 }
 
 uint64_t DBManager::MaxID(const Options& options) {
-  CHECK(options.type == LockboxDatabase::EMAIL_USER ||
-        options.type == LockboxDatabase::USER_DEVICE ||
-        options.type == LockboxDatabase::USER_TOP_DIR);
+  CHECK(options.type == ServerDB::EMAIL_USER ||
+        options.type == ServerDB::USER_DEVICE ||
+        options.type == ServerDB::USER_TOP_DIR);
   leveldb::DB* db = db_map_.find(GenKey(options))->second;
   leveldb::Iterator* it = db->NewIterator(leveldb::ReadOptions());
   uint64_t max = 0;
@@ -177,9 +177,9 @@ uint64_t DBManager::MaxID(const Options& options) {
 }
 
 uint64_t DBManager::CountEntries(const Options& options) {
-  CHECK(options.type != LockboxDatabase::UNKNOWN);
-  CHECK(options.type != LockboxDatabase::TOP_DIR_PLACEHOLDER);
-  if (options.type > LockboxDatabase::TOP_DIR_PLACEHOLDER) {
+  CHECK(options.type != ServerDB::UNKNOWN);
+  CHECK(options.type != ServerDB::TOP_DIR_PLACEHOLDER);
+  if (options.type > ServerDB::TOP_DIR_PLACEHOLDER) {
     CHECK(!options.name.empty());
   }
   leveldb::DB* db = db_map_.find(GenKey(options))->second;
