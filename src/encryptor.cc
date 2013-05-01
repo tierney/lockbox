@@ -65,6 +65,7 @@ bool Encryptor::Encrypt(const string& path, const vector<string>& users,
 
   LOG(INFO) << "RSA_size " << RSA_size(priv_key.get());
   // flen must be less than RSA_size(rsa)-11.
+  // with 2048 modulus, then that means 32 chars, or with the padding, 21.
   RSA_public_encrypt(key_data.size(),
                      const_cast<unsigned char *>(key_data.data), );
   // vector<
