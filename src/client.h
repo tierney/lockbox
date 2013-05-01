@@ -42,15 +42,46 @@ class Client {
 
   virtual ~Client() {}
 
-  template<typename R, typename... Args>
+  // Driver for the LockboxServiceClient code.
+  template <typename R, typename... Args>
   R Exec(R(LockboxServiceClient::*func)(Args...), Args... args) {
-    transport_->open();
-    R ret = (client_.*func)(std::forward<Args>(args)...);
-    transport_->close();
-    return ret;
+    return execer<R(Args...)>::exec(transport_, client_, func,
+                                    std::forward<Args>(args)...);
   }
 
+
  private:
+  // Specialized driver for the Thrift API. In particular, the template wrappers
+  // are necessary to account for some void return types given that the Thrift
+  // code offers functions with void and non-void return types.
+  template <typename F>
+  struct execer {};
+
+  template<typename R, typename... Args>
+  struct execer<R(Args...)> {
+    static R exec(
+        boost::shared_ptr<apache::thrift::transport::TTransport> transport_,
+        LockboxServiceClient client_,
+        R(LockboxServiceClient::*func)(Args...), Args... args) {
+      transport_->open();
+      R ret = (client_.*func)(std::forward<Args>(args)...);
+      transport_->close();
+      return ret;
+    }
+  };
+
+  template<typename... Args>
+  struct execer<void(Args...)> {
+    static void exec(
+        boost::shared_ptr<apache::thrift::transport::TTransport> transport_,
+        LockboxServiceClient client_,
+        void(LockboxServiceClient::*func)(Args...), Args... args) {
+      transport_->open();
+      (client_.*func)(std::forward<Args>(args)...);
+      transport_->close();
+    }
+  };
+
   boost::shared_ptr<apache::thrift::transport::TSocket> socket_;
   boost::shared_ptr<apache::thrift::transport::TTransport> transport_;
   boost::shared_ptr<apache::thrift::protocol::TProtocol> protocol_;

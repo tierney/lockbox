@@ -29,9 +29,9 @@ struct HybridCrypto {
 }
 
 struct RemotePackage {
-  1: required string base_abs_path,
+  1: required string top_dir,
   2: required HybridCrypto path,
-  3: required HybridCrypto data,
+  3: required HybridCrypto payload,
 }
 
 struct DownloadRequest {
@@ -132,7 +132,7 @@ service LockboxService {
 
   void ReleaseLockRelPath(1:PathLockRequest lock),
 
-  i64 UploadPackage(1:LocalPackage pkg),
+  i64 UploadPackage(1:RemotePackage pkg),
 
   LocalPackage DownloadPackage(1:DownloadRequest req),
 

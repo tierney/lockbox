@@ -148,14 +148,30 @@ libcounter_la_SOURCES += counter.h
 libcounter_la_SOURCES += counter.cc
 libcounter_la_LIBADD = $(BOOST_THREAD_LIBS)
 
+noinst_LTLIBRARIES += libutil.la
+libutil_la_SOURCES = util.h
+libutil_la_SOURCES += util.cc
+
+# Encryptor.
+
+noinst_LTLIBRARIES += libencryptor.la
+libencryptor_la_SOURCES = encryptor.h
+libencryptor_la_SOURCES += encryptor.cc
+libencryptor_la_LIBADD = $(top_builddir)/crypto/libcryptor.la
+
 # Event helpers.
 noinst_LTLIBRARIES += libqueue_filter.la
 libqueue_filter_la_SOURCES = queue_filter.h
 libqueue_filter_la_SOURCES += queue_filter.cc
 libqueue_filter_la_LIBADD = $(BOOST_THREAD_LIBS)
 libqueue_filter_la_LIBADD += libdb_manager.la
+libqueue_filter_la_LIBADD += libutil.la
 libqueue_filter_la_LIBADD += $(top_builddir)/base/strings/libstring_split.la
 
+noinst_LTLIBRARIES += libfile_event_queue_handler.la
+libfile_event_queue_handler_la_SOURCES =
+libfile_event_queue_handler_la_SOURCES += file_event_queue_handler.h
+libfile_event_queue_handler_la_SOURCES += file_event_queue_handler.cc
 
 # Database pieces.
 noinst_LTLIBRARIES += libdb_manager.la

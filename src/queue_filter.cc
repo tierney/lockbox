@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+#include "util.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/strings/string_split.h"
 
@@ -11,15 +12,6 @@ using std::string;
 using std::vector;
 
 namespace lockbox {
-
-namespace {
-
-bool IsPrefixOf(const string& first, const string& second) {
-  auto res = std::mismatch(first.begin(), first.end(), second.begin());
-  return (res.first == first.end());
-}
-
-} // namespace
 
 QueueFilter::QueueFilter(DBManagerClient* dbm)
     : dbm_(dbm),

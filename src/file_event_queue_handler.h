@@ -1,8 +1,13 @@
 #pragma once
 
 #include <string>
+#include <map>
 #include <boost/thread/thread.hpp>
 
+#include "client.h"
+#include "db_manager_client.h"
+
+using std::map;
 using std::string;
 
 namespace lockbox {
@@ -14,8 +19,10 @@ namespace lockbox {
 // end-user.
 class FileEventQueueHandler {
  public:
-  // Does not take ownership of |dbm|
-  explicit FileEventQueueHandler(const string& top_dir, DBManagerClient* dbm);
+  // Does not take ownership of |dbm| or |client|.
+  explicit FileEventQueueHandler(const string& top_dir,
+                                 DBManagerClient* dbm,
+                                 Client* client);
 
   virtual ~FileEventQueueHandler();
 
@@ -24,7 +31,8 @@ class FileEventQueueHandler {
  private:
   void PrepareMaps(const string& top_dir_path);
 
-  DBMangerClient* dbm_;
+  DBManagerClient* dbm_;
+  Client* client_;
   boost::thread* thread_;
   const string top_dir_id_;
 
