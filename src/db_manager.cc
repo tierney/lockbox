@@ -24,6 +24,7 @@ DBManager::~DBManager() {
   STLDeleteContainerPairSecondPointers(db_map_.begin(), db_map_.end());
 }
 
+// TODO(tierney): Refactor for check.
 bool DBManager::Get(const Options& options,
                     const string& key,
                     string* value) {
@@ -35,7 +36,9 @@ bool DBManager::Get(const Options& options,
 bool DBManager::Put(const Options& options,
                     const string& key,
                     const string& value) {
-  leveldb::DB* db = db_map_.find(GenKey(options))->second;
+  auto iter = db_map_.find(GenKey(options));
+  CHECK(iter != db_map_.end());
+  leveldb::DB* db = iter->second;
   leveldb::Status s = db->Put(leveldb::WriteOptions(), key, value);
   return s.ok();
 }
@@ -63,15 +66,23 @@ bool DBManager::Update(const Options& options,
   return true;
 }
 
+bool DBManager::Delete(const Options& options, const string& key) {
+  leveldb::DB* db = db_map_.find(GenKey(options))->second;
+  leveldb::Status s = db->Delete(leveldb::WriteOptions(), key);
+  return s.ok();
+}
+
 bool DBManager::NewTopDir(const Options& options) {
   CHECK(false) << "Not implemented.";
   return false;
 }
 
 bool DBManager::Track(const Options& options) {
-  string new_key = GenKey(options);
+  const string new_key = GenKey(options);
   CHECK(!ContainsKey(db_map_, new_key));
-  db_map_[new_key] = OpenDB(GenPath(db_location_base_, options));
+  const string new_path = GenPath(db_location_base_, options);
+  LOG(INFO) << "Tracking: " << new_path;
+  db_map_[new_key] = OpenDB(new_path);
   return true;
 }
 
@@ -123,5 +134,8 @@ string DBManager::GenKey(const Options& options) {
   return key;
 }
 
+leveldb::DB* DBManager::db(const Options& options) {
+  return db_map_.find(GenKey(options))->second;
+}
 
 } // namespace lockbox

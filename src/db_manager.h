@@ -34,8 +34,10 @@ class DBManager {
   virtual bool Put(const Options& options, const string& key, const string& value);
 
   virtual bool Update(const Options& options,
-              const string& key,
-              const string& new_value);
+                      const string& key,
+                      const string& new_value);
+
+  virtual bool Delete(const Options& options, const string& key);
 
   virtual bool NewTopDir(const Options& options);
 
@@ -48,6 +50,8 @@ class DBManager {
 
   // Creates keys of the name THIS_IS_A_TYPE and THIS_IS_A_TYPEOPTIONS_NAME.
   virtual string GenKey(const Options& options);
+
+  virtual leveldb::DB* db(const Options& options);
 
  protected:
   string db_location_base_;

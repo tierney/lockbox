@@ -1,5 +1,4 @@
-#ifndef _LOCKBOX_FILE_UTIL_H
-#define _LOCKBOX_FILE_UTIL_H
+#pragma once
 
 #include "base/files/file_path.h"
 #include "base/platform_file.h"
@@ -17,5 +16,3 @@ bool IsDirectory(const base::FilePath& fpath);
 string GetHomeDirectory();
 
 } // namespace lockbox
-
-#endif  // _LOCKBOX_FILE_UTIL_H

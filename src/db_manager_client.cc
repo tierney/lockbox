@@ -73,7 +73,7 @@ bool DBManagerClient::NewTopDir(const Options& options) {
       continue;
     }
     new_options.type = static_cast<ClientDB::type>(iter.first);
-
+    LOG(INFO) << "NewTopDir calling track for " << new_options.name;
     // Call the function that setup up the database and store a pointer in the
     // appropriate places.
     CHECK(Track(new_options));
@@ -99,6 +99,5 @@ bool DBManagerClient::Track(const Options& options) {
 uint64_t DBManagerClient::MaxID(const Options& options) {
   return DBManager::MaxID(options);
 }
-
 
 } // namespace lockbox

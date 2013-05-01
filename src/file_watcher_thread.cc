@@ -3,7 +3,9 @@
 #include "file_util.h"
 #include "base/files/file_path.h"
 #include "base/file_util.h"
-
+#include "db_manager_client.h"
+#include "base/strings/string_number_conversions.h"
+#include "base/stringprintf.h"
 
 namespace lockbox {
 
@@ -57,21 +59,35 @@ void FileWatcherThread::handleFileAction(FW::WatchID watchid,
   base::FilePath potential_dir(base::FilePath(dir).Append(filename));
   switch(action) {
     case FW::Actions::Add:
-      std::cout << "File (" << dir + "/" + filename << ") Added! " <<  std::endl;
+      std::cout << "File (" << dir + "/" + filename << ") Added! "
+                << std::endl;
       if (IsDirectory(potential_dir)) {
-        LOG(INFO) << "Watching new directory.";
+        LOG(INFO) << "Watching new directory " << potential_dir.value();
         AddDirectory(potential_dir.value(), true);
       }
       break;
     case FW::Actions::Delete:
-      std::cout << "File (" << dir + "/" + filename << ") Deleted! " << std::endl;
+      std::cout << "File (" << dir + "/" + filename << ") Deleted! "
+                << std::endl;
       break;
     case FW::Actions::Modified:
-      std::cout << "File (" << dir + "/" + filename << ") Modified! " << std::endl;
+      std::cout << "File (" << dir + "/" + filename << ") Modified! "
+                << std::endl;
       break;
     default:
-      std::cout << "Should never happen!" << std::endl;
+      CHECK(false) << "Should never happen!";
   }
+  DBManagerClient::Options options;
+  options.type = ClientDB::UNFILTERED_QUEUE;
+  db_manager_->Put(options,
+                   base::StringPrintf("%s_%s/%s",
+                                      base::Int64ToString(time(NULL)).c_str(),
+                                      dir.c_str(),
+                                      filename.c_str()),
+                   base::StringPrintf("%s/%s:%d",
+                                      dir.c_str(),
+                                      filename.c_str(),
+                                      action));
 }
 
 void FileWatcherThread::Start() {

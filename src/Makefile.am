@@ -103,6 +103,7 @@ libfile_util_la_SOURCES += file_util.cc
 bin_PROGRAMS += client
 client_SOURCES = client.cc
 client_LDADD =
+client_LDADD += libqueue_filter.la
 client_LDADD += liblockbox_thrift.la
 client_LDADD += libfile_util.la
 client_LDADD += $(THRIFT_LIBS)
@@ -145,6 +146,15 @@ libcounter_la_SOURCES =
 libcounter_la_SOURCES += counter.h
 libcounter_la_SOURCES += counter.cc
 libcounter_la_LIBADD = $(BOOST_THREAD_LIBS)
+
+# Event helpers.
+noinst_LTLIBRARIES += libqueue_filter.la
+libqueue_filter_la_SOURCES = queue_filter.h
+libqueue_filter_la_SOURCES += queue_filter.cc
+libqueue_filter_la_LIBADD = $(BOOST_THREAD_LIBS)
+libqueue_filter_la_LIBADD += libdb_manager.la
+libqueue_filter_la_LIBADD += $(top_builddir)/base/strings/libstring_split.la
+
 
 # Database pieces.
 noinst_LTLIBRARIES += libdb_manager.la
