@@ -79,8 +79,11 @@ void FileWatcherThread::handleFileAction(FW::WatchID watchid,
   }
   DBManagerClient::Options options;
   options.type = ClientDB::UNFILTERED_QUEUE;
+  // TODO(tierney): Bring this key formation to somewhere more manageable. We
+  // shouldn't bake this in... Also see file_event_queue_handler when updating
+  // this code.
   db_manager_->Put(options,
-                   base::StringPrintf("%s_%s/%s",
+                   base::StringPrintf("%s:%s/%s",
                                       base::Int64ToString(time(NULL)).c_str(),
                                       dir.c_str(),
                                       filename.c_str()),

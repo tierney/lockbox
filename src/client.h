@@ -1,3 +1,17 @@
+// Templated client that does what we want.
+//
+// lockbox::UserID user_id =
+//     client.Exec<lockbox::UserID, const lockbox::UserAuth&>(
+//         &lockbox::LockboxServiceClient::RegisterUser,
+//         auth);
+// lockbox::DeviceID device_id =
+//     client.Exec<lockbox::DeviceID, const lockbox::UserAuth&>(
+//         &lockbox::LockboxServiceClient::RegisterDevice,
+//         auth);
+// lockbox::TopDirID top_dir_id =
+//     client.Exec<lockbox::TopDirID, const lockbox::UserAuth&>(
+//         &lockbox::LockboxServiceClient::RegisterTopDir,
+//         auth);
 #pragma once
 
 #include "LockboxService.h"
@@ -27,8 +41,6 @@ class Client {
   }
 
   virtual ~Client() {}
-
-  apache::thrift::transport::TTransport* GetTransport() const { return transport_.get(); }
 
   template<typename R, typename... Args>
   R Exec(R(LockboxServiceClient::*func)(Args...), Args... args) {
