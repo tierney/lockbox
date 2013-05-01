@@ -30,9 +30,6 @@ int main(int argc, char **argv) {
   string home_dir(lockbox::GetHomeDirectory());
   lockbox::DBManagerClient client_db(home_dir.append("/.lockbox"));
 
-  // Set the event processor running.
-  lockbox::QueueFilter queue_filter(&client_db);
-
   // See if the databases are already full of interesting data.
   lockbox::DBManagerClient::Options options;
   options.type = lockbox::ClientDB::CLIENT_DATA;
@@ -65,6 +62,9 @@ int main(int argc, char **argv) {
   delete it;
 
   // Use the top dir locations to seed the watcher.
+
+  // Set the event processor running.
+  lockbox::QueueFilter queue_filter(&client_db);
 
 
   lockbox::UserAuth auth;

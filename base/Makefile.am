@@ -22,6 +22,11 @@ EXTRA_DIST += tuple.h
 
 noinst_LTLIBRARIES =
 
+noinst_LTLIBRARIES += libmd5.la
+libmd5_la_SOURCES = md5.h
+libmd5_la_SOURCES += md5.cc
+libmd5_la_LIBADD = strings/libstring_piece.la
+
 noinst_LTLIBRARIES += profiler/libscoped_profile.la
 profiler_libscoped_profile_la_SOURCES = profiler/scoped_profile.h
 profiler_libscoped_profile_la_SOURCES += profiler/scoped_profile.cc

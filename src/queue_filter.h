@@ -8,7 +8,7 @@ namespace lockbox {
 
 class QueueFilter {
  public:
-  QueueFilter(DBManagerClient* dbm);
+  explicit QueueFilter(DBManagerClient* dbm);
 
   virtual ~QueueFilter();
 

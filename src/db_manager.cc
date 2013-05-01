@@ -28,7 +28,9 @@ DBManager::~DBManager() {
 bool DBManager::Get(const Options& options,
                     const string& key,
                     string* value) {
-  leveldb::DB* db = db_map_.find(GenKey(options))->second;
+  auto iter = db_map_.find(GenKey(options));
+  CHECK(iter != db_map_.end());
+  leveldb::DB* db = iter->second;
   leveldb::Status s = db->Get(leveldb::ReadOptions(), key, value);
   return s.ok();
 }
@@ -37,7 +39,9 @@ bool DBManager::Put(const Options& options,
                     const string& key,
                     const string& value) {
   auto iter = db_map_.find(GenKey(options));
-  CHECK(iter != db_map_.end());
+  CHECK(iter != db_map_.end())
+      << values_to_names_.find(options.type)->second
+      << " " << options.name;
   leveldb::DB* db = iter->second;
   leveldb::Status s = db->Put(leveldb::WriteOptions(), key, value);
   return s.ok();
@@ -46,7 +50,9 @@ bool DBManager::Put(const Options& options,
 bool DBManager::Update(const Options& options,
                        const string& key,
                        const string& new_value) {
-  leveldb::DB* db = db_map_.find(GenKey(options))->second;
+  auto iter = db_map_.find(GenKey(options));
+  CHECK(iter != db_map_.end());
+  leveldb::DB* db = iter->second;
 
   std::string value;
   leveldb::Status s = db->Get(leveldb::ReadOptions(), key, &value);
@@ -67,7 +73,9 @@ bool DBManager::Update(const Options& options,
 }
 
 bool DBManager::Delete(const Options& options, const string& key) {
-  leveldb::DB* db = db_map_.find(GenKey(options))->second;
+  auto iter = db_map_.find(GenKey(options));
+  CHECK(iter != db_map_.end());
+  leveldb::DB* db = iter->second;
   leveldb::Status s = db->Delete(leveldb::WriteOptions(), key);
   return s.ok();
 }
@@ -87,7 +95,9 @@ bool DBManager::Track(const Options& options) {
 }
 
 uint64_t DBManager::MaxID(const Options& options) {
-  leveldb::DB* db = db_map_.find(GenKey(options))->second;
+  auto iter = db_map_.find(GenKey(options));
+  CHECK(iter != db_map_.end());
+  leveldb::DB* db = iter->second;
   leveldb::Iterator* it = db->NewIterator(leveldb::ReadOptions());
   uint64_t max = 0;
   for (it->SeekToFirst(); it->Valid(); it->Next()) {
@@ -113,7 +123,6 @@ string DBManager::GenPath(const string& base, const Options& options) {
   auto found = values_to_names_.find(options.type);
   CHECK(found != values_to_names_.end());
   string type_name = found->second;
-  LOG(INFO) << "GenPath() type_name " << type_name;
   FilePath appended_fp(fp.Append(type_name));
   if (!options.name.empty()) {
     return appended_fp.Append(options.name).value();
@@ -123,19 +132,19 @@ string DBManager::GenPath(const string& base, const Options& options) {
 
 string DBManager::GenKey(const Options& options) {
   string key;
-  LOG(INFO) << options.type;
   auto found = values_to_names_.find(options.type);
   CHECK(found != values_to_names_.end());
   key = found->second;
   if (!options.name.empty()) {
     key.append(options.name);
   }
-  LOG(INFO) << "GenKey() " << key;
   return key;
 }
 
 leveldb::DB* DBManager::db(const Options& options) {
-  return db_map_.find(GenKey(options))->second;
+  auto iter = db_map_.find(GenKey(options));
+  CHECK(iter != db_map_.end());
+  return iter->second;
 }
 
 } // namespace lockbox

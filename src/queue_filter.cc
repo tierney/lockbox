@@ -21,8 +21,9 @@ bool IsPrefixOf(const string& first, const string& second) {
 
 } // namespace
 
-QueueFilter::QueueFilter(DBManagerClient* dbm) : dbm_(dbm) {
-  thread_ = new boost::thread(boost::bind(&QueueFilter::Run, this));
+QueueFilter::QueueFilter(DBManagerClient* dbm)
+    : dbm_(dbm),
+      thread_(new boost::thread(boost::bind(&QueueFilter::Run, this))) {
 }
 
 QueueFilter::~QueueFilter() {
@@ -42,7 +43,7 @@ void QueueFilter::Run() {
       sleep(1);
       continue;
     }
-    const string ts = it->key().ToString();
+    const string ts_path = it->key().ToString();
     const string value = it->value().ToString();
 
     vector<string> path_state;
@@ -78,15 +79,16 @@ void QueueFilter::Run() {
     file_changes_options.type = ClientDB::FILE_CHANGES;
     file_changes_options.name = top_dir_num;
 
-    // Figure out if the update should be written (still see a request in the queue).
+    // Figure out if the update should be written (still see a request in the
+    // queue).
 
 
     // Write to the update_queue, if necessary.
+    LOG(INFO) << "Putting " << path << " into the update queue";
     dbm_->Put(update_queue_options, path, state);
 
-
     // Delete the key when done.
-    dbm_->Delete(unfiltered_queue_options, ts);
+    dbm_->Delete(unfiltered_queue_options, ts_path);
   }
 }
 

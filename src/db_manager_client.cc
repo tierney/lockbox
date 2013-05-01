@@ -72,11 +72,14 @@ bool DBManagerClient::NewTopDir(const Options& options) {
     if (iter.first <= ClientDB::TOP_DIR_PLACEHOLDER) {
       continue;
     }
-    new_options.type = static_cast<ClientDB::type>(iter.first);
-    LOG(INFO) << "NewTopDir calling track for " << new_options.name;
+    new_options.type = iter.first;
+    LOG(INFO) << "NewTopDir calling track for "
+              << values_to_names_.find(new_options.type)->second
+              << " " << new_options.name;
     // Call the function that setup up the database and store a pointer in the
     // appropriate places.
-    CHECK(Track(new_options));
+    CHECK(this->Track(new_options));
+    LOG(INFO) << "Back from tracking...";
   }
 }
 
@@ -90,6 +93,7 @@ string DBManagerClient::GenKey(const Options& options) {
 
 bool DBManagerClient::Track(const Options& options) {
   CHECK(options.type > ClientDB::TOP_DIR_PLACEHOLDER)
+      << "Going to track "
       << _ClientDB_VALUES_TO_NAMES.find(options.type)->second;
   CHECK(!options.name.empty());
 
