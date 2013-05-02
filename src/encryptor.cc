@@ -67,7 +67,7 @@ bool Encryptor::Encrypt(const string& path, const vector<string>& users,
 bool Encryptor::Decrypt(const string& data,
                         const map<string, string>& user_enc_session,
                         const string& out_path) {
-  return true;
+  return false;
 }
 
 } // namespace lockbox

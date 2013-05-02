@@ -71,15 +71,16 @@ int main(int argc, char **argv) {
     client_db.Put(options, "me2@you.com",
                   string(export_pub.begin(), export_pub.end()));
 
+    // Update the public key in the cloud.
     lockbox::PublicKey pub_key;
     pub_key.key.clear();
     pub_key.key.assign(export_pub.begin(), export_pub.end());
-    bool ret = client.Exec<bool, const lockbox::UserAuth&, const lockbox::PublicKey&>(
+    bool ret = client.Exec<bool,
+                           const lockbox::UserAuth&, const lockbox::PublicKey&>(
         &lockbox::LockboxServiceClient::AssociateKey,
         auth, pub_key);
     CHECK(ret);
   }
-
 
   // Prepare to start the various watchers.
   map<int64, lockbox::FileWatcherThread*> top_dir_watchers;
