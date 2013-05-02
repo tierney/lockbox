@@ -17,6 +17,9 @@ class LockboxServiceHandler : virtual public LockboxServiceIf {
 
   TopDirID RegisterTopDir(const UserAuth& user);
 
+  bool AssociateKey(const UserAuth& user, const PublicKey& pub);
+
+
   void AcquireLockRelPath(PathLockResponse& _return,
                           const PathLockRequest& lock);
 

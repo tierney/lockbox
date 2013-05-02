@@ -6,6 +6,7 @@
 
 #include "base/logging.h"
 #include "gflags/gflags.h"
+#include "db_manager_client.h"
 
 using std::map;
 using std::string;
@@ -16,19 +17,21 @@ namespace lockbox {
 class Encryptor {
  public:
 
-  // explicit Encryptor();
+  explicit Encryptor(DBManagerClient* dbm);
 
-  // virtual ~Encryptor();
+  virtual ~Encryptor();
 
-  static bool Encrypt(const string& path, const vector<string>& users,
-                      string* data, map<string, string>* user_enc_session);
+  bool Encrypt(const string& path, const vector<string>& users,
+               string* data, map<string, string>* user_enc_session);
 
-  static bool Decrypt(const string& data,
-                      const map<string, string>& user_enc_session,
-                      const string& out_path);
+  bool Decrypt(const string& data,
+               const map<string, string>& user_enc_session,
+               const string& out_path);
 
  private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(Encryptor);
+  DBManagerClient* dbm_;
+
+  DISALLOW_COPY_AND_ASSIGN(Encryptor);
 };
 
 } // namespace lockbox

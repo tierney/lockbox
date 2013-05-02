@@ -66,6 +66,13 @@ TopDirID LockboxServiceHandler::RegisterTopDir(const UserAuth& user) {
   return top_dir_id;
 }
 
+bool LockboxServiceHandler::AssociateKey(const UserAuth& user, const PublicKey& pub) {
+  LOG(INFO) << "Associating " << user.email << " with "
+            << string(pub.key.begin(), pub.key.end());
+
+  return true;
+}
+
 void LockboxServiceHandler::AcquireLockRelPath(PathLockResponse& _return,
                                                const PathLockRequest& lock) {
   // Your implementation goes here

@@ -108,7 +108,7 @@ enum ClientDB {
   UNKNOWN = 0,
 
   TOP_DIR_LOCATION,
-  EMAIL_KEYS,
+  EMAIL_KEY,
   CLIENT_DATA, #
   UNFILTERED_QUEUE,
 
@@ -132,6 +132,9 @@ service LockboxService {
 
   # Returns the top directory's GUID.
   TopDirID RegisterTopDir(1:UserAuth user),
+
+  # Attach a public key to a user.
+  bool AssociateKey(1:UserAuth user, 2:PublicKey pub),
 
   # Grab lock on rel path for the TDN.
   PathLockResponse AcquireLockRelPath(1:PathLockRequest lock),

@@ -47,29 +47,39 @@ int main(int argc, char **argv) {
   options.type = lockbox::ClientDB::CLIENT_DATA;
   string value;
 
-  // Need public key. If don't have one, then generate and register with the
-  // cloud.
-  scoped_ptr<crypto::RSAPrivateKey> priv_key(
-      crypto::RSAPrivateKey::Create(2048));
-  vector<uint8> export_priv;
-  vector<uint8> export_pub;
+  lockbox::UserAuth auth;
+  auth.email = "me2@you.com";
+  auth.password = "password";
 
-  CHECK(priv_key->ExportPublicKey(&export_pub));
-  crypto::ScopedOpenSSL<RSA, RSA_free> rsa(
-      lockbox::RSAPublicKey::PublicKeyToRSA(export_pub));
-  CHECK(rsa.get());
+  // Initialize the private key if necessary.
+  client_db.Get(options, "PRIV_KEY", &value);
+  if (value.empty()) {
+    // Generate the key.
+    scoped_ptr<crypto::RSAPrivateKey> priv_key(
+        crypto::RSAPrivateKey::Create(2048));
 
-  // flen must be less than RSA_size(rsa)-11.
-  // with 2048 modulus, then that means 32 chars, or with the padding, 21.
-  string password("0123456789012345678901");
-  string out;
-  lockbox::RSAWrapper::Encrypt(password, rsa.get(), &out);
-  LOG(INFO) << out;
-  return 0;
+    // Save the private key to our local data store.
+    vector<uint8> export_priv;
+    CHECK(priv_key->ExportPrivateKey(&export_priv));
+    client_db.Put(options, "PRIV_KEY",
+                  string(export_priv.begin(), export_priv.end()));
 
-  CHECK(priv_key->ExportPrivateKey(&export_priv));
+    // Set the public key in the EMAIL_KEY db.
+    vector<uint8> export_pub;
+    CHECK(priv_key->ExportPublicKey(&export_pub));
+    options.type = lockbox::ClientDB::EMAIL_KEY;
+    client_db.Put(options, "me2@you.com",
+                  string(export_pub.begin(), export_pub.end()));
 
-  // Write key to disk: priv_key->key();
+    lockbox::PublicKey pub_key;
+    pub_key.key.clear();
+    pub_key.key.assign(export_pub.begin(), export_pub.end());
+    bool ret = client.Exec<bool, const lockbox::UserAuth&, const lockbox::PublicKey&>(
+        &lockbox::LockboxServiceClient::AssociateKey,
+        auth, pub_key);
+    CHECK(ret);
+  }
+
 
   // Prepare to start the various watchers.
   map<int64, lockbox::FileWatcherThread*> top_dir_watchers;
@@ -77,6 +87,8 @@ int main(int argc, char **argv) {
 
   options.type = lockbox::ClientDB::TOP_DIR_LOCATION;
   options.name.clear();
+
+  lockbox::Encryptor encryptor(&client_db);
 
   leveldb::DB* db = client_db.db(options);
   leveldb::Iterator* it = db->NewIterator(leveldb::ReadOptions());
@@ -101,7 +113,7 @@ int main(int argc, char **argv) {
 
     lockbox::FileEventQueueHandler* event_queue =
         new lockbox::FileEventQueueHandler(it->key().ToString(),
-                                           &client_db, &client);
+                                           &client_db, &client, &encryptor);
     top_dir_queues[top_dir_id] = event_queue;
   }
   delete it;
@@ -111,9 +123,6 @@ int main(int argc, char **argv) {
   // Set the event processor running.
   lockbox::QueueFilter queue_filter(&client_db);
 
-  lockbox::UserAuth auth;
-  auth.email = "me2@you.com";
-  auth.password = "password";
 
   // lockbox::UserID user_id =
   //     client.Exec<lockbox::UserID, const lockbox::UserAuth&>(

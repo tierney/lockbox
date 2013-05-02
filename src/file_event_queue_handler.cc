@@ -31,9 +31,11 @@ string FileToMD5(const string& path) {
 
 FileEventQueueHandler::FileEventQueueHandler(const string& top_dir_id,
                                              DBManagerClient* dbm,
-                                             Client* client)
+                                             Client* client,
+                                             Encryptor* encryptor)
     : dbm_(dbm),
       client_(client),
+      encryptor_(encryptor),
       thread_(new boost::thread(
           boost::bind(&FileEventQueueHandler::Run, this))),
       top_dir_id_(top_dir_id) {
@@ -162,9 +164,9 @@ void FileEventQueueHandler::Run() {
 
         LOG(INFO) << "Encrypting.";
         // Read the file, do the encryption.
-        Encryptor::Encrypt(path, users,
-                           &(package.payload.data),
-                           &(package.payload.user_enc_session));
+        encryptor_->Encrypt(path, users,
+                            &(package.payload.data),
+                            &(package.payload.user_enc_session));
 
         for (auto& ptr : package.payload.user_enc_session) {
           LOG(INFO) << "  " << ptr.first << " : " << ptr.second;

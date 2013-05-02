@@ -13,7 +13,6 @@ namespace lockbox {
 
 class RSAPublicKey {
  public:
-
   static RSA* PublicKeyToRSA(const vector<uint8>& pub);
   static RSA* PublicKeyToRSA(const string& pub);
 

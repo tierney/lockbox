@@ -6,6 +6,7 @@
 
 #include "client.h"
 #include "db_manager_client.h"
+#include "encryptor.h"
 
 using std::map;
 using std::string;
@@ -22,7 +23,8 @@ class FileEventQueueHandler {
   // Does not take ownership of |dbm| or |client|.
   explicit FileEventQueueHandler(const string& top_dir,
                                  DBManagerClient* dbm,
-                                 Client* client);
+                                 Client* client,
+                                 Encryptor* encryptor);
 
   virtual ~FileEventQueueHandler();
 
@@ -33,6 +35,7 @@ class FileEventQueueHandler {
 
   DBManagerClient* dbm_;
   Client* client_;
+  Encryptor* encryptor_;
   boost::thread* thread_;
   const string top_dir_id_;
 
