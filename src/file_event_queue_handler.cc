@@ -133,7 +133,6 @@ void FileEventQueueHandler::Run() {
     int64 ret = 0;
     switch (fw_action) {
       case FW::Actions::Add:
-      case FW::Actions::Modified:
         LOG(INFO) << "Read the file.";
         // Lock the file in the cloud.
         path_lock.user = user_auth;
@@ -153,12 +152,23 @@ void FileEventQueueHandler::Run() {
 
         // Determine who it should be shared with.
         users = response.users;
+        for (auto& ptr : response.users) {
+          LOG(INFO) << "  " << ptr;
+        }
+        LOG(INFO) << "Users:";
+        for (auto& iter : users) {
+          LOG(INFO) << "  Encrypting for " << iter;
+        }
 
         LOG(INFO) << "Encrypting.";
         // Read the file, do the encryption.
         Encryptor::Encrypt(path, users,
                            &(package.payload.data),
                            &(package.payload.user_enc_session));
+
+        for (auto& ptr : package.payload.user_enc_session) {
+          LOG(INFO) << "  " << ptr.first << " : " << ptr.second;
+        }
 
         LOG(INFO) << "Uploading.";
         // Upload the package. Cloud needs to update the appropriate user's
@@ -181,10 +191,10 @@ void FileEventQueueHandler::Run() {
         LOG(WARNING) << "Delete not implemented.";
         dbm_->Delete(update_queue_options, it->key().ToString());
         break;
-      // case FW::Actions::Modified:
-      //   LOG(WARNING) << "Modified not implemented.";
-      //   dbm_->Delete(update_queue_options, it->key().ToString());
-      //   break;
+      case FW::Actions::Modified:
+        LOG(WARNING) << "Modified not implemented.";
+        dbm_->Delete(update_queue_options, it->key().ToString());
+        break;
       default:
         CHECK(false) << "Unrecognize event " << fw_action;
     }

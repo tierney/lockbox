@@ -2,6 +2,9 @@
 
 #include "base/strings/string_number_conversions.h"
 
+#include <thrift/protocol/TBinaryProtocol.h>
+#include <thrift/transport/TBufferTransports.h>
+
 namespace lockbox {
 
 LockboxServiceHandler::LockboxServiceHandler(DBManagerServer* manager)
@@ -89,6 +92,23 @@ void LockboxServiceHandler::ReleaseLockRelPath(const PathLockRequest& lock) {
 int64_t LockboxServiceHandler::UploadPackage(const RemotePackage& pkg) {
   // Your implementation goes here
   printf("UploadPackage\n");
+  int64_t ret = pkg.payload.data.size();
+
+  LOG(INFO) << "Received data (" << pkg.payload.data.size() << ") :"
+            << pkg.payload.data;
+
+  for (auto& ptr : pkg.payload.user_enc_session) {
+    LOG(INFO) << "  " << ptr.first << " : " << ptr.second;
+  }
+
+  boost::shared_ptr<apache::thrift::transport::TMemoryBuffer> mem_buf(
+      new apache::thrift::transport::TMemoryBuffer());
+  boost::shared_ptr<apache::thrift::protocol::TBinaryProtocol> bin_prot(
+      new apache::thrift::protocol::TBinaryProtocol(mem_buf));
+
+  pkg.write(bin_prot.get());
+  string mem = mem_buf->getBufferAsString();
+  LOG(INFO) << "Did it work?: " << mem.size();
 }
 
 void LockboxServiceHandler::DownloadPackage(LocalPackage& _return, const DownloadRequest& req) {

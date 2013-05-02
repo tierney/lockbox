@@ -1,5 +1,7 @@
 #include <string>
+#include <vector>
 
+#include "base/basictypes.h"
 #include "client.h"
 #include "LockboxService.h"
 #include "lockbox_types.h"
@@ -11,8 +13,17 @@
 #include "base/strings/string_number_conversions.h"
 #include "queue_filter.h"
 #include "file_event_queue_handler.h"
+#include "crypto/rsa_private_key.h"
+
+#include "rsa_public_key_openssl.h"
+#include "rsa.h"
+
+#include "crypto/openssl_util.h"
+#include <openssl/bio.h>
+#include <openssl/x509.h>
 
 using std::string;
+using std::vector;
 
 namespace lockbox {
 
@@ -36,6 +47,31 @@ int main(int argc, char **argv) {
   options.type = lockbox::ClientDB::CLIENT_DATA;
   string value;
 
+  // Need public key. If don't have one, then generate and register with the
+  // cloud.
+  scoped_ptr<crypto::RSAPrivateKey> priv_key(
+      crypto::RSAPrivateKey::Create(2048));
+  vector<uint8> export_priv;
+  vector<uint8> export_pub;
+
+  CHECK(priv_key->ExportPublicKey(&export_pub));
+  crypto::ScopedOpenSSL<RSA, RSA_free> rsa(
+      lockbox::RSAPublicKey::PublicKeyToRSA(export_pub));
+  CHECK(rsa.get());
+
+  // flen must be less than RSA_size(rsa)-11.
+  // with 2048 modulus, then that means 32 chars, or with the padding, 21.
+  string password("0123456789012345678901");
+  string out;
+  lockbox::RSAWrapper::Encrypt(password, rsa.get(), &out);
+  LOG(INFO) << out;
+  return 0;
+
+  CHECK(priv_key->ExportPrivateKey(&export_priv));
+
+  // Write key to disk: priv_key->key();
+
+  // Prepare to start the various watchers.
   map<int64, lockbox::FileWatcherThread*> top_dir_watchers;
   map<int64, lockbox::FileEventQueueHandler*> top_dir_queues;
 

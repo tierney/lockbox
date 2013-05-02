@@ -697,5 +697,74 @@ template <typename T>
 scoped_ptr<T> make_scoped_ptr(T* ptr) {
   return scoped_ptr<T>(ptr);
 }
+//  scoped_array extends scoped_ptr to arrays. Deletion of the array pointed to
+//  is guaranteed, either on destruction of the scoped_array or via an explicit
+//  reset(). Use shared_array or std::vector if your needs are more complex.
+
+template<typename T>
+class scoped_array {
+ private:
+
+  T* ptr;
+
+  scoped_array(scoped_array const &);
+  scoped_array & operator=(scoped_array const &);
+
+ public:
+
+  typedef T element_type;
+
+  explicit scoped_array(T* p = 0) : ptr(p) {}
+
+  ~scoped_array() {
+    typedef char type_must_be_complete[sizeof(T)];
+    delete[] ptr;
+  }
+
+  void reset(T* p = 0) {
+    typedef char type_must_be_complete[sizeof(T)];
+
+    if (ptr != p) {
+      delete [] ptr;
+      ptr = p;
+    }
+  }
+
+  T& operator[](std::ptrdiff_t i) const {
+    assert(ptr != 0);
+    assert(i >= 0);
+    return ptr[i];
+  }
+
+  bool operator==(T* p) const {
+    return ptr == p;
+  }
+
+  bool operator!=(T* p) const {
+    return ptr != p;
+  }
+
+  T* get() const {
+    return ptr;
+  }
+
+  void swap(scoped_array & b) {
+    T* tmp = b.ptr;
+    b.ptr = ptr;
+    ptr = tmp;
+  }
+
+  T* release() {
+    T* tmp = ptr;
+    ptr = 0;
+    return tmp;
+  }
+
+ private:
+
+  // no reason to use these: each scoped_array should have its own object
+  template <typename U> bool operator==(scoped_array<U> const& p) const;
+  template <typename U> bool operator!=(scoped_array<U> const& p) const;
+};
 
 #endif  // BASE_MEMORY_SCOPED_PTR_H_

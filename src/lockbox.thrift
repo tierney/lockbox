@@ -19,13 +19,13 @@ enum PackageType {
 struct LocalPackage {
   1: required string base_abs_path,
   2: required string base_rel_path,
-  3: optional PackageType type,
-  4: optional string contents,
+  3: PackageType type,
+  4: string contents,
 }
 
 struct HybridCrypto {
   1: required string data,
-  2: optional map<string, string> user_enc_session,
+  2: map<string, string> user_enc_session,
 }
 
 struct RemotePackage {
@@ -43,13 +43,13 @@ struct DownloadRequest {
 struct PathLockRequest {
   1: required UserAuth user,
   2: required i64 top_dir_id,
-  3: optional i32 seconds_requested,
-  4: optional string rel_path,
+  3: string rel_path,
+  4: i32 seconds_requested,
 }
 
 struct PathLockResponse {
   1: required bool acquired,
-  2: optional list<string> users,
+  2: required list<string> users,
 }
 
 # When a user requests an update list for files to fetch, this is the list that
@@ -57,7 +57,13 @@ struct PathLockResponse {
 struct Updates {
   1: required string device,
   2: required string user,
-  3: optional list<HybridCrypto> updates,
+  3: list<HybridCrypto> updates,
+}
+
+# This should best match the C++ openssl expectation that we export to a
+# vector<uint8>.
+struct PublicKey {
+  1: required list<byte> key,
 }
 
 # Hash Chain Digests. Follows the methodology outlined by Jinyuan Li.
@@ -75,8 +81,8 @@ struct HashChainDigestEntry {
 
 # TODO(tierney): These should be tied to the TDN and relative paths too...
 struct VersionInfo {
-  1: optional map<i32, HashChainDigestEntry> vector,
-  2: optional HashChainDigestHistory history
+  1: map<i32, HashChainDigestEntry> vector,
+  2: HashChainDigestHistory history
 }
 
 # Database names.

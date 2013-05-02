@@ -92,6 +92,15 @@ void FileWatcherThread::handleFileAction(FW::WatchID watchid,
                                           filename.c_str(),
                                           action);
   LOG(INFO) << "Value: " << value;
+
+  // Be sure to avoid overwriting a key that is already there.
+  string existing_entry;
+  db_manager_->Get(options, key, &existing_entry);
+  if (!existing_entry.empty()) {
+    LOG(INFO) << "Dropping duplicate event for " << key << " " << value;
+    return;
+  }
+
   db_manager_->Put(options, key, value);
 }
 

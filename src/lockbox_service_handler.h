@@ -19,6 +19,7 @@ class LockboxServiceHandler : virtual public LockboxServiceIf {
 
   void AcquireLockRelPath(PathLockResponse& _return,
                           const PathLockRequest& lock);
+
   void ReleaseLockRelPath(const PathLockRequest& lock);
 
   int64_t UploadPackage(const RemotePackage& pkg);

@@ -105,6 +105,8 @@ bin_PROGRAMS += client
 client_SOURCES = client.cc
 client_LDADD =
 client_LDADD += libqueue_filter.la
+client_LDADD += librsa.la
+client_LDADD += librsa_public_key_openssl.la
 client_LDADD += liblockbox_thrift.la
 client_LDADD += libfile_util.la
 client_LDADD += $(THRIFT_LIBS)
@@ -159,10 +161,24 @@ libutil_la_SOURCES += util.cc
 noinst_LTLIBRARIES += libencryptor.la
 libencryptor_la_SOURCES = encryptor.h
 libencryptor_la_SOURCES += encryptor.cc
-libencryptor_la_LIBADD = $(top_builddir)/crypto/libencryptor.la
+libencryptor_la_LIBADD =
+libencryptor_la_LIBADD += libblock_cipher.la
 libencryptor_la_LIBADD += $(top_builddir)/crypto/libsymmetric_key.la
+libencryptor_la_LIBADD += $(top_builddir)/crypto/libencryptor.la
 libencryptor_la_LIBADD += $(top_builddir)/crypto/librandom.la
 libencryptor_la_LIBADD += $(top_builddir)/crypto/librsa_private_key.la
+
+noinst_LTLIBRARIES += libblock_cipher.la
+libblock_cipher_la_SOURCES = block_cipher.cc
+libblock_cipher_la_SOURCES += block_cipher.h
+
+noinst_LTLIBRARIES += librsa_public_key_openssl.la
+librsa_public_key_openssl_la_SOURCES = rsa_public_key_openssl.cc
+librsa_public_key_openssl_la_SOURCES += rsa_public_key_openssl.h
+
+noinst_LTLIBRARIES += librsa.la
+librsa_la_SOURCES = rsa.h
+librsa_la_SOURCES += rsa.cc
 
 # Event helpers.
 noinst_LTLIBRARIES += libqueue_filter.la
