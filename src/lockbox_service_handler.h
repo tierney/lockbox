@@ -21,7 +21,7 @@ class LockboxServiceHandler : virtual public LockboxServiceIf {
                           const PathLockRequest& lock);
   void ReleaseLockRelPath(const PathLockRequest& lock);
 
-  int64_t UploadPackage(const LocalPackage& pkg);
+  int64_t UploadPackage(const RemotePackage& pkg);
 
   void DownloadPackage(LocalPackage& _return, const DownloadRequest& req);
 

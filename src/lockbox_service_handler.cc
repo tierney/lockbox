@@ -67,13 +67,26 @@ void LockboxServiceHandler::AcquireLockRelPath(PathLockResponse& _return,
                                                const PathLockRequest& lock) {
   // Your implementation goes here
   printf("LockRelPath\n");
+
+  // TODO(tierney): Authenticate.
+
+  // See if the lock is already held.
+
+  // Set the lock.
+  _return.acquired = true;
+
+  // Get the names of the individuals with whom to share the directory.
+  _return.users.push_back("me2@you.com");
+
+  // Send the data back in the response.
+  return;
 }
 
 void LockboxServiceHandler::ReleaseLockRelPath(const PathLockRequest& lock) {
 
 }
 
-int64_t LockboxServiceHandler::UploadPackage(const LocalPackage& pkg) {
+int64_t LockboxServiceHandler::UploadPackage(const RemotePackage& pkg) {
   // Your implementation goes here
   printf("UploadPackage\n");
 }

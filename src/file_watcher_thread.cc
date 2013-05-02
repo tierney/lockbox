@@ -82,15 +82,17 @@ void FileWatcherThread::handleFileAction(FW::WatchID watchid,
   // TODO(tierney): Bring this key formation to somewhere more manageable. We
   // shouldn't bake this in... Also see file_event_queue_handler when updating
   // this code.
-  db_manager_->Put(options,
-                   base::StringPrintf("%s:%s/%s",
-                                      base::Int64ToString(time(NULL)).c_str(),
-                                      dir.c_str(),
-                                      filename.c_str()),
-                   base::StringPrintf("%s/%s:%d",
-                                      dir.c_str(),
-                                      filename.c_str(),
-                                      action));
+  const string key = base::StringPrintf("%s:%s/%s",
+                                        base::Int64ToString(time(NULL)).c_str(),
+                                        dir.c_str(),
+                                        filename.c_str());
+  LOG(INFO) << "Key: " << key;
+  const string value = base::StringPrintf("%s/%s:%d",
+                                          dir.c_str(),
+                                          filename.c_str(),
+                                          action);
+  LOG(INFO) << "Value: " << value;
+  db_manager_->Put(options, key, value);
 }
 
 void FileWatcherThread::Start() {

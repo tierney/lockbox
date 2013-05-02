@@ -3,8 +3,12 @@
 #include <string>
 #include <openssl/rsa.h>
 
+#include "base/memory/scoped_ptr.h"
+#include "crypto/random.h"
 #include "crypto/encryptor.h"
 #include "crypto/rsa_private_key.h"
+#include "crypto/symmetric_key.h"
+#include "base/file_util.h"
 
 using std::string;
 
@@ -41,11 +45,11 @@ bool Encryptor::Encrypt(const string& path, const vector<string>& users,
                         string* data, map<string, string>* user_enc_session) {
   // Read file to string.
   string raw_input;
-  base::ReadFileToString(base::FilePath(path), &raw_input);
+  file_util::ReadFileToString(base::FilePath(path), &raw_input);
 
   // Generate a random session key.
   scoped_ptr<crypto::SymmetricKey> key(
-      GenerateRandomKey(crypto::SymmetricKey::AES, 256));
+      crypto::SymmetricKey::GenerateRandomKey(crypto::SymmetricKey::AES, 256));
   const string& key_data = key->key();
 
   char iv_raw[17];
@@ -63,11 +67,10 @@ bool Encryptor::Encrypt(const string& path, const vector<string>& users,
   scoped_ptr<crypto::RSAPrivateKey> priv_key(
       crypto::RSAPrivateKey::Create(2048));
 
-  LOG(INFO) << "RSA_size " << RSA_size(priv_key.get());
   // flen must be less than RSA_size(rsa)-11.
   // with 2048 modulus, then that means 32 chars, or with the padding, 21.
-  RSA_public_encrypt(key_data.size(),
-                     const_cast<unsigned char *>(key_data.data), );
+  // RSA_public_encrypt(key_data.size(),
+  //                    const_cast<unsigned char *>(key_data.data), );
   // vector<
 
   return true;

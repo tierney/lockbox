@@ -2,9 +2,14 @@
 
 #include <map>
 #include <string>
+#include <vector>
+
+#include "base/logging.h"
+#include "gflags/gflags.h"
 
 using std::map;
 using std::string;
+using std::vector;
 
 namespace lockbox {
 

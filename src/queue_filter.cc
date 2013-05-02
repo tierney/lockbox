@@ -74,10 +74,12 @@ void QueueFilter::Run() {
     // Figure out if the update should be written (still see a request in the
     // queue).
 
+    // Be sure to avoid overwriting a key that is already there.
 
     // Write to the update_queue, if necessary.
-    LOG(INFO) << "Putting " << path << " into the update queue";
-    dbm_->Put(update_queue_options, path, state);
+    LOG(INFO) << "Putting " << ts_path << " into the update queue of "
+              << update_queue_options.name;
+    dbm_->Put(update_queue_options, ts_path, state);
 
     // Delete the key when done.
     dbm_->Delete(unfiltered_queue_options, ts_path);

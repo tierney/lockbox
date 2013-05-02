@@ -10,6 +10,7 @@
 #include "leveldb/db.h"
 #include "base/strings/string_number_conversions.h"
 #include "queue_filter.h"
+#include "file_event_queue_handler.h"
 
 using std::string;
 
@@ -36,6 +37,8 @@ int main(int argc, char **argv) {
   string value;
 
   map<int64, lockbox::FileWatcherThread*> top_dir_watchers;
+  map<int64, lockbox::FileEventQueueHandler*> top_dir_queues;
+
   options.type = lockbox::ClientDB::TOP_DIR_LOCATION;
   options.name.clear();
 
@@ -51,6 +54,7 @@ int main(int argc, char **argv) {
     options.name = it->key().ToString();
     client_db.NewTopDir(options);
 
+    // Per top directory items to init and start.
     lockbox::FileWatcherThread* file_watcher =
         new lockbox::FileWatcherThread(&client_db);
     file_watcher->Start();
@@ -58,6 +62,11 @@ int main(int argc, char **argv) {
     LOG(INFO) << "Starting watcher for " << top_dir_id << " --> "
               << it->value().ToString();
     top_dir_watchers[top_dir_id] = file_watcher;
+
+    lockbox::FileEventQueueHandler* event_queue =
+        new lockbox::FileEventQueueHandler(it->key().ToString(),
+                                           &client_db, &client);
+    top_dir_queues[top_dir_id] = event_queue;
   }
   delete it;
 
@@ -65,7 +74,6 @@ int main(int argc, char **argv) {
 
   // Set the event processor running.
   lockbox::QueueFilter queue_filter(&client_db);
-
 
   lockbox::UserAuth auth;
   auth.email = "me2@you.com";

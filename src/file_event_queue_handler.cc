@@ -10,6 +10,7 @@
 #include "base/strings/string_split.h"
 #include "file_watcher/file_watcher.h"
 #include "util.h"
+#include "encryptor.h"
 
 using std::vector;
 
@@ -38,6 +39,7 @@ FileEventQueueHandler::FileEventQueueHandler(const string& top_dir_id,
       top_dir_id_(top_dir_id) {
   CHECK(dbm);
   CHECK(client);
+  LOG(INFO) << "Starting FileEventQueueHandler for " << top_dir_id;
 }
 
 FileEventQueueHandler::~FileEventQueueHandler() {
@@ -87,11 +89,11 @@ void FileEventQueueHandler::Run() {
   update_queue_options.type = ClientDB::UPDATE_QUEUE_CLIENT;
   update_queue_options.name = top_dir_id_;
   scoped_ptr<leveldb::Iterator> it;
+  leveldb::DB* db = dbm_->db(update_queue_options);
   while (true) {
     // As new files become available, lock the cloud if necessary, and make any
     // necessary computations before sending up.
 
-    leveldb::DB* db = dbm_->db(update_queue_options);
     it.reset(db->NewIterator(leveldb::ReadOptions()));
     it->SeekToFirst();
     if (!it->Valid()) {
@@ -100,10 +102,17 @@ void FileEventQueueHandler::Run() {
     }
     const string ts_path_key = it->key().ToString();
     const string event_type = it->value().ToString();
+    LOG(INFO) << "Got an action: " << ts_path_key << " " << event_type;
     vector<string> ts_path;
     // TODO(tierney): See the file_watcher_thread for updates to this code's
     // handling of the key formatting.
+    LOG(INFO) << "ts_path_key: " << ts_path_key;
     base::SplitString(ts_path_key, ':', &ts_path);
+    if (ts_path.size() != 2) {
+      LOG(WARNING) << "bad ts_path_key " << ts_path_key;
+      dbm_->Delete(update_queue_options, it->key().ToString());
+      continue;
+    }
     const string ts = ts_path[0];
     const string path = ts_path[1];
 
@@ -116,16 +125,22 @@ void FileEventQueueHandler::Run() {
     user_auth.password = "password";
 
     base::StringToInt(event_type, &fw_action);
+    LOG(INFO) << "fw_action: " << fw_action;
     PathLockRequest path_lock;
     PathLockResponse response;
+    vector<string> users;
+    RemotePackage package;
+    int64 ret = 0;
     switch (fw_action) {
       case FW::Actions::Add:
+      case FW::Actions::Modified:
         LOG(INFO) << "Read the file.";
         // Lock the file in the cloud.
         path_lock.user = user_auth;
         base::StringToInt64(top_dir_id_, &path_lock.top_dir_id);
         path_lock.rel_path = RemoveBaseFromInput(top_dir_path, path);
 
+        LOG(INFO) << "Locking on the cloud.";
         client_->Exec<void, PathLockResponse&, const PathLockRequest&>(
             &LockboxServiceClient::AcquireLockRelPath,
             response,
@@ -137,30 +152,39 @@ void FileEventQueueHandler::Run() {
         }
 
         // Determine who it should be shared with.
-        const vector<string>& users = response.users;
+        users = response.users;
 
+        LOG(INFO) << "Encrypting.";
         // Read the file, do the encryption.
-        RemotePackage package;
         Encryptor::Encrypt(path, users,
                            &(package.payload.data),
                            &(package.payload.user_enc_session));
 
+        LOG(INFO) << "Uploading.";
         // Upload the package. Cloud needs to update the appropriate user's
         // update queues.
-        int64 ret = client_->Exec<int64, const RemotePackage&>(
+        ret = client_->Exec<int64, const RemotePackage&>(
             &LockboxServiceClient::UploadPackage,
             package);
 
         // Release the lock.
+        LOG(INFO) << "Releasing lock";
         client_->Exec<void, const PathLockRequest&>(
             &LockboxServiceClient::ReleaseLockRelPath,
             path_lock);
 
+        LOG(INFO) << "Done.";
+        dbm_->Delete(update_queue_options, it->key().ToString());
+
         break;
       case FW::Actions::Delete:
+        LOG(WARNING) << "Delete not implemented.";
+        dbm_->Delete(update_queue_options, it->key().ToString());
         break;
-      case FW::Actions::Modified:
-        break;
+      // case FW::Actions::Modified:
+      //   LOG(WARNING) << "Modified not implemented.";
+      //   dbm_->Delete(update_queue_options, it->key().ToString());
+      //   break;
       default:
         CHECK(false) << "Unrecognize event " << fw_action;
     }

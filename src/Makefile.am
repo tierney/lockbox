@@ -2,7 +2,7 @@ LEVELDB_CFLAGS = -I$(top_builddir)/leveldb/include
 
 AM_CPPFLAGS = -I$(top_srcdir)/testing/gtest/include
 AM_CPPFLAGS += -I$(top_srcdir) -I$(top_builddir) $(LEVELDB_CFLAGS)
-AM_CPPFLAGS += -DHAVE_INTTYPES_H -DHAVE_NETINET_IN_H
+AM_CPPFLAGS += -DHAVE_INTTYPES_H -DHAVE_NETINET_IN_H -DUSE_OPENSSL
 AM_CFLAGS = -Wall -Wextra -g -O0
 AM_CXXFLAGS = -Wall -Wextra -g -O0
 AM_LDFLAGS = -L$(top_builddir) -static
@@ -110,6 +110,8 @@ client_LDADD += libfile_util.la
 client_LDADD += $(THRIFT_LIBS)
 client_LDADD += libdb_manager_client.la
 client_LDADD += libfile_watcher_thread.la
+client_LDADD += libfile_event_queue_handler.la
+client_LDADD += libencryptor.la
 client_LDADD += libleveldb_util.la
 client_LDADD += $(LEVELDB_BIN_LIBS)
 client_LDADD += $(BOOST_THREAD_LIBS)
@@ -157,7 +159,10 @@ libutil_la_SOURCES += util.cc
 noinst_LTLIBRARIES += libencryptor.la
 libencryptor_la_SOURCES = encryptor.h
 libencryptor_la_SOURCES += encryptor.cc
-libencryptor_la_LIBADD = $(top_builddir)/crypto/libcryptor.la
+libencryptor_la_LIBADD = $(top_builddir)/crypto/libencryptor.la
+libencryptor_la_LIBADD += $(top_builddir)/crypto/libsymmetric_key.la
+libencryptor_la_LIBADD += $(top_builddir)/crypto/librandom.la
+libencryptor_la_LIBADD += $(top_builddir)/crypto/librsa_private_key.la
 
 # Event helpers.
 noinst_LTLIBRARIES += libqueue_filter.la
@@ -172,6 +177,7 @@ noinst_LTLIBRARIES += libfile_event_queue_handler.la
 libfile_event_queue_handler_la_SOURCES =
 libfile_event_queue_handler_la_SOURCES += file_event_queue_handler.h
 libfile_event_queue_handler_la_SOURCES += file_event_queue_handler.cc
+libfile_event_queue_handler_la_LIBADD = $(top_builddir)/base/libmd5.la
 
 # Database pieces.
 noinst_LTLIBRARIES += libdb_manager.la
