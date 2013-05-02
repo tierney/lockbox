@@ -1,19 +1,20 @@
 #include <string>
 #include <vector>
 
-#include "base/basictypes.h"
-#include "client.h"
 #include "LockboxService.h"
-#include "lockbox_types.h"
-#include "file_watcher_thread.h"
-#include "db_manager_client.h"
+#include "base/basictypes.h"
 #include "base/file_util.h"
-#include "file_util.h"
-#include "leveldb/db.h"
+#include "base/memory/scoped_ptr.h"
 #include "base/strings/string_number_conversions.h"
-#include "queue_filter.h"
-#include "file_event_queue_handler.h"
+#include "client.h"
 #include "crypto/rsa_private_key.h"
+#include "db_manager_client.h"
+#include "file_event_queue_handler.h"
+#include "file_util.h"
+#include "file_watcher_thread.h"
+#include "leveldb/db.h"
+#include "lockbox_types.h"
+#include "queue_filter.h"
 
 #include "rsa_public_key_openssl.h"
 #include "rsa.h"
@@ -42,14 +43,14 @@ int main(int argc, char **argv) {
   string home_dir(lockbox::GetHomeDirectory());
   lockbox::DBManagerClient client_db(home_dir.append("/.lockbox"));
 
+  lockbox::UserAuth auth;
+  auth.email = "me2@you.com";
+  auth.password = "password";
+
   // See if the databases are already full of interesting data.
   lockbox::DBManagerClient::Options options;
   options.type = lockbox::ClientDB::CLIENT_DATA;
   string value;
-
-  lockbox::UserAuth auth;
-  auth.email = "me2@you.com";
-  auth.password = "password";
 
   // Initialize the private key if necessary.
   client_db.Get(options, "PRIV_KEY", &value);
@@ -68,7 +69,7 @@ int main(int argc, char **argv) {
     vector<uint8> export_pub;
     CHECK(priv_key->ExportPublicKey(&export_pub));
     options.type = lockbox::ClientDB::EMAIL_KEY;
-    client_db.Put(options, "me2@you.com",
+    client_db.Put(options, auth.email,
                   string(export_pub.begin(), export_pub.end()));
 
     // Update the public key in the cloud.
@@ -86,24 +87,25 @@ int main(int argc, char **argv) {
   map<int64, lockbox::FileWatcherThread*> top_dir_watchers;
   map<int64, lockbox::FileEventQueueHandler*> top_dir_queues;
 
-  options.type = lockbox::ClientDB::TOP_DIR_LOCATION;
-  options.name.clear();
-
   lockbox::Encryptor encryptor(&client_db);
 
+  options.type = lockbox::ClientDB::TOP_DIR_LOCATION;
+  options.name.clear();
   leveldb::DB* db = client_db.db(options);
-  leveldb::Iterator* it = db->NewIterator(leveldb::ReadOptions());
+  scoped_ptr<leveldb::Iterator> it(db->NewIterator(leveldb::ReadOptions()));
   for (it->SeekToFirst(); it->Valid(); it->Next()) {
+    // Get the TOP DIR id.
     int64 top_dir_id = 0;
     CHECK(base::StringToInt64(it->key().ToString(), &top_dir_id))
         << it->key().ToString();
 
+    // Make sure that we have the top dir databases watched.
     lockbox::DBManagerClient::Options options;
     options.type = lockbox::ClientDB::TOP_DIR_PLACEHOLDER;
     options.name = it->key().ToString();
     client_db.NewTopDir(options);
 
-    // Per top directory items to init and start.
+    // Per top directory init and start.
     lockbox::FileWatcherThread* file_watcher =
         new lockbox::FileWatcherThread(&client_db);
     file_watcher->Start();
@@ -117,7 +119,6 @@ int main(int argc, char **argv) {
                                            &client_db, &client, &encryptor);
     top_dir_queues[top_dir_id] = event_queue;
   }
-  delete it;
 
   // Use the top dir locations to seed the watcher.
 
