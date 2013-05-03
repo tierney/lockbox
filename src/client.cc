@@ -37,152 +37,138 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  lockbox::Client::ConnInfo conn_info(argv[1], atoi(argv[2]));
-  lockbox::Client client(conn_info);
+  // lockbox::Client::ConnInfo conn_info(argv[1], atoi(argv[2]));
+  // lockbox::Client client(conn_info);
 
-  string home_dir(lockbox::GetHomeDirectory());
-  lockbox::DBManagerClient client_db(home_dir.append("/.lockbox"));
+  // string home_dir(lockbox::GetHomeDirectory());
+  // lockbox::DBManagerClient client_db(home_dir.append("/.lockbox"));
 
-  lockbox::UserAuth user_auth;
-  user_auth.email = "me2@you.com";
-  user_auth.password = "password";
+  // lockbox::UserAuth user_auth;
+  // user_auth.email = "me2@you.com";
+  // user_auth.password = "password";
 
-  // See if the databases are already full of interesting data.
-  lockbox::DBManagerClient::Options options;
-  options.type = lockbox::ClientDB::CLIENT_DATA;
-  string value;
-
-  lockbox::AccessCard acc;
-  // New key
-  acc.Generate();
-  string pem;
-  // Get public key
-  acc.PublicKey(pem);
-  std::cout << pem << "\n";
-  // Get private key
-  acc.PrivateKey(pem, "hello");
-  std::cout << pem << "\n";
-  // Load a private key using pass 'hello'
-  acc.Load(pem, "hello");
-  acc.PublicKey(pem);
-  std::cout << pem << "\n";
-
-  lockbox::AccessCard a2;
-  a2.LoadPub(pem, "hello");
-  string enc_out;
-  a2.Encrypt("hello world", &enc_out);
+  // // See if the databases are already full of interesting data.
+  // lockbox::DBManagerClient::Options options;
+  // options.type = lockbox::ClientDB::CLIENT_DATA;
+  // string value;
 
 
-  acc.PrivateKey(pem, "hello");
+  lockbox::RSAPEM rsa;
+  string priv;
+  string pub;
+  rsa.Generate("passphrase", &priv, &pub);
 
-  lockbox::AccessCard a3;
-  a3.Load(pem, "hello");
-  string dec_out;
-  a3.Decrypt(enc_out, &dec_out);
-  LOG(INFO) << "out: " << dec_out;
+  string enc;
+  rsa.PublicEncrypt(pub, "0123456789012345678901", &enc);
 
+  string dec;
+  rsa.PrivateDecrypt(priv, enc, &dec);
+  LOG(INFO) << dec;
 
   return 0;
 
 
+  // // Initialize the private key if necessary.
+  // client_db.Get(options, "PRIV_KEY", &value);
+  // if (value.empty()) {
+  //   // Generate the key.
+  //   scoped_ptr<crypto::RSAPrivateKey> priv_key(
+  //       crypto::RSAPrivateKey::Create(2048));
+
+  //   // Save the private key to our local data store.
+  //   vector<uint8> export_priv;
+  //   CHECK(priv_key->ExportPrivateKey(&export_priv));
+  //   string s_export_priv(export_priv.begin(), export_priv.end());
+  //   client_db.Put(options, "PRIV_KEY", s_export_priv);
 
 
-  // Initialize the private key if necessary.
-  client_db.Get(options, "PRIV_KEY", &value);
-  if (value.empty()) {
-    // Generate the key.
-    scoped_ptr<crypto::RSAPrivateKey> priv_key(
-        crypto::RSAPrivateKey::Create(2048));
+  //   LOG(INFO) << "PRIV_KEY " << s_export_priv;
 
-    // Save the private key to our local data store.
-    vector<uint8> export_priv;
-    CHECK(priv_key->ExportPrivateKey(&export_priv));
-    string s_export_priv(export_priv.begin(), export_priv.end());
-    client_db.Put(options, "PRIV_KEY", s_export_priv);
+  //   // Set the public key in the EMAIL_KEY db.
+  //   vector<uint8> export_pub;
+  //   CHECK(priv_key->ExportPublicKey(&export_pub));
+  //   options.type = lockbox::ClientDB::EMAIL_KEY;
+  //   client_db.Put(options, user_auth.email,
+  //                 string(export_pub.begin(), export_pub.end()));
 
 
-    LOG(INFO) << "PRIV_KEY " << s_export_priv;
+  //   // Update the public key in the cloud.
+  //   lockbox::PublicKey pub_key;
+  //   pub_key.key.clear();
+  //   pub_key.key.assign(export_pub.begin(), export_pub.end());
+  //   bool ret = client.Exec<bool,
+  //                          const lockbox::UserAuth&, const lockbox::PublicKey&>(
+  //       &lockbox::LockboxServiceClient::AssociateKey,
+  //       user_auth, pub_key);
+  //   CHECK(ret);
 
-    // Set the public key in the EMAIL_KEY db.
-    vector<uint8> export_pub;
-    CHECK(priv_key->ExportPublicKey(&export_pub));
-    options.type = lockbox::ClientDB::EMAIL_KEY;
-    client_db.Put(options, user_auth.email,
-                  string(export_pub.begin(), export_pub.end()));
+  //   // FORCE FIRST TIME STARTUP WITH THIS.
+
+  //   lockbox::UserID user_id =
+  //       client.Exec<lockbox::UserID, const lockbox::UserAuth&>(
+  //           &lockbox::LockboxServiceClient::RegisterUser,
+  //           user_auth);
+  //   lockbox::DeviceID device_id =
+  //       client.Exec<lockbox::DeviceID, const lockbox::UserAuth&>(
+  //           &lockbox::LockboxServiceClient::RegisterDevice,
+  //           user_auth);
+  //   lockbox::TopDirID top_dir_id =
+  //       client.Exec<lockbox::TopDirID, const lockbox::UserAuth&>(
+  //           &lockbox::LockboxServiceClient::RegisterTopDir,
+  //           user_auth);
+
+  //   lockbox::DBManagerClient::Options dir_loc_options;
+  //   dir_loc_options.type = lockbox::ClientDB::TOP_DIR_LOCATION;
+  //   client_db.Put(dir_loc_options, base::Int64ToString(top_dir_id), "/home/tierney/Lockbox");
+  // }
+
+  // // Prepare to start the various watchers.
+  // map<int64, lockbox::FileWatcherThread*> top_dir_watchers;
+  // map<int64, lockbox::FileEventQueueHandler*> top_dir_queues;
+
+  // lockbox::Encryptor encryptor(&client_db);
+
+  // options.type = lockbox::ClientDB::TOP_DIR_LOCATION;
+  // options.name.clear();
+  // leveldb::DB* db = client_db.db(options);
+  // scoped_ptr<leveldb::Iterator> it(db->NewIterator(leveldb::ReadOptions()));
+  // for (it->SeekToFirst(); it->Valid(); it->Next()) {
+  //   // Get the TOP DIR id.
+  //   int64 top_dir_id = 0;
+  //   CHECK(base::StringToInt64(it->key().ToString(), &top_dir_id))
+  //       << it->key().ToString();
+
+  //   // Make sure that we have the top dir databases watched.
+  //   lockbox::DBManagerClient::Options options;
+  //   options.type = lockbox::ClientDB::TOP_DIR_PLACEHOLDER;
+  //   options.name = it->key().ToString();
+  //   client_db.NewTopDir(options);
+
+  //   // Per top directory init and start.
+  //   lockbox::FileWatcherThread* file_watcher =
+  //       new lockbox::FileWatcherThread(&client_db);
+  //   file_watcher->Start();
+  //   file_watcher->AddDirectory(it->value().ToString(), true /* recursive */);
+  //   LOG(INFO) << "Starting watcher for " << top_dir_id << " --> "
+  //             << it->value().ToString();
+  //   top_dir_watchers[top_dir_id] = file_watcher;
+
+  //   lockbox::FileEventQueueHandler* event_queue =
+  //       new lockbox::FileEventQueueHandler(it->key().ToString(),
+  //                                          &client_db, &client, &encryptor,
+  //                                          &user_auth);
+  //   top_dir_queues[top_dir_id] = event_queue;
+  // }
+
+  // // Use the top dir locations to seed the watcher.
+
+  // // Set the event processor running.
+  // lockbox::QueueFilter queue_filter(&client_db);
 
 
-    // Update the public key in the cloud.
-    lockbox::PublicKey pub_key;
-    pub_key.key.clear();
-    pub_key.key.assign(export_pub.begin(), export_pub.end());
-    bool ret = client.Exec<bool,
-                           const lockbox::UserAuth&, const lockbox::PublicKey&>(
-        &lockbox::LockboxServiceClient::AssociateKey,
-        user_auth, pub_key);
-    CHECK(ret);
 
-    // FORCE FIRST TIME STARTUP WITH THIS.
 
-    lockbox::UserID user_id =
-        client.Exec<lockbox::UserID, const lockbox::UserAuth&>(
-            &lockbox::LockboxServiceClient::RegisterUser,
-            user_auth);
-    lockbox::DeviceID device_id =
-        client.Exec<lockbox::DeviceID, const lockbox::UserAuth&>(
-            &lockbox::LockboxServiceClient::RegisterDevice,
-            user_auth);
-    lockbox::TopDirID top_dir_id =
-        client.Exec<lockbox::TopDirID, const lockbox::UserAuth&>(
-            &lockbox::LockboxServiceClient::RegisterTopDir,
-            user_auth);
 
-    lockbox::DBManagerClient::Options dir_loc_options;
-    dir_loc_options.type = lockbox::ClientDB::TOP_DIR_LOCATION;
-    client_db.Put(dir_loc_options, base::Int64ToString(top_dir_id), "/home/tierney/Lockbox");
-  }
-
-  // Prepare to start the various watchers.
-  map<int64, lockbox::FileWatcherThread*> top_dir_watchers;
-  map<int64, lockbox::FileEventQueueHandler*> top_dir_queues;
-
-  lockbox::Encryptor encryptor(&client_db);
-
-  options.type = lockbox::ClientDB::TOP_DIR_LOCATION;
-  options.name.clear();
-  leveldb::DB* db = client_db.db(options);
-  scoped_ptr<leveldb::Iterator> it(db->NewIterator(leveldb::ReadOptions()));
-  for (it->SeekToFirst(); it->Valid(); it->Next()) {
-    // Get the TOP DIR id.
-    int64 top_dir_id = 0;
-    CHECK(base::StringToInt64(it->key().ToString(), &top_dir_id))
-        << it->key().ToString();
-
-    // Make sure that we have the top dir databases watched.
-    lockbox::DBManagerClient::Options options;
-    options.type = lockbox::ClientDB::TOP_DIR_PLACEHOLDER;
-    options.name = it->key().ToString();
-    client_db.NewTopDir(options);
-
-    // Per top directory init and start.
-    lockbox::FileWatcherThread* file_watcher =
-        new lockbox::FileWatcherThread(&client_db);
-    file_watcher->Start();
-    file_watcher->AddDirectory(it->value().ToString(), true /* recursive */);
-    LOG(INFO) << "Starting watcher for " << top_dir_id << " --> "
-              << it->value().ToString();
-    top_dir_watchers[top_dir_id] = file_watcher;
-
-    lockbox::FileEventQueueHandler* event_queue =
-        new lockbox::FileEventQueueHandler(it->key().ToString(),
-                                           &client_db, &client, &encryptor,
-                                           &user_auth);
-    top_dir_queues[top_dir_id] = event_queue;
-  }
-
-  // Use the top dir locations to seed the watcher.
-
-  // Set the event processor running.
-  lockbox::QueueFilter queue_filter(&client_db);
 
 
   // lockbox::UserID user_id =
