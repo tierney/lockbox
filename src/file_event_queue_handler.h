@@ -33,6 +33,8 @@ class FileEventQueueHandler {
  private:
   void PrepareMaps(const string& top_dir_path);
 
+  bool HandleAddAction();
+
   DBManagerClient* dbm_;
   Client* client_;
   Encryptor* encryptor_;

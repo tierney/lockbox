@@ -130,7 +130,6 @@ void FileEventQueueHandler::Run() {
     LOG(INFO) << "fw_action: " << fw_action;
     PathLockRequest path_lock;
     PathLockResponse response;
-    vector<string> users;
     RemotePackage package;
     int64 ret = 0;
     switch (fw_action) {
@@ -138,9 +137,10 @@ void FileEventQueueHandler::Run() {
         LOG(INFO) << "Read the file.";
         // Lock the file in the cloud.
         path_lock.user = user_auth;
-        base::StringToInt64(top_dir_id_, &path_lock.top_dir_id);
+        path_lock.top_dir = top_dir_id_;
         path_lock.rel_path = RemoveBaseFromInput(top_dir_path, path);
 
+        // Acquire the lock on the cloud.
         LOG(INFO) << "Locking on the cloud.";
         client_->Exec<void, PathLockResponse&, const PathLockRequest&>(
             &LockboxServiceClient::AcquireLockRelPath,
@@ -148,23 +148,16 @@ void FileEventQueueHandler::Run() {
             path_lock);
         if (!response.acquired) {
           LOG(INFO) << "Someone else already locked the file " << path;
-          // Delete the entry?
+          // TODO(tierney): Consider rewriting the queue entry with the current
+          // timestamp so that we can make sure to handle any updates to the
+          // file, even if they come from the cloud.
+          dbm_->Delete(update_queue_options, it->key().ToString());
           continue;
         }
 
-        // Determine who it should be shared with.
-        users = response.users;
-        for (auto& ptr : response.users) {
-          LOG(INFO) << "  " << ptr;
-        }
-        LOG(INFO) << "Users:";
-        for (auto& iter : users) {
-          LOG(INFO) << "  Encrypting for " << iter;
-        }
-
-        LOG(INFO) << "Encrypting.";
         // Read the file, do the encryption.
-        encryptor_->Encrypt(path, users,
+        LOG(INFO) << "Encrypting.";
+        encryptor_->Encrypt(path, response.users,
                             &(package.payload.data),
                             &(package.payload.user_enc_session));
 
@@ -172,9 +165,9 @@ void FileEventQueueHandler::Run() {
           LOG(INFO) << "  " << ptr.first << " : " << ptr.second;
         }
 
-        LOG(INFO) << "Uploading.";
         // Upload the package. Cloud needs to update the appropriate user's
         // update queues.
+        LOG(INFO) << "Uploading.";
         ret = client_->Exec<int64, const RemotePackage&>(
             &LockboxServiceClient::UploadPackage,
             package);
@@ -201,6 +194,11 @@ void FileEventQueueHandler::Run() {
         CHECK(false) << "Unrecognize event " << fw_action;
     }
   }
+}
+
+bool FileEventQueueHandler::HandleAddAction() {
+
+  return true;
 }
 
 } // namespace lockbox

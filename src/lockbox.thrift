@@ -42,7 +42,7 @@ struct DownloadRequest {
 
 struct PathLockRequest {
   1: required UserAuth user,
-  2: required i64 top_dir_id,
+  2: required string top_dir,
   3: string rel_path,
   4: i32 seconds_requested,
 }
