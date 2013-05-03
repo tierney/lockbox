@@ -1,237 +1,236 @@
-AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src
-AM_CPPFLAGS += -DHAVE_INTTYPES_H -DHAVE_NETINET_IN_H $(DEPS_CFLAGS) $(GTK_CFLAGS)
-AM_CXXFLAGS = -Wall -Wextra
+LEVELDB_CFLAGS = -I$(top_builddir)/leveldb/include
 
-SUBDIRS =
+AM_CPPFLAGS = -I$(top_srcdir)/testing/gtest/include
+AM_CPPFLAGS += -I$(top_srcdir) -I$(top_builddir) $(LEVELDB_CFLAGS)
+AM_CPPFLAGS += -DHAVE_INTTYPES_H -DHAVE_NETINET_IN_H -DUSE_OPENSSL
+AM_CFLAGS = -Wall -Wextra -g -O0
+AM_CXXFLAGS = -Wall -Wextra -g -O0
+AM_LDFLAGS = -L$(top_builddir) -static
+
 TESTS =
 bin_PROGRAMS =
 noinst_PROGRAMS =
 noinst_LTLIBRARIES =
 
+LEVELDB_BIN_LIBS = $(top_builddir)/leveldb/libleveldb.a -lsnappy
 
 bin_PROGRAMS += lockbox_main
-lockbox_main_LDADD = $(DEPS_LIBS) $(LIBEVENT_LIBS) $(GTK_LIBS)
 lockbox_main_SOURCES = lockbox_main.cc
-lockbox_main_SOURCES +=
-lockbox_main_SOURCES += base/run_loop.h
-lockbox_main_SOURCES += base/run_loop.cc
-lockbox_main_SOURCES += base/pending_task.cc
-lockbox_main_SOURCES += base/metrics/statistics_recorder.cc
-lockbox_main_SOURCES += base/metrics/histogram.cc
-lockbox_main_SOURCES += base/metrics/histogram_base.cc
-lockbox_main_SOURCES += base/pickle.h base/base_export.h base/pickle.cc
-lockbox_main_SOURCES += base/values.cc
-lockbox_main_SOURCES += base/metrics/bucket_ranges.cc
-lockbox_main_SOURCES += base/time_posix.cc
-lockbox_main_SOURCES += base/metrics/sample_vector.cc
-lockbox_main_SOURCES += base/time.cc
-lockbox_main_SOURCES += base/stringprintf.cc
-lockbox_main_SOURCES += base/threading/thread_restrictions.cc \
-	base/debug/alias.cc \
-	base/memory/weak_ptr.cc \
-	base/debug/trace_event_impl.h \
-	base/debug/trace_event_impl.cc
-lockbox_main_SOURCES += base/threading/platform_thread_posix.cc
-lockbox_main_SOURCES += base/synchronization/cancellation_flag.cc
-lockbox_main_SOURCES += base/synchronization/waitable_event_posix.cc
-lockbox_main_SOURCES += base/string_util.cc
-lockbox_main_SOURCES += base/strings/string_split.h
-lockbox_main_SOURCES += base/strings/string_split.cc
-lockbox_main_SOURCES += base/memory/ref_counted_memory.cc
-lockbox_main_SOURCES += base/threading/thread_id_name_manager.cc
-lockbox_main_SOURCES += base/threading/thread_local_posix.cc
-lockbox_main_SOURCES += base/atomicops_internals_x86_gcc.cc
-lockbox_main_SOURCES += base/at_exit.cc
-lockbox_main_SOURCES += base/memory/singleton.h base/memory/singleton.cc
-lockbox_main_SOURCES += base/strings/string_piece.cc
-lockbox_main_SOURCES += base/synchronization/condition_variable_posix.cc
-lockbox_main_SOURCES += base/third_party/dynamic_annotations/dynamic_annotations.c
-lockbox_main_SOURCES += base/process_util_@GENERIC_OS_SUFFIX@.@OS_LANG_EXT@
-lockbox_main_SOURCES += base/process_posix.cc
-lockbox_main_SOURCES += base/process_util_posix.cc \
-	base/process_util.h \
-	base/process_util.cc \
-	base/allocator/type_profiler_control.cc \
-	base/posix/file_descriptor_shuffle.cc \
-	base/tracking_info.cc
-lockbox_main_SOURCES += base/thread_task_runner_handle.cc
-lockbox_main_SOURCES += base/message_pump_default.cc
-lockbox_main_SOURCES += base/message_pump_libevent.cc
-lockbox_main_SOURCES += base/message_pump_gtk.cc
-lockbox_main_SOURCES += base/message_pump_glib.cc
-lockbox_main_SOURCES += base/metrics/sparse_histogram.cc
-lockbox_main_SOURCES += base/metrics/sample_map.cc
-lockbox_main_SOURCES += base/metrics/histogram_samples.cc
-lockbox_main_SOURCES += base/json/json_string_value_serializer.cc
-lockbox_main_SOURCES += base/string16.cc
-lockbox_main_SOURCES += base/utf_string_conversions.cc
-lockbox_main_SOURCES += base/json/json_writer.cc
-lockbox_main_SOURCES += base/third_party/nspr/prtime.cc
-lockbox_main_SOURCES += base/threading/thread_checker_impl.cc
-lockbox_main_SOURCES += base/third_party/icu/icu_utf.cc
-lockbox_main_SOURCES += base/strings/string_number_conversions.cc
-lockbox_main_SOURCES += base/sys_info_posix.cc
-lockbox_main_SOURCES += base/message_pump.cc
-lockbox_main_SOURCES += base/json/json_reader.cc
-lockbox_main_SOURCES += base/strings/utf_string_conversion_utils.cc
-lockbox_main_SOURCES += base/json/string_escape.cc
-lockbox_main_SOURCES += base/third_party/dmg_fp/g_fmt.cc
-lockbox_main_SOURCES += base/third_party/dmg_fp/dtoa.cc
-lockbox_main_SOURCES += base/json/json_parser.cc
-lockbox_main_SOURCES += base/debug/stack_trace_posix.cc
-lockbox_main_SOURCES += base/debug/stack_trace.cc
-lockbox_main_SOURCES += base/debug/debugger_posix.cc
-lockbox_main_SOURCES += base/safe_strerror_posix.cc
-lockbox_main_SOURCES += base/vlog.cc
-lockbox_main_SOURCES += base/command_line.cc
-lockbox_main_SOURCES += base/base_switches.cc
-lockbox_main_SOURCES += base/strings/sys_string_conversions_posix.cc
-lockbox_main_SOURCES += base/platform_file.cc
-lockbox_main_SOURCES += base/platform_file_posix.cc
-lockbox_main_SOURCES += base/profiler/tracked_time.cc
-lockbox_main_SOURCES += base/threading/thread_local_storage_posix.cc
-lockbox_main_SOURCES += base/profiler/alternate_timer.cc
-lockbox_main_SOURCES += base/threading/thread_collision_warner.cc
-lockbox_main_SOURCES += base/threading/post_task_and_reply_impl.cc
+lockbox_main_LDADD =
+lockbox_main_LDADD += $(GFLAGS_LIBS)
+lockbox_main_LDADD += $(top_builddir)/base/libfile_util.la
+lockbox_main_LDADD += $(top_builddir)/crypto/librsa_private_key.la
+lockbox_main_LDADD += $(top_builddir)/base/threading/libthread.la
+lockbox_main_LDADD += $(top_builddir)/base/files/libfile_path_watcher.la
+lockbox_main_LDADD += $(top_builddir)/base/librun_loop.la
+lockbox_main_LDADD += $(top_builddir)/base/synchronization/libwaitable_event.la
+lockbox_main_LDADD += libclient_initialization.la
+lockbox_main_LDADD += libfile_watcher.la
+lockbox_main_LDADD += libnegotiator.la
+lockbox_main_LDADD += $(BOOST_SYSTEM_LIBS)
 
-lockbox_main_LDADD += libfile_path_watcher.la
-lockbox_main_LDADD += libmessage_loop.la
-lockbox_main_LDADD += libmessage_loop_proxy.la
-lockbox_main_LDADD += libtracked_objects.la
-lockbox_main_LDADD += libref_counted.la
-lockbox_main_LDADD += libcallback.la
-lockbox_main_LDADD += liblocation.la
-lockbox_main_LDADD += libtask_runner.la
-lockbox_main_LDADD += liblock.la
+# noinst_LTLIBRARIES += libleveldb_base.la
+# libleveldb_base_la_SOURCES = leveldb_base.h
+# libleveldb_base_la_SOURCES += leveldb_base.cc
+# libleveldb_base_la_CXXFLAGS = $(LEVELDB_CFLAGS)
+# libleveldb_base_la_LIBADD = $(LEVELDB_BIN_LIBS)
 
+noinst_LTLIBRARIES += libclient_initialization.la
+libclient_initialization_la_SOURCES = client_initialization.h
+libclient_initialization_la_SOURCES += client_initialization.cc
+
+noinst_LTLIBRARIES += libfile_watcher.la
+libfile_watcher_la_SOURCES = file_watcher.h
+
+noinst_LTLIBRARIES += libnegotiator.la
+libnegotiator_la_SOURCES = negotiator.h
+
+bin_PROGRAMS += user_device_queue_main
+user_device_queue_main_SOURCES = user_device_queue_main.cc
+user_device_queue_main_CXXFLAGS = -static
+user_device_queue_main_CXXFLAGS += $(GFLAGS_CFLAGS)
+user_device_queue_main_CXXFLAGS += $(LEVELDB_CFLAGS)
+user_device_queue_main_LDADD = $(LEVELDB_BIN_LIBS)
+user_device_queue_main_LDADD += $(GFLAGS_LIBS)
+user_device_queue_main_LDADD += $(top_builddir)/base/libstringprintf.la
+user_device_queue_main_LDADD += $(top_builddir)/base/liblogging.la
+
+# TESTS += db_email_user_test
+# bin_PROGRAMS += db_email_user_test
+# db_email_user_test_SOURCES = db_email_user_test.cc
+# db_email_user_test_CXXFLAGS = $(LEVELDB_CFLAGS)
+# db_email_user_test_LDADD = $(top_builddir)/testing/gtest/lib/libgtest.la
+# db_email_user_test_LDADD += $(top_builddir)/testing/gtest/lib/libgtest_main.la
+# db_email_user_test_LDADD += libdb_email_user.la
+# db_email_user_test_LDADD += $(top_builddir)/base/files/libfile_path.la
+# db_email_user_test_LDADD += $(top_builddir)/base/liblogging.la
+# db_email_user_test_LDADD += libleveldb_util.la
+# db_email_user_test_LDADD += $(LEVELDB_BIN_LIBS)
+
+noinst_LTLIBRARIES += libguid_creator.la
+libguid_creator_la_SOURCES = guid_creator.h
+libguid_creator_la_SOURCES += guid_creator.cc
+
+noinst_LTLIBRARIES += liblockbox_service_handler.la
+liblockbox_service_handler_la_SOURCES = lockbox_service_handler.h
+liblockbox_service_handler_la_SOURCES += lockbox_service_handler.cc
+liblockbox_service_handler_la_CXXFLAGS = $(LEVELDB_CFLAGS)
+liblockbox_service_handler_la_LIBADD = liblockbox_thrift.la
+liblockbox_service_handler_la_LIBADD += libdb_manager_server.la
 
 bin_PROGRAMS += server
-server_SOURCES = UserStorage_server.cpp
+server_SOURCES = server.cc
+server_CXXFLAGS = $(LEVELDB_CFLAGS)
 server_LDADD =
-server_LDADD += libuserthrift.la
-server_LDADD += -lthrift -lthriftnb -levent -lpthread -lc
+server_LDADD += liblockbox_service_handler.la
+server_LDADD += liblockbox_thrift.la
+server_LDADD += libdb_manager_server.la
+server_LDADD += libcounter.la
+server_LDADD += libguid_creator.la
+server_LDADD += $(top_builddir)/crypto/librandom.la
+server_LDADD += $(LEVELDB_BIN_LIBS)
+server_LDADD += libleveldb_util.la
+server_LDADD += $(top_builddir)/base/files/libfile_path.la
+server_LDADD += $(top_builddir)/base/liblogging.la
+server_LDADD += $(THRIFT_LIBS)
+server_LDADD += $(LIBEVENT_LIBS)
+server_LDADD += $(PTHREAD_LIBS)
 server_LDADD += $(BOOST_THREAD_LIBS)
 
+noinst_LTLIBRARIES += libfile_util.la
+libfile_util_la_SOURCES = file_util.h
+libfile_util_la_SOURCES += file_util.cc
 
 bin_PROGRAMS += client
-client_SOURCES = UserStorage_client.cpp
+client_SOURCES = client.cc
 client_LDADD =
-client_LDADD += libuserthrift.la
-client_LDADD += -lthrift
+client_LDADD += libqueue_filter.la
+client_LDADD += librsa.la
+client_LDADD += librsa_public_key_openssl.la
+client_LDADD += liblockbox_thrift.la
+client_LDADD += libfile_util.la
+client_LDADD += $(THRIFT_LIBS)
+client_LDADD += libdb_manager_client.la
+client_LDADD += libfile_watcher_thread.la
+client_LDADD += libfile_event_queue_handler.la
+client_LDADD += libencryptor.la
+client_LDADD += libleveldb_util.la
+client_LDADD += $(LEVELDB_BIN_LIBS)
+client_LDADD += $(BOOST_THREAD_LIBS)
 
 # thrift compiler command. Note that the --out value for the output
 # directory.
 THRIFT_BUILD = $(THRIFT) --gen cpp --out . $<
 
+####
+# Remember to run the generate_thrift_automake.py script once we add a .thrift
+# file OR a new service to an existing .thrift file.
 
-noinst_LTLIBRARIES += libuserthrift.la
-libuserthrift_la_SOURCES =
-libuserthrift_la_SOURCES += UserStorage.cpp
-libuserthrift_la_SOURCES += UserStorage.h
-libuserthrift_la_SOURCES += user_constants.cpp
-libuserthrift_la_SOURCES += user_types.cpp
-libuserthrift_la_SOURCES += user_constants.h
-libuserthrift_la_SOURCES += user_types.h
-
-$(libuserthrift_la_SOURCES): $(srcdir)/user.thrift
-	$(THRIFT_BUILD)
+# AM_MAKEFLAGS = -W$(top_srcdir)/src/thrift.mk
+# $(top_srcdir)/src/thrift.mk:
+# 	./generate_thrift_automake.py *.thrift > thrift.mk
+####
+include thrift.mk
 
 
-noinst_LTLIBRARIES += libhash_chain_digestthrift.la
-libhash_chain_digestthrift_la_SOURCES =
-libhash_chain_digestthrift_la_SOURCES += VersionExchange.cpp
-libhash_chain_digestthrift_la_SOURCES += VersionExchange.h
-libhash_chain_digestthrift_la_SOURCES += hash_chain_digest_constants.cpp
-libhash_chain_digestthrift_la_SOURCES += hash_chain_digest_constants.h
-libhash_chain_digestthrift_la_SOURCES += hash_chain_digest_types.cpp
-libhash_chain_digestthrift_la_SOURCES += hash_chain_digest_types.h
+# Delta encoding pieces.
+bin_PROGRAMS += delta_encoding_main
+delta_encoding_main_SOURCES = delta_encoding_main.cc
+delta_encoding_main_LDADD =
+delta_encoding_main_LDADD += $(top_builddir)/courgette/libsimple_delta.la
+delta_encoding_main_LDADD += $(top_builddir)/courgette/libstreams.la
 
-$(libhash_chain_digestthrift_la_SOURCES): $(srcdir)/hash_chain_digest.thrift
-	$(THRIFT_BUILD)
+noinst_LTLIBRARIES += libfile_watcher_thread.la
+libfile_watcher_thread_la_SOURCES = file_watcher_thread.h
+libfile_watcher_thread_la_SOURCES += file_watcher_thread.cc
+libfile_watcher_thread_la_LIBADD = $(top_builddir)/file_watcher/libfile_watcher.la
 
+# Counter helper library.
+noinst_LTLIBRARIES += libcounter.la
+libcounter_la_SOURCES =
+libcounter_la_SOURCES += counter.h
+libcounter_la_SOURCES += counter.cc
+libcounter_la_LIBADD = $(BOOST_THREAD_LIBS)
 
-clean-local: clean-local-check
-.PHONY: clean-local-check
-clean-local-check:
-	-rm -rf \
-		$(libuserthrift_la_SOURCES) \
-		$(libhash_chain_digestthrift_la_SOURCES) \
-		*.skeleton.cpp
+noinst_LTLIBRARIES += libutil.la
+libutil_la_SOURCES = util.h
+libutil_la_SOURCES += util.cc
 
+# Encryptor.
 
-noinst_LTLIBRARIES += libfile_path_watcher.la
-libfile_path_watcher_la_CPPFLAGS = -I$(top_srcdir)/src $(DEPS_CFLAGS)
-libfile_path_watcher_la_LIBS = $(DEPS_LIBS)
-libfile_path_watcher_la_SOURCES = base/files/file_path_watcher.h
-libfile_path_watcher_la_SOURCES += base/files/file_path_watcher.cc
-libfile_path_watcher_la_SOURCES += base/files/file_path_watcher_@FILE_PATH_WATCHER_SUFFIX@.cc
-libfile_path_watcher_la_SOURCES += \
- base/base_export.h base/basictypes.h base/port.h build/build_config.h \
- base/callback.h base/callback_forward.h base/callback_internal.h \
- base/memory/ref_counted.h base/atomic_ref_count.h base/atomicops.h \
- base/atomicops_internals_x86_gcc.h \
- base/third_party/dynamic_annotations/dynamic_annotations.h \
- base/compiler_specific.h base/threading/thread_collision_warner.h \
- base/memory/scoped_ptr.h base/move.h base/template_util.h \
- base/files/file_path.h base/hash_tables.h base/string16.h \
- base/strings/string_piece.h base/message_loop_proxy.h \
- base/message_loop/message_loop_proxy.h base/single_thread_task_runner.h \
- base/sequenced_task_runner.h base/sequenced_task_runner_helpers.h \
- base/task_runner.h base/time.h base/bind.h base/bind_internal.h \
- base/bind_helpers.h base/memory/weak_ptr.h base/logging.h \
- base/debug/debugger.h base/threading/thread_checker.h \
- base/threading/thread_checker_impl.h base/synchronization/lock.h \
- base/synchronization/lock_impl.h base/threading/platform_thread.h \
- base/memory/raw_scoped_refptr_mismatch_checker.h base/tuple.h \
- base/file_util.h base/platform_file.h base/file_descriptor_posix.h \
- base/posix/eintr_wrapper.h base/lazy_instance.h \
- base/memory/aligned_memory.h base/threading/thread_restrictions.h \
- base/location.h base/message_loop.h base/message_pump.h \
- base/observer_list.h base/pending_task.h base/tracking_info.h \
- base/message_pump_libevent.h base/message_pump_gtk.h \
- base/message_pump_glib.h base/threading/thread.h
-libfile_path_watcher_la_SOURCES += base/threading/thread.cc
-libfile_path_watcher_la_SOURCES += base/logging.cc
-libfile_path_watcher_la_SOURCES += base/files/file_path.cc
-libfile_path_watcher_la_SOURCES += base/lazy_instance.cc
-libfile_path_watcher_la_SOURCES += base/file_util.cc
-libfile_path_watcher_la_SOURCES += base/file_util_@GENERIC_OS_SUFFIX@.@OS_LANG_EXT@
-# libfile_path_watcher_la_SOURCES += base/file_util_posix.cc
-libfile_path_watcher_la_SOURCES += base/message_loop/message_loop_proxy_impl.cc
+noinst_LTLIBRARIES += libencryptor.la
+libencryptor_la_SOURCES = encryptor.h
+libencryptor_la_SOURCES += encryptor.cc
+libencryptor_la_LIBADD =
+libencryptor_la_LIBADD += librsa.la
+libencryptor_la_LIBADD += librsa_public_key_openssl.la
+libencryptor_la_LIBADD += libblock_cipher.la
+libencryptor_la_LIBADD += $(top_builddir)/crypto/libsymmetric_key.la
+libencryptor_la_LIBADD += $(top_builddir)/crypto/libencryptor.la
+libencryptor_la_LIBADD += $(top_builddir)/crypto/librandom.la
+libencryptor_la_LIBADD += $(top_builddir)/crypto/librsa_private_key.la
 
+noinst_LTLIBRARIES += libblock_cipher.la
+libblock_cipher_la_SOURCES = block_cipher.cc
+libblock_cipher_la_SOURCES += block_cipher.h
 
+noinst_LTLIBRARIES += librsa_public_key_openssl.la
+librsa_public_key_openssl_la_SOURCES = rsa_public_key_openssl.cc
+librsa_public_key_openssl_la_SOURCES += rsa_public_key_openssl.h
 
-noinst_LTLIBRARIES += libmessage_loop.la
-libmessage_loop_la_SOURCES = base/message_loop.h
-libmessage_loop_la_SOURCES += base/message_loop.cc
+noinst_LTLIBRARIES += librsa.la
+librsa_la_SOURCES = rsa.h
+librsa_la_SOURCES += rsa.cc
 
-noinst_LTLIBRARIES += libmessage_loop_proxy.la
-libmessage_loop_proxy_la_SOURCES = base/message_loop/message_loop_proxy.h
-libmessage_loop_proxy_la_SOURCES += base/message_loop/message_loop_proxy.cc
+# Event helpers.
+noinst_LTLIBRARIES += libqueue_filter.la
+libqueue_filter_la_SOURCES = queue_filter.h
+libqueue_filter_la_SOURCES += queue_filter.cc
+libqueue_filter_la_LIBADD = $(BOOST_THREAD_LIBS)
+libqueue_filter_la_LIBADD += libdb_manager.la
+libqueue_filter_la_LIBADD += libutil.la
+libqueue_filter_la_LIBADD += $(top_builddir)/base/strings/libstring_split.la
 
-noinst_LTLIBRARIES += libtracked_objects.la
-libtracked_objects_la_SOURCES = base/tracked_objects.h
-libtracked_objects_la_SOURCES += base/tracked_objects.cc
+noinst_LTLIBRARIES += libfile_event_queue_handler.la
+libfile_event_queue_handler_la_SOURCES =
+libfile_event_queue_handler_la_SOURCES += file_event_queue_handler.h
+libfile_event_queue_handler_la_SOURCES += file_event_queue_handler.cc
+libfile_event_queue_handler_la_LIBADD = $(top_builddir)/base/libmd5.la
 
-noinst_LTLIBRARIES += libref_counted.la
-libref_counted_la_SOURCES = base/memory/ref_counted.h
-libref_counted_la_SOURCES += base/memory/ref_counted.cc
+# Database pieces.
+noinst_LTLIBRARIES += libdb_manager.la
+libdb_manager_la_CXXFLAGS = $(LEVELDB_CFLAGS)
+libdb_manager_la_SOURCES = db_manager.h
+libdb_manager_la_SOURCES += db_manager.cc
+libdb_manager_la_LIBADD = libleveldb_util.la
+libdb_manager_la_LIBADD += liblockbox_thrift.la
 
-noinst_LTLIBRARIES += libcallback.la
-libcallback_la_SOURCES = base/callback.h
-libcallback_la_SOURCES += base/callback_forward.h
-libcallback_la_SOURCES += base/cancelable_callback.h
-libcallback_la_SOURCES += base/callback_internal.cc
-libcallback_la_SOURCES += base/callback_helpers.h
+noinst_LTLIBRARIES += libdb_manager_client.la
+libdb_manager_client_la_CXXFLAGS = $(LEVELDB_CFLAGS)
+libdb_manager_client_la_SOURCES = db_manager_client.h
+libdb_manager_client_la_SOURCES += db_manager_client.cc
+libdb_manager_client_la_LIBADD =
+libdb_manager_client_la_LIBADD += $(top_builddir)/base/libfile_util.la
+libdb_manager_client_la_LIBADD += $(top_builddir)/base/liblogging.la
+libdb_manager_client_la_LIBADD += libleveldb_util.la
+libdb_manager_client_la_LIBADD += liblockbox_thrift.la
+libdb_manager_client_la_LIBADD += libdb_manager.la
 
-noinst_LTLIBRARIES += liblocation.la
-liblocation_la_SOURCES = base/location.h base/location.cc
+noinst_LTLIBRARIES += libdb_manager_server.la
+libdb_manager_server_la_CXXFLAGS = $(LEVELDB_CFLAGS)
+libdb_manager_server_la_SOURCES = db_manager_server.h
+libdb_manager_server_la_SOURCES += db_manager_server.cc
+libdb_manager_server_la_LIBADD = libleveldb_util.la
+libdb_manager_server_la_LIBADD += liblockbox_thrift.la
+libdb_manager_server_la_LIBADD += libdb_manager.la
 
-noinst_LTLIBRARIES += libtask_runner.la
-libtask_runner_la_SOURCES = base/task_runner.h base/task_runner.cc base/task_runner_util.h
+noinst_LTLIBRARIES += libleveldb_util.la
+libleveldb_util_la_CXXFLAGS = $(LEVELDB_CFLAGS)
+libleveldb_util_la_SOURCES = leveldb_util.h
+libleveldb_util_la_SOURCES += leveldb_util.cc
+libleveldb_util_la_LIBADD = $(top_builddir)/base/libfile_util.la
 
-noinst_LTLIBRARIES += liblock.la
-liblock_la_SOURCES = base/synchronization/lock_impl.h
-liblock_la_SOURCES += base/synchronization/lock_impl_posix.cc
-liblock_la_SOURCES += base/synchronization/lock.h
-liblock_la_SOURCES += base/synchronization/lock.cc
+# noinst_LTLIBRARIES += libdb_email_user.la
+# libdb_email_user_la_CXXFLAGS = $(LEVELDB_CFLAGS)
+# libdb_email_user_la_SOURCES = db_email_user.h
+# libdb_email_user_la_SOURCES += db_email_user.cc
