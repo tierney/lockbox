@@ -26,7 +26,7 @@ class Encryptor {
 
   bool Decrypt(const string& data,
                const map<string, string>& user_enc_session,
-               const string& out_path);
+               string* out_path);
 
  private:
   DBManagerClient* dbm_;

@@ -3,6 +3,7 @@ DEFAULT_INCLUDES =
 # AM_CPPFLAGS = -I$(builddir) -I$(top_srcdir)
 AM_CPPFLAGS = -I$(top_srcdir) -I$(top_builddir)
 AM_CFLAGS = -I$(top_srcdir)
+AM_CXXFLAGS = -g -O0
 
 EXTRA_DIST =
 EXTRA_DIST += auto_reset.h

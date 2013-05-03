@@ -43,14 +43,49 @@ int main(int argc, char **argv) {
   string home_dir(lockbox::GetHomeDirectory());
   lockbox::DBManagerClient client_db(home_dir.append("/.lockbox"));
 
-  lockbox::UserAuth auth;
-  auth.email = "me2@you.com";
-  auth.password = "password";
+  lockbox::UserAuth user_auth;
+  user_auth.email = "me2@you.com";
+  user_auth.password = "password";
 
   // See if the databases are already full of interesting data.
   lockbox::DBManagerClient::Options options;
   options.type = lockbox::ClientDB::CLIENT_DATA;
   string value;
+
+  lockbox::AccessCard acc;
+  // New key
+  acc.Generate();
+  string pem;
+  // Get public key
+  acc.PublicKey(pem);
+  std::cout << pem << "\n";
+  // Get private key
+  acc.PrivateKey(pem, "hello");
+  std::cout << pem << "\n";
+  // Load a private key using pass 'hello'
+  acc.Load(pem, "hello");
+  acc.PublicKey(pem);
+  std::cout << pem << "\n";
+
+  lockbox::AccessCard a2;
+  a2.LoadPub(pem, "hello");
+  string enc_out;
+  a2.Encrypt("hello world", &enc_out);
+
+
+  acc.PrivateKey(pem, "hello");
+
+  lockbox::AccessCard a3;
+  a3.Load(pem, "hello");
+  string dec_out;
+  a3.Decrypt(enc_out, &dec_out);
+  LOG(INFO) << "out: " << dec_out;
+
+
+  return 0;
+
+
+
 
   // Initialize the private key if necessary.
   client_db.Get(options, "PRIV_KEY", &value);
@@ -62,15 +97,19 @@ int main(int argc, char **argv) {
     // Save the private key to our local data store.
     vector<uint8> export_priv;
     CHECK(priv_key->ExportPrivateKey(&export_priv));
-    client_db.Put(options, "PRIV_KEY",
-                  string(export_priv.begin(), export_priv.end()));
+    string s_export_priv(export_priv.begin(), export_priv.end());
+    client_db.Put(options, "PRIV_KEY", s_export_priv);
+
+
+    LOG(INFO) << "PRIV_KEY " << s_export_priv;
 
     // Set the public key in the EMAIL_KEY db.
     vector<uint8> export_pub;
     CHECK(priv_key->ExportPublicKey(&export_pub));
     options.type = lockbox::ClientDB::EMAIL_KEY;
-    client_db.Put(options, auth.email,
+    client_db.Put(options, user_auth.email,
                   string(export_pub.begin(), export_pub.end()));
+
 
     // Update the public key in the cloud.
     lockbox::PublicKey pub_key;
@@ -79,8 +118,27 @@ int main(int argc, char **argv) {
     bool ret = client.Exec<bool,
                            const lockbox::UserAuth&, const lockbox::PublicKey&>(
         &lockbox::LockboxServiceClient::AssociateKey,
-        auth, pub_key);
+        user_auth, pub_key);
     CHECK(ret);
+
+    // FORCE FIRST TIME STARTUP WITH THIS.
+
+    lockbox::UserID user_id =
+        client.Exec<lockbox::UserID, const lockbox::UserAuth&>(
+            &lockbox::LockboxServiceClient::RegisterUser,
+            user_auth);
+    lockbox::DeviceID device_id =
+        client.Exec<lockbox::DeviceID, const lockbox::UserAuth&>(
+            &lockbox::LockboxServiceClient::RegisterDevice,
+            user_auth);
+    lockbox::TopDirID top_dir_id =
+        client.Exec<lockbox::TopDirID, const lockbox::UserAuth&>(
+            &lockbox::LockboxServiceClient::RegisterTopDir,
+            user_auth);
+
+    lockbox::DBManagerClient::Options dir_loc_options;
+    dir_loc_options.type = lockbox::ClientDB::TOP_DIR_LOCATION;
+    client_db.Put(dir_loc_options, base::Int64ToString(top_dir_id), "/home/tierney/Lockbox");
   }
 
   // Prepare to start the various watchers.
@@ -116,7 +174,8 @@ int main(int argc, char **argv) {
 
     lockbox::FileEventQueueHandler* event_queue =
         new lockbox::FileEventQueueHandler(it->key().ToString(),
-                                           &client_db, &client, &encryptor);
+                                           &client_db, &client, &encryptor,
+                                           &user_auth);
     top_dir_queues[top_dir_id] = event_queue;
   }
 
@@ -129,15 +188,15 @@ int main(int argc, char **argv) {
   // lockbox::UserID user_id =
   //     client.Exec<lockbox::UserID, const lockbox::UserAuth&>(
   //         &lockbox::LockboxServiceClient::RegisterUser,
-  //         auth);
+  //         user_auth);
   // lockbox::DeviceID device_id =
   //     client.Exec<lockbox::DeviceID, const lockbox::UserAuth&>(
   //         &lockbox::LockboxServiceClient::RegisterDevice,
-  //         auth);
+  //         user_auth);
   // lockbox::TopDirID top_dir_id =
   //     client.Exec<lockbox::TopDirID, const lockbox::UserAuth&>(
   //         &lockbox::LockboxServiceClient::RegisterTopDir,
-  //         auth);
+  //         user_auth);
 
   // std::cout << "UID " << user_id << std::endl;
   // std::cout << "DeviceID " << device_id << std::endl;

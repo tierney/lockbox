@@ -32,15 +32,19 @@ string FileToMD5(const string& path) {
 FileEventQueueHandler::FileEventQueueHandler(const string& top_dir_id,
                                              DBManagerClient* dbm,
                                              Client* client,
-                                             Encryptor* encryptor)
+                                             Encryptor* encryptor,
+                                             UserAuth* user_auth)
     : dbm_(dbm),
       client_(client),
       encryptor_(encryptor),
+      user_auth_(user_auth),
       thread_(new boost::thread(
           boost::bind(&FileEventQueueHandler::Run, this))),
       top_dir_id_(top_dir_id) {
   CHECK(dbm);
   CHECK(client);
+  CHECK(encryptor);
+  CHECK(user_auth);
   LOG(INFO) << "Starting FileEventQueueHandler for " << top_dir_id;
 }
 
@@ -128,56 +132,17 @@ void FileEventQueueHandler::Run() {
 
     base::StringToInt(event_type, &fw_action);
     LOG(INFO) << "fw_action: " << fw_action;
-    PathLockRequest path_lock;
-    PathLockResponse response;
-    RemotePackage package;
-    int64 ret = 0;
+    bool success = false;
     switch (fw_action) {
       case FW::Actions::Add:
-        LOG(INFO) << "Read the file.";
-        // Lock the file in the cloud.
-        path_lock.user = user_auth;
-        path_lock.top_dir = top_dir_id_;
-        path_lock.rel_path = RemoveBaseFromInput(top_dir_path, path);
-
-        // Acquire the lock on the cloud.
-        LOG(INFO) << "Locking on the cloud.";
-        client_->Exec<void, PathLockResponse&, const PathLockRequest&>(
-            &LockboxServiceClient::AcquireLockRelPath,
-            response,
-            path_lock);
-        if (!response.acquired) {
-          LOG(INFO) << "Someone else already locked the file " << path;
-          // TODO(tierney): Consider rewriting the queue entry with the current
-          // timestamp so that we can make sure to handle any updates to the
-          // file, even if they come from the cloud.
-          dbm_->Delete(update_queue_options, it->key().ToString());
-          continue;
+        success = HandleAddAction(top_dir_path, path);
+        if (!success) {
+          LOG(WARNING) << "Someone else won... ";
+          CHECK(false);
         }
-
-        // Read the file, do the encryption.
-        LOG(INFO) << "Encrypting.";
-        encryptor_->Encrypt(path, response.users,
-                            &(package.payload.data),
-                            &(package.payload.user_enc_session));
-
-        for (auto& ptr : package.payload.user_enc_session) {
-          LOG(INFO) << "  " << ptr.first << " : " << ptr.second;
-        }
-
-        // Upload the package. Cloud needs to update the appropriate user's
-        // update queues.
-        LOG(INFO) << "Uploading.";
-        ret = client_->Exec<int64, const RemotePackage&>(
-            &LockboxServiceClient::UploadPackage,
-            package);
-
-        // Release the lock.
-        LOG(INFO) << "Releasing lock";
-        client_->Exec<void, const PathLockRequest&>(
-            &LockboxServiceClient::ReleaseLockRelPath,
-            path_lock);
-
+        // If not successful, consider rewriting the queue entry with the
+        // current timestamp so that we can make sure to handle any updates to
+        // the file, even if they come from the cloud.
         LOG(INFO) << "Done.";
         dbm_->Delete(update_queue_options, it->key().ToString());
 
@@ -196,7 +161,61 @@ void FileEventQueueHandler::Run() {
   }
 }
 
-bool FileEventQueueHandler::HandleAddAction() {
+bool FileEventQueueHandler::HandleAddAction(const string& top_dir_path,
+                                            const string& path) {
+
+  // Lock the file in the cloud.
+  PathLockRequest path_lock;
+  path_lock.user.email = user_auth_->email;
+  path_lock.user.password = user_auth_->password;
+  path_lock.top_dir = top_dir_id_;
+  path_lock.rel_path = RemoveBaseFromInput(top_dir_path, path);
+
+  // Acquire the lock on the cloud.
+  LOG(INFO) << "Locking on the cloud.";
+  PathLockResponse response;
+  client_->Exec<void, PathLockResponse&, const PathLockRequest&>(
+      &LockboxServiceClient::AcquireLockRelPath,
+      response,
+      path_lock);
+  if (!response.acquired) {
+    LOG(INFO) << "Someone else already locked the file " << path;
+    // TODO(tierney): Consider rewriting the queue entry with the current
+    // timestamp so that we can make sure to handle any updates to the
+    // file, even if they come from the cloud.
+    return false;
+  }
+
+  // Read the file, do the encryption.
+  LOG(INFO) << "Encrypting.";
+  RemotePackage package;
+  encryptor_->Encrypt(path, response.users,
+                      &(package.payload.data),
+                      &(package.payload.user_enc_session));
+
+  string out_path;
+  encryptor_->Decrypt(package.payload.data,
+                      package.payload.user_enc_session,
+                      &out_path);
+  LOG(INFO) << "Is it what we expect? " << out_path;
+
+  for (auto& ptr : package.payload.user_enc_session) {
+    LOG(INFO) << "  " << ptr.first << " : " << ptr.second;
+  }
+
+  // Upload the package. Cloud needs to update the appropriate user's
+  // update queues.
+  LOG(INFO) << "Uploading.";
+  int64 ret = client_->Exec<int64, const RemotePackage&>(
+      &LockboxServiceClient::UploadPackage,
+      package);
+  LOG(INFO) << "  Uploaded " << ret;
+
+  // Release the lock.
+  LOG(INFO) << "Releasing lock";
+  client_->Exec<void, const PathLockRequest&>(
+      &LockboxServiceClient::ReleaseLockRelPath,
+      path_lock);
 
   return true;
 }

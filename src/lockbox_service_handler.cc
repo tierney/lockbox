@@ -80,7 +80,7 @@ void LockboxServiceHandler::AcquireLockRelPath(PathLockResponse& _return,
 
   // TODO(tierney): Authenticate.
 
-  // See if the lock is already held.
+  // TODO(tierney): See if the lock is already held.
 
   // Set the lock.
   _return.acquired = true;
@@ -116,24 +116,32 @@ int64_t LockboxServiceHandler::UploadPackage(const RemotePackage& pkg) {
   pkg.write(bin_prot.get());
   string mem = mem_buf->getBufferAsString();
   LOG(INFO) << "Did it work?: " << mem.size();
+  return mem.size();
 }
 
-void LockboxServiceHandler::DownloadPackage(LocalPackage& _return, const DownloadRequest& req) {
+void LockboxServiceHandler::DownloadPackage(LocalPackage& _return,
+                                            const DownloadRequest& req) {
   // Your implementation goes here
   printf("DownloadPackage\n");
 }
 
-void LockboxServiceHandler::PollForUpdates(Updates& _return, const UserAuth& auth, const DeviceID device) {
+void LockboxServiceHandler::PollForUpdates(Updates& _return,
+                                           const UserAuth& auth,
+                                           const DeviceID device) {
   // Your implementation goes here
   printf("PollForUpdates\n");
 }
 
-void LockboxServiceHandler::Send(const UserAuth& sender, const std::string& receiver_email, const VersionInfo& vinfo) {
+void LockboxServiceHandler::Send(const UserAuth& sender,
+                                 const std::string& receiver_email,
+                                 const VersionInfo& vinfo) {
   // Your implementation goes here
   printf("Send\n");
 }
 
-void LockboxServiceHandler::GetLatestVersion(VersionInfo& _return, const UserAuth& requestor, const std::string& receiver_email) {
+void LockboxServiceHandler::GetLatestVersion(VersionInfo& _return,
+                                             const UserAuth& requestor,
+                                             const std::string& receiver_email) {
   // Your implementation goes here
   printf("GetLatestVersion\n");
 }

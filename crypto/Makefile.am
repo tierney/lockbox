@@ -1,6 +1,6 @@
 AM_CPPFLAGS = -I$(top_srcdir) -I$(top_builddir) -I$(top_builddir)/testing/gtest/include
 AM_CPPFLAGS += -DUSE_OPENSSL
-AM_CXXFLAGS = -Wall -Wextra
+AM_CXXFLAGS = -Wall -Wextra -O0 -g
 
 TEST_DIR_LOC = $(top_builddir)/testing/gtest
 

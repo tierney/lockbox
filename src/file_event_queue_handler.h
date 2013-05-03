@@ -24,7 +24,8 @@ class FileEventQueueHandler {
   explicit FileEventQueueHandler(const string& top_dir,
                                  DBManagerClient* dbm,
                                  Client* client,
-                                 Encryptor* encryptor);
+                                 Encryptor* encryptor,
+                                 UserAuth* user_auth);
 
   virtual ~FileEventQueueHandler();
 
@@ -33,11 +34,13 @@ class FileEventQueueHandler {
  private:
   void PrepareMaps(const string& top_dir_path);
 
-  bool HandleAddAction();
+  bool HandleAddAction(const string& top_dir_path, const string& path);
 
   DBManagerClient* dbm_;
   Client* client_;
   Encryptor* encryptor_;
+  UserAuth* user_auth_;
+
   boost::thread* thread_;
   const string top_dir_id_;
 
