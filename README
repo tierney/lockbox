@@ -44,3 +44,7 @@ libgflags-dev
 autoconf
 
 libsnappy-dev
+
+Mac OS X
+
+    PKG_CONFIG_PATH=/opt/X11/lib/pkgconfig
