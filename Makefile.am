@@ -1,7 +1,13 @@
+AM_CPPFLAGS = -I$(top_srcdir)/src/testing/gtest/include
 aclocaldir = $(datadir)/aclocal
 
-ACLOCAL_AMFLAGS = -I build-aux
+EXTRA_DIST =
+EXTRA_DIST += build/build_config.h
 
-SUBDIRS = src
+ACLOCAL_AMFLAGS = -I m4
 
-aclocal_DATA = build-aux/boost.m4
+SUBDIRS = testing/gtest leveldb base courgette crypto file_watcher src
+
+aclocal_DATA = m4/boost.m4
+
+bin_PROGRAMS =
