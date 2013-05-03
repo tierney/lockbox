@@ -150,8 +150,6 @@ case $host_os in
         AC_SUBST(FILE_PATH_WATCHER_SUFFIX, linux)
         AC_SUBST(GENERIC_OS_SUFFIX, linux)
         AC_SUBST(OS_LANG_EXT, cc)
-        PKG_CHECK_MODULES([DEPS], [glib-2.0 >= 2.24.1])
-        PKG_CHECK_MODULES([GTK], [gtk+-2.0])
         ;;
     *)
         #Default Case
