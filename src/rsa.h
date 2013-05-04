@@ -42,7 +42,8 @@ class RSAPEM {
 
   void PublicEncrypt(const string& pem, const string& input, string* output);
 
-  void PrivateDecrypt(const string& pem, const string& input, string* output);
+  void PrivateDecrypt(const string& passphrase, const string& pem,
+                      const string& input, string* output);
 };
 
 } // namespace lockbox

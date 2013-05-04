@@ -1,8 +1,12 @@
 #pragma once
 
+#include <string>
+
 #include "LockboxService.h"
 #include "counter.h"
 #include "db_manager_server.h"
+
+using std::string;
 
 namespace lockbox {
 
@@ -16,6 +20,9 @@ class LockboxServiceHandler : virtual public LockboxServiceIf {
   DeviceID RegisterDevice(const UserAuth& user);
 
   TopDirID RegisterTopDir(const UserAuth& user);
+
+  void RegisterRelativePath(string& _return,
+                            const RegisterRelativePathRequest& req);
 
   bool AssociateKey(const UserAuth& user, const PublicKey& pub);
 

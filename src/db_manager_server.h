@@ -13,15 +13,17 @@
 
 #pragma once
 
+#include <mutex>
 #include <string>
 
 #include "base/basictypes.h"
 #include "base/logging.h"
-#include "leveldb/db.h"
-#include "lockbox_types.h"
 #include "counter.h"
 #include "db_manager.h"
+#include "leveldb/db.h"
+#include "lockbox_types.h"
 
+using std::mutex;
 using std::string;
 
 namespace lockbox {
@@ -56,10 +58,14 @@ class DBManagerServer : public DBManager {
   uint64_t GetNextDeviceID();
   uint64_t GetNextTopDirID();
 
+  mutex* get_mutex(const Options& options);
+
  private:
   Counter num_users_;
   Counter num_devices_;
   Counter num_top_dirs_;
+
+  map<string, mutex*> db_mutex_;
 
   DISALLOW_COPY_AND_ASSIGN(DBManagerServer);
 };

@@ -30,14 +30,21 @@ struct HybridCrypto {
 
 struct RemotePackage {
   1: required string top_dir,
-  2: required HybridCrypto path,
-  3: required HybridCrypto payload,
+  2: required string rel_path_id,
+  3: required PackageType type,
+  4: required HybridCrypto path,
+  5: required HybridCrypto payload,
 }
 
 struct DownloadRequest {
   1: required UserAuth auth,
   2: required string top_dir,
   3: required string pkg_name,
+}
+
+struct RegisterRelativePathRequest {
+  1: required UserAuth user,
+  2: required string top_dir,
 }
 
 struct PathLockRequest {
@@ -97,11 +104,12 @@ enum ServerDB {
 
   TOP_DIR_PLACEHOLDER,
 
-  TOP_DIR_META, // Who's sharing the data "EDITORS".
-  TOP_DIR_RELPATH_LOCK,
-  TOP_DIR_SNAPSHOTS,
-  TOP_DIR_DATA,
-  TOP_DIR_FPTRS,
+  TOP_DIR_META, # Who's sharing the data "EDITORS"
+  TOP_DIR_RELPATH, # RELPATH_ID -> first hash for the relpath.
+  TOP_DIR_RELPATH_LOCK, # RELPATH_ID -> lock
+  TOP_DIR_SNAPSHOTS, # RELPATH_ID -> list of all snapshots, in order.
+  TOP_DIR_DATA, # HASH -> bytes...
+  TOP_DIR_FPTRS, # HASH_i -> HASH_(i+1)
 }
 
 enum ClientDB {
@@ -114,6 +122,7 @@ enum ClientDB {
 
   TOP_DIR_PLACEHOLDER,
 
+  RELPATH_ID_LOCATION,
   RELPATHS_HASH,
   RELPATHS_TIME,
   UPDATE_QUEUE_SERVER,
@@ -135,6 +144,9 @@ service LockboxService {
 
   # Attach a public key to a user.
   bool AssociateKey(1:UserAuth user, 2:PublicKey pub),
+
+  # Get relative path ID for the TDN.
+  string RegisterRelativePath(1:RegisterRelativePathRequest req),
 
   # Grab lock on rel path for the TDN.
   PathLockResponse AcquireLockRelPath(1:PathLockRequest lock),

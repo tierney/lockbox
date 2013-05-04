@@ -163,13 +163,30 @@ void FileEventQueueHandler::Run() {
 
 bool FileEventQueueHandler::HandleAddAction(const string& top_dir_path,
                                             const string& path) {
+  // Register path.
+  string path_guid;
+  RegisterRelativePathRequest rel_path_req;
+  rel_path_req.user.email = "me2@you.com";
+  rel_path_req.user.password = "password";
+  rel_path_req.top_dir = top_dir_id_;
+  client_->Exec<void, string&, const RegisterRelativePathRequest&>(
+      &LockboxServiceClient::RegisterRelativePath,
+      path_guid,
+      rel_path_req);
+
+  // Store the association between the GUID and the location.
+  DBManagerClient::Options options;
+  options.type = ClientDB::RELPATH_ID_LOCATION;
+  options.name = top_dir_id_;
+  dbm_->Put(options, path_guid, RemoveBaseFromInput(top_dir_path, path));
 
   // Lock the file in the cloud.
   PathLockRequest path_lock;
   path_lock.user.email = user_auth_->email;
   path_lock.user.password = user_auth_->password;
   path_lock.top_dir = top_dir_id_;
-  path_lock.rel_path = RemoveBaseFromInput(top_dir_path, path);
+  // path_lock.rel_path = RemoveBaseFromInput(top_dir_path, path);
+  path_lock.rel_path = path_guid;
 
   // Acquire the lock on the cloud.
   LOG(INFO) << "Locking on the cloud.";
@@ -180,6 +197,7 @@ bool FileEventQueueHandler::HandleAddAction(const string& top_dir_path,
       path_lock);
   if (!response.acquired) {
     LOG(INFO) << "Someone else already locked the file " << path;
+    CHECK(false) << "This should not happen (using GUIDs in the cloud).";
     // TODO(tierney): Consider rewriting the queue entry with the current
     // timestamp so that we can make sure to handle any updates to the
     // file, even if they come from the cloud.
@@ -189,19 +207,19 @@ bool FileEventQueueHandler::HandleAddAction(const string& top_dir_path,
   // Read the file, do the encryption.
   LOG(INFO) << "Encrypting.";
   RemotePackage package;
-  encryptor_->Encrypt(path, response.users,
-                      &(package.payload.data),
-                      &(package.payload.user_enc_session));
+  package.rel_path_id = path_guid;
+  package.type = PackageType::SNAPSHOT;
+  encryptor_->Encrypt(top_dir_path, path, response.users, &package);
 
-  string out_path;
-  encryptor_->Decrypt(package.payload.data,
-                      package.payload.user_enc_session,
-                      &out_path);
-  LOG(INFO) << "Is it what we expect? " << out_path;
+  // string out_path;
+  // encryptor_->Decrypt(package.payload.data,
+  //                     package.payload.user_enc_session,
+  //                     &out_path);
+  // LOG(INFO) << "Is it what we expect? " << out_path;
 
-  for (auto& ptr : package.payload.user_enc_session) {
-    LOG(INFO) << "  " << ptr.first << " : " << ptr.second;
-  }
+  // for (auto& ptr : package.payload.user_enc_session) {
+  //   LOG(INFO) << "  " << ptr.first << " : " << ptr.second;
+  // }
 
   // Upload the package. Cloud needs to update the appropriate user's
   // update queues.

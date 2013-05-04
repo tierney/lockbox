@@ -36,15 +36,16 @@ DBManagerServer::DBManagerServer(const string& db_location_base)
 
     string path = DBManager::GenPath(db_location_base, options);
     db_map_[key] = OpenDB(path);
+
   }
 
   // Set the counters for the ID-valued databases.
   Options options;
-  options.type = static_cast<int>(ServerDB::EMAIL_USER);
+  options.type = ServerDB::EMAIL_USER;
   num_users_.Set(MaxID(options));
-  options.type = static_cast<int>(ServerDB::USER_DEVICE);
+  options.type = ServerDB::USER_DEVICE;
   num_devices_.Set(MaxID(options));
-  options.type = static_cast<int>(ServerDB::USER_TOP_DIR);
+  options.type = ServerDB::USER_TOP_DIR;
   num_top_dirs_.Set(MaxID(options));
 }
 
@@ -94,7 +95,9 @@ bool DBManagerServer::NewTopDir(const Options& options) {
     if (iter.first <= ServerDB::TOP_DIR_PLACEHOLDER) {
       continue;
     }
-    new_options.type = static_cast<ServerDB::type>(iter.first);
+    new_options.type = iter.first;
+
+    // TODO(tierney): Update the DBManagerServer's maps.
 
     // Call the function that setup up the database and store a pointer in the
     // appropriate places.
@@ -106,6 +109,8 @@ bool DBManagerServer::Track(const Options& options) {
   CHECK(options.type > ServerDB::TOP_DIR_PLACEHOLDER)
       << _ServerDB_VALUES_TO_NAMES.find(options.type)->second;
   CHECK(!options.name.empty());
+
+  db_mutex_[GetKey(options)] = new mutex();
 
   return DBManager::Track(options);
 }
@@ -135,6 +140,13 @@ uint64_t DBManagerServer::GetNextDeviceID() {
 
 uint64_t DBManagerServer::GetNextTopDirID() {
   return num_top_dirs_.Increment();
+}
+
+mutex* DBManagerServer::get_mutex(const Options& options) {
+  string key(GenKey(options));
+  auto ret_mutex = db_mutex_.find(key);
+  CHECK(ret_mutex != db_mutex_.end());
+  return ret_mutex->second;
 }
 
 } // namespace lockbox

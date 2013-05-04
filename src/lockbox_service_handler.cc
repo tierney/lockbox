@@ -1,6 +1,8 @@
 #include "lockbox_service_handler.h"
 
 #include "base/strings/string_number_conversions.h"
+#include "scoped_mutex.h"
+#include "guid_creator.h"
 
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/transport/TBufferTransports.h>
@@ -63,8 +65,37 @@ TopDirID LockboxServiceHandler::RegisterTopDir(const UserAuth& user) {
   options.type = ServerDB::TOP_DIR_PLACEHOLDER;
   options.name = top_dir_id_to_persist;
   CHECK(manager_->NewTopDir(options));
+
   return top_dir_id;
 }
+
+void LockboxServiceHandler::RegisterRelativePath(
+    string& _return, const RegisterRelativePathRequest& req) {
+  // If a request has been held, then must send back empty string.
+  DBManagerServer::Options options;
+  options.type = ServerDB::TOP_DIR_META;
+  options.name = req.top_dir;
+
+  // Lock access to the relative create lock for the tdn database.
+  ScopedMutexLock lock(manager_->get_mutex(options));
+
+  // Generate next number and send back the number.
+  while (true) {
+    string rel_path_id;
+    CreateGUIDString(&rel_path_id);
+    options.type = ServerDB::TOP_DIR_RELPATH;
+    string found;
+    manager_->Get(options, rel_path_id, &found);
+    if (found.empty()) {
+      manager_->Put(options, rel_path_id, "none");
+      _return = rel_path_id;
+      break;
+    }
+  }
+  // TODO(tierney): If we find that two different GUIDs map to the same relative
+  // path, then the users' app must reconcile by choosing the smallest GUID.
+}
+
 
 bool LockboxServiceHandler::AssociateKey(const UserAuth& user, const PublicKey& pub) {
   LOG(INFO) << "Associating " << user.email << " with "
@@ -81,6 +112,10 @@ void LockboxServiceHandler::AcquireLockRelPath(PathLockResponse& _return,
   // TODO(tierney): Authenticate.
 
   // TODO(tierney): See if the lock is already held.
+  DBManagerServer::Options options;
+  options.type = TOP_DIR_RELPATH_LOCK;
+  options.name = lock.top_dir;
+  manager_->Get(options, lock.rel_path, )
 
   // Set the lock.
   _return.acquired = true;
@@ -101,12 +136,12 @@ int64_t LockboxServiceHandler::UploadPackage(const RemotePackage& pkg) {
   printf("UploadPackage\n");
   int64_t ret = pkg.payload.data.size();
 
-  LOG(INFO) << "Received data (" << pkg.payload.data.size() << ") :"
-            << pkg.payload.data;
+  // LOG(INFO) << "Received data (" << pkg.payload.data.size() << ") :"
+  //           << pkg.payload.data;
 
-  for (auto& ptr : pkg.payload.user_enc_session) {
-    LOG(INFO) << "  " << ptr.first << " : " << ptr.second;
-  }
+  // for (auto& ptr : pkg.payload.user_enc_session) {
+  //   LOG(INFO) << "  " << ptr.first << " : " << ptr.second;
+  // }
 
   boost::shared_ptr<apache::thrift::transport::TMemoryBuffer> mem_buf(
       new apache::thrift::transport::TMemoryBuffer());
@@ -116,6 +151,12 @@ int64_t LockboxServiceHandler::UploadPackage(const RemotePackage& pkg) {
   pkg.write(bin_prot.get());
   string mem = mem_buf->getBufferAsString();
   LOG(INFO) << "Did it work?: " << mem.size();
+
+  // Associate the rel path GUID with the package. If the rel_path's latest is
+  // empty then this is the first.
+  DBManagerServer::Options options;
+  // manager_->Get(options);
+
   return mem.size();
 }
 

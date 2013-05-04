@@ -21,14 +21,18 @@ class Encryptor {
 
   virtual ~Encryptor();
 
-  bool Encrypt(const string& path, const vector<string>& users,
-               string* data, map<string, string>* user_enc_session);
+  bool Encrypt(const string& top_dir_path, const string& path,
+               const vector<string>& users,
+               RemotePackage* package);
 
   bool Decrypt(const string& data,
                const map<string, string>& user_enc_session,
                string* out_path);
 
  private:
+  bool EncryptInternal(const string& input, const vector<string>& users,
+                       string* payload, map<string, string>* enc_session);
+
   DBManagerClient* dbm_;
 
   DISALLOW_COPY_AND_ASSIGN(Encryptor);

@@ -116,10 +116,8 @@ void RSAPEM::PublicEncrypt(const string& pem, const string& input,
       BIO_new_mem_buf(StringAsVoid(pem), -1));
   CHECK(bio.get());
 
-  const string passphrase("passphrase"); // TODO(tierney): Get from user.
-
   crypto::ScopedOpenSSL<RSA, RSA_free> key_pair(
-      PEM_read_bio_RSA_PUBKEY(bio.get(), NULL, pass_cb, StringAsVoid(passphrase)));
+      PEM_read_bio_RSA_PUBKEY(bio.get(), NULL, NULL, NULL));
   CHECK(key_pair.get());
 
   // Encrypt for the public key.
@@ -135,21 +133,19 @@ void RSAPEM::PublicEncrypt(const string& pem, const string& input,
   output->assign(reinterpret_cast<char *>(temp.get()), rsa_size);
 }
 
-void RSAPEM::PrivateDecrypt(const string& pem, const string& input,
-                            string* output) {
+void RSAPEM::PrivateDecrypt(const string& passphrase, const string& pem,
+                            const string& input, string* output) {
   // Get the key from the pem.
   crypto::ScopedOpenSSL<BIO, BIO_free_all> bio(
       BIO_new_mem_buf(StringAsVoid(pem), -1));
   CHECK(bio.get());
-
-  const string passphrase("passphrase"); // TODO(tierney): Get from user.
 
   crypto::ScopedOpenSSL<RSA, RSA_free> key_pair(
       PEM_read_bio_RSAPrivateKey(bio.get(), NULL, pass_cb,
                                  StringAsVoid(passphrase)));
   CHECK(key_pair.get());
 
-  const int kPasswordSize = 22;
+  const int kPasswordSize = 21;
   scoped_array<unsigned char> password(new unsigned char[kPasswordSize]);
   RSA_private_decrypt(input.size(),
                       reinterpret_cast<const unsigned char *>(input.c_str()),

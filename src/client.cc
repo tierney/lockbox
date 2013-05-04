@@ -66,8 +66,7 @@ int main(int argc, char **argv) {
     client_db.Put(options, "PRIV_KEY", priv_key);
     LOG(INFO) << "PRIV_KEY " << priv_key;
 
-    // // Set the public key in the EMAIL_KEY db.
-    // vector<uint8> export_pub;
+    // Set the public key in the EMAIL_KEY db.
     options.type = lockbox::ClientDB::EMAIL_KEY;
     client_db.Put(options, user_auth.email, pub_key);
 

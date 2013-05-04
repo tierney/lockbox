@@ -15,6 +15,7 @@
 #include "block_cipher.h"
 #include "rsa_public_key_openssl.h"
 #include "rsa.h"
+#include "util.h"
 
 using std::string;
 using std::vector;
@@ -29,48 +30,58 @@ Encryptor::Encryptor(DBManagerClient* dbm)
 Encryptor::~Encryptor() {
 }
 
-bool Encryptor::Encrypt(const string& path, const vector<string>& users,
-                        string* data, map<string, string>* user_enc_session) {
-  CHECK(data);
-  CHECK(user_enc_session);
+bool Encryptor::Encrypt(const string& top_dir_path, const string& path,
+                        const vector<string>& users, RemotePackage* package) {
+  CHECK(package);
+  bool success = false;
+
+  // Encrypt the relative path name.
+  string rel_path(RemoveBaseFromInput(top_dir_path, path));
+  success = EncryptInternal(rel_path, users, &(package->path.data),
+                            &(package->path.user_enc_session));
+  CHECK(success);
 
   // Read file to string.
   string raw_input;
   file_util::ReadFileToString(base::FilePath(path), &raw_input);
 
-  // Encrypt the file with the session key.
-  char password_bytes[22];
-  memset(password_bytes, 'a', 21);
-  password_bytes[21] = '\0';
+  // Encrypt the data.
+  success = EncryptInternal(raw_input, users, &(package->payload.data),
+                            &(package->payload.user_enc_session));
+  CHECK(success);
+  return true;
+}
 
-  // memset(password_bytes, '\0', 22);
-  // crypto::RandBytes(password_bytes, 21);
+bool Encryptor::EncryptInternal(
+    const string& raw_input, const vector<string>& users,
+    string* data, map<string, string>* user_enc_session) {
+  CHECK(data);
+  CHECK(user_enc_session);
+
+   // Encrypt the file with the session key.
+  char password_bytes[22];
+  memset(password_bytes, '\0', 22);
+  crypto::RandBytes(password_bytes, 21);
   string password(password_bytes);
-  LOG(INFO) << "Password " << password;
+  // LOG(INFO) << "Password " << password;
 
   // Cipher the main payload data with the symmetric key algo.
   BlockCipher block_cipher;
   data->clear();
   CHECK(block_cipher.Encrypt(raw_input, password, data));
 
-
   // Encrypt the session key per user using RSA.
   DBManagerClient::Options email_key_options;
   email_key_options.type = ClientDB::EMAIL_KEY;
-  crypto::ScopedOpenSSL<RSA, RSA_free> rsa;
   for (const string& user : users) {
     string key;
     dbm_->Get(email_key_options, user, &key);
-    rsa.reset(RSAPublicKey::PublicKeyToRSA(key));
 
     string enc_session;
-    RSAWrapper::Encrypt(password, rsa.get(), &enc_session);
+    RSAPEM rsa_pem;
+    rsa_pem.PublicEncrypt(key, password, &enc_session);
 
     user_enc_session->insert(std::make_pair(user, enc_session));
-
-    string out_password;
-    Decrypt(*data, *user_enc_session, &out_password);
-    LOG(INFO) << "out_password " << out_password;
 }
 
   return true;
@@ -89,20 +100,10 @@ bool Encryptor::Decrypt(const string& data,
   string priv_key;
   dbm_->Get(client_data_options, "PRIV_KEY", &priv_key);
 
-  vector<uint8> key(priv_key.begin(), priv_key.end());
-  crypto::RSAPrivateKey* rsa_priv_key = crypto::RSAPrivateKey::CreateFromPrivateKeyInfo(key);
-  crypto::ScopedOpenSSL<RSA, RSA_free> rsa_key(RSA_new());
-  crypto::ScopedOpenSSL<BIGNUM, BN_free> bn(BN_new());
-
-  CHECK(!(!rsa_key.get() || !bn.get() || !BN_set_word(bn.get(), 65537L)));
-  rsa_key.get()->n = bn.get();
-
-  CHECK(EVP_PKEY_set1_RSA(rsa_priv_key->key(), rsa_key.get()));
-
+  RSAPEM rsa_pem;
   string out;
-  RSAWrapper::Decrypt(encrypted_key, rsa_key.get(), &out);
-  LOG(INFO) << "Decrypted session key: " << out;
-
+  rsa_pem.PrivateDecrypt("password", priv_key, encrypted_key, &out);
+  // LOG(INFO) << "Decrypte " << out;
 
   BlockCipher block_cipher;
   block_cipher.Decrypt(data, out, out_path);
