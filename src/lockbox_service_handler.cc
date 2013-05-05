@@ -59,6 +59,8 @@ TopDirID LockboxServiceHandler::RegisterTopDir(const UserAuth& user) {
   TopDirID top_dir_id = manager_->GetNextTopDirID();
   string top_dir_id_to_persist = base::IntToString(top_dir_id);
 
+  // Appends the top_dir_id for the user to the end of the list of top dirs
+  // owned by that user.
   CHECK(manager_->Update(options, user.email, top_dir_id_to_persist));
 
   // TODO(tierney): Should create additional top_dir database here.
@@ -113,9 +115,11 @@ void LockboxServiceHandler::AcquireLockRelPath(PathLockResponse& _return,
 
   // TODO(tierney): See if the lock is already held.
   DBManagerServer::Options options;
-  options.type = TOP_DIR_RELPATH_LOCK;
+  options.type = ServerDB::TOP_DIR_RELPATH_LOCK;
   options.name = lock.top_dir;
-  manager_->Get(options, lock.rel_path, )
+
+  string lock_status;
+  manager_->Get(options, lock.rel_path, &lock_status);
 
   // Set the lock.
   _return.acquired = true;

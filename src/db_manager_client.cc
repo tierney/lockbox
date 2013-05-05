@@ -3,8 +3,11 @@
 #include "leveldb_util.h"
 namespace lockbox {
 
+// TODO(tierney): Consider moving most of this activity to an init function
+// outside the constructor.
 DBManagerClient::DBManagerClient(const string& db_location_base)
     : DBManager(db_location_base, _ClientDB_VALUES_TO_NAMES) {
+  // Initialize the databases and cache the mapping data that we have on disk.
   for (auto& iter : _ClientDB_VALUES_TO_NAMES) {
     ClientDB::type val = static_cast<ClientDB::type>(iter.first);
     if (val == ClientDB::UNKNOWN) {

@@ -48,3 +48,12 @@ libsnappy-dev
 Mac OS X
 
     PKG_CONFIG_PATH=/opt/X11/lib/pkgconfig
+
+
+Running a Server
+
+  o If you plan to manage many users' data, then your server will need the
+    ability to have many files open concurrently (I'm not doing anything smart
+    about this for the time being).
+
+    ulimit -Sn unlimited

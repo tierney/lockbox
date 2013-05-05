@@ -1,8 +1,13 @@
 #include "db_manager_server.h"
+
+#include <set>
+#include <vector>
+
 #include "lockbox_types.h"
 #include "leveldb_util.h"
 
 #include "base/files/file_path.h"
+#include "base/memory/scoped_ptr.h"
 #include "base/strings/string_number_conversions.h"
 #include "base/strings/string_split.h"
 #include "base/stl_util.h"
@@ -11,6 +16,8 @@
 #include "leveldb/db.h"
 
 using base::FilePath;
+using std::set;
+using std::vector;
 
 namespace lockbox {
 
@@ -39,6 +46,8 @@ DBManagerServer::DBManagerServer(const string& db_location_base)
 
   }
 
+  InitTopDirs();
+
   // Set the counters for the ID-valued databases.
   Options options;
   options.type = ServerDB::EMAIL_USER;
@@ -50,6 +59,33 @@ DBManagerServer::DBManagerServer(const string& db_location_base)
 }
 
 DBManagerServer::~DBManagerServer() {
+}
+
+void DBManagerServer::InitTopDirs() {
+  // Iterate through all of the USER_TOP_DIR profiles and cache the top_dir
+  // information in a set. Then we prime the appropriate maps with the keys for
+  // the top_dirs.
+  Options user_top_dir_options;
+  user_top_dir_options.type = ServerDB::USER_TOP_DIR;
+
+  leveldb::DB* db = DBManager::db(user_top_dir_options);
+  scoped_ptr<leveldb::Iterator> it(db->NewIterator(leveldb::ReadOptions()));
+
+  set<string> top_dirs;
+  for (it->SeekToFirst(); it->Valid(); it->Next()) {
+    vector<string> user_top_dirs;
+    base::SplitString(it->value().ToString(), ',', &user_top_dirs);
+    for (const string& top_dir_val : user_top_dirs) {
+      top_dirs.insert(top_dir_val);
+    }
+  }
+
+  Options new_top_dir_options;
+  new_top_dir_options.type = ServerDB::TOP_DIR_PLACEHOLDER;
+  for (const string& iter : top_dirs) {
+    new_top_dir_options.name = iter;
+    NewTopDir(new_top_dir_options);
+  }
 }
 
 bool DBManagerServer::Get(const Options& options,
@@ -110,7 +146,12 @@ bool DBManagerServer::Track(const Options& options) {
       << _ServerDB_VALUES_TO_NAMES.find(options.type)->second;
   CHECK(!options.name.empty());
 
-  db_mutex_[GetKey(options)] = new mutex();
+  string key = GenKey(options);
+  LOG(INFO) << "Generated mutex for " << key;
+
+  CHECK(!ContainsKey(db_mutex_, key)) << "Already have a mutex for " << key;
+
+  db_mutex_[key] = new mutex();
 
   return DBManager::Track(options);
 }
@@ -145,7 +186,7 @@ uint64_t DBManagerServer::GetNextTopDirID() {
 mutex* DBManagerServer::get_mutex(const Options& options) {
   string key(GenKey(options));
   auto ret_mutex = db_mutex_.find(key);
-  CHECK(ret_mutex != db_mutex_.end());
+  CHECK(ret_mutex != db_mutex_.end()) << "Couldn't find mutex for " << key;
   return ret_mutex->second;
 }
 

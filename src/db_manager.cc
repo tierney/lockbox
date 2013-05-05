@@ -58,6 +58,8 @@ bool DBManager::Update(const Options& options,
   leveldb::Status s = db->Get(leveldb::ReadOptions(), key, &value);
   CHECK(s.ok() || s.IsNotFound());
   LOG(INFO) << "Update before " << value;
+  // TODO(tierney): Pull this notion of append out. We should also have
+  // facilities for getting an iterator out of this list.
   if (!value.empty()) {
     value.append(",");
   }

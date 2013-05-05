@@ -100,7 +100,7 @@ enum ServerDB {
   USER_DEVICE,
   DEVICE_SYNC,
   EMAIL_KEY,
-  USER_TOP_DIR,
+  USER_TOP_DIR, # Maps user to directories owned.
 
   TOP_DIR_PLACEHOLDER,
 

@@ -61,6 +61,8 @@ class DBManagerServer : public DBManager {
   mutex* get_mutex(const Options& options);
 
  private:
+  void InitTopDirs();
+
   Counter num_users_;
   Counter num_devices_;
   Counter num_top_dirs_;
