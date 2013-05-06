@@ -28,6 +28,7 @@ void UpdateQueuer::Run() {
   try {
     unique_lock<mutex> lock(sync_->m, std::defer_lock);
     while (true) {
+
       lock.lock();
 
       DBManagerServer::Options options;
