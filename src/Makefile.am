@@ -29,6 +29,11 @@ lockbox_main_LDADD += libfile_watcher.la
 lockbox_main_LDADD += libnegotiator.la
 lockbox_main_LDADD += $(BOOST_SYSTEM_LIBS)
 
+bin_PROGRAMS += leveldb_sb
+leveldb_sb_SOURCES = leveldb_sb.cc
+leveldb_sb_CXXFLAGS = $(LEVELDB_CFLAGS)
+leveldb_sb_LDADD = $(LEVELDB_BIN_CFLAGS)
+
 # noinst_LTLIBRARIES += libleveldb_base.la
 # libleveldb_base_la_SOURCES = leveldb_base.h
 # libleveldb_base_la_SOURCES += leveldb_base.cc
