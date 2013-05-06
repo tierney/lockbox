@@ -23,6 +23,10 @@ EXTRA_DIST += tuple.h
 
 noinst_LTLIBRARIES =
 
+noinst_LTLIBRARIES += libsha1.la
+libsha1_la_SOURCES = sha1.h
+libsha1_la_SOURCES += sha1_portable.cc
+
 noinst_LTLIBRARIES += libmd5.la
 libmd5_la_SOURCES = md5.h
 libmd5_la_SOURCES += md5.cc

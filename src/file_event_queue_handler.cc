@@ -174,6 +174,8 @@ bool FileEventQueueHandler::HandleAddAction(const string& top_dir_path,
       path_guid,
       rel_path_req);
 
+  LOG(INFO) << "ADDed file GUID from server " << path_guid;
+
   // Store the association between the GUID and the location.
   DBManagerClient::Options options;
   options.type = ClientDB::RELPATH_ID_LOCATION;
@@ -207,6 +209,7 @@ bool FileEventQueueHandler::HandleAddAction(const string& top_dir_path,
   // Read the file, do the encryption.
   LOG(INFO) << "Encrypting.";
   RemotePackage package;
+  package.top_dir = top_dir_id_;
   package.rel_path_id = path_guid;
   package.type = PackageType::SNAPSHOT;
   encryptor_->Encrypt(top_dir_path, path, response.users, &package);

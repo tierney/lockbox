@@ -43,9 +43,12 @@ int main(int argc, char **argv) {
 
   lockbox::DBManagerServer manager("/tmp");
 
+  // Thread pool of watchers that will pick off the queued results and send them
+  // to the appropriate fillers.
+
+
   shared_ptr<lockbox::LockboxServiceHandler> handler(
-      new lockbox::LockboxServiceHandler(&manager
-                                         ));
+      new lockbox::LockboxServiceHandler(&manager));
   shared_ptr<TProcessor> processor(
       new lockbox::LockboxServiceProcessor(handler));
   shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());

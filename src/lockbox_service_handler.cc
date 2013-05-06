@@ -1,5 +1,6 @@
 #include "lockbox_service_handler.h"
 
+#include "base/sha1.h"
 #include "base/strings/string_number_conversions.h"
 #include "scoped_mutex.h"
 #include "guid_creator.h"
@@ -140,8 +141,8 @@ int64_t LockboxServiceHandler::UploadPackage(const RemotePackage& pkg) {
   printf("UploadPackage\n");
   int64_t ret = pkg.payload.data.size();
 
-  // LOG(INFO) << "Received data (" << pkg.payload.data.size() << ") :"
-  //           << pkg.payload.data;
+  LOG(INFO) << "Received data (" << pkg.payload.data.size() << ") :"
+            << pkg.rel_path_id;
 
   // for (auto& ptr : pkg.payload.user_enc_session) {
   //   LOG(INFO) << "  " << ptr.first << " : " << ptr.second;
@@ -153,13 +154,43 @@ int64_t LockboxServiceHandler::UploadPackage(const RemotePackage& pkg) {
       new apache::thrift::protocol::TBinaryProtocol(mem_buf));
 
   pkg.write(bin_prot.get());
-  string mem = mem_buf->getBufferAsString();
+  const string mem = mem_buf->getBufferAsString();
   LOG(INFO) << "Did it work?: " << mem.size();
+
+  // Hash the input content.
+  // TODO(tierney): This should actually be just the encrypted contents.
+  const string hash_of_prot = base::SHA1HashString(pkg.payload.data);
 
   // Associate the rel path GUID with the package. If the rel_path's latest is
   // empty then this is the first.
   DBManagerServer::Options options;
-  // manager_->Get(options);
+  options.name = pkg.top_dir;
+
+  // TODO(tierney): Check that for the directory we have the correct GUID.
+
+  // TODO(tierney): If we have a snapshot type, then we need to update the
+  // latest snapshot order to include this hash.
+
+  // Check if this is the first doc for the relpath.
+  string previous;
+  options.type = ServerDB::TOP_DIR_RELPATH;
+  manager_->Get(options, pkg.rel_path_id, &previous);
+  if (previous.empty()) {
+    LOG(INFO) << "First upload for a file." << pkg.rel_path_id;
+  }
+
+  // Point the relpath's HEAD to this one.
+  manager_->Put(options, pkg.rel_path_id, hash_of_prot);
+
+  // Set the previous pointer to whatever previous is.
+  options.type = ServerDB::TOP_DIR_FPTRS;
+  manager_->Put(options, hash_of_prot, previous);
+
+  // Write the file to disk.
+  options.type = ServerDB::TOP_DIR_DATA;
+  manager_->Put(options, hash_of_prot, mem);
+
+  // TODO(tierney): Update the appropriate queues.
 
   return mem.size();
 }
@@ -170,7 +201,7 @@ void LockboxServiceHandler::DownloadPackage(LocalPackage& _return,
   printf("DownloadPackage\n");
 }
 
-void LockboxServiceHandler::PollForUpdates(Updates& _return,
+void LockboxServiceHandler::PollForUpdates(UpdateList& _return,
                                            const UserAuth& auth,
                                            const DeviceID device) {
   // Your implementation goes here

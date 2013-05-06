@@ -61,10 +61,15 @@ struct PathLockResponse {
 
 # When a user requests an update list for files to fetch, this is the list that
 # the user can use to fetch requests for new downloads.
-struct Updates {
-  1: required string device,
-  2: required string user,
-  3: list<HybridCrypto> updates,
+struct Update {
+  1: i64 timestamp,
+  2: string top_dir_id,
+  3: string rel_path_id,
+  4: string hash,
+}
+
+struct UpdateList {
+  1: list<Update> updates,
 }
 
 # This should best match the C++ openssl expectation that we export to a
@@ -101,15 +106,16 @@ enum ServerDB {
   DEVICE_SYNC,
   EMAIL_KEY,
   USER_TOP_DIR, # Maps user to directories owned.
+  UPDATE_ACTION_QUEUE, # Holds (TDN, RPI, hash) value for updates.
 
   TOP_DIR_PLACEHOLDER,
 
   TOP_DIR_META, # Who's sharing the data "EDITORS"
-  TOP_DIR_RELPATH, # RELPATH_ID -> first hash for the relpath.
+  TOP_DIR_RELPATH, # RELPATH_ID -> latest hash for the relpath.
   TOP_DIR_RELPATH_LOCK, # RELPATH_ID -> lock
   TOP_DIR_SNAPSHOTS, # RELPATH_ID -> list of all snapshots, in order.
   TOP_DIR_DATA, # HASH -> bytes...
-  TOP_DIR_FPTRS, # HASH_i -> HASH_(i+1)
+  TOP_DIR_FPTRS, # HASH_i -> HASH_(i-1)
 }
 
 enum ClientDB {
@@ -157,7 +163,7 @@ service LockboxService {
 
   LocalPackage DownloadPackage(1:DownloadRequest req),
 
-  Updates PollForUpdates(1:UserAuth auth, 2:DeviceID device),
+  UpdateList PollForUpdates(1:UserAuth auth, 2:DeviceID device),
 
   # Hash chain service API.
   void Send(1:UserAuth sender, 2:string receiver_email, 3:VersionInfo vinfo),

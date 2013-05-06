@@ -107,6 +107,8 @@ int main(int argc, char **argv) {
 
   lockbox::Encryptor encryptor(&client_db);
 
+  // For all of the top_dirs that are associated with this account, we need to
+  // start up various facilities.
   options.type = lockbox::ClientDB::TOP_DIR_LOCATION;
   options.name.clear();
   leveldb::DB* db = client_db.db(options);

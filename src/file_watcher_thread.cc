@@ -120,6 +120,7 @@ void FileWatcherThread::Run() {
   try {
     while (true) {
       file_watcher_.update();
+      boost::this_thread::interruption_point();
       sleep(1);
     }
   } catch (boost::thread_interrupted&) {

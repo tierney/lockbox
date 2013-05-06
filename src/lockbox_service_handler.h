@@ -36,7 +36,7 @@ class LockboxServiceHandler : virtual public LockboxServiceIf {
 
   void DownloadPackage(LocalPackage& _return, const DownloadRequest& req);
 
-  void PollForUpdates(Updates& _return,
+  void PollForUpdates(UpdateList& _return,
                       const UserAuth& auth,
                       const DeviceID device);
 

@@ -77,6 +77,7 @@ liblockbox_service_handler_la_SOURCES += lockbox_service_handler.cc
 liblockbox_service_handler_la_CXXFLAGS = $(LEVELDB_CFLAGS)
 liblockbox_service_handler_la_LIBADD = liblockbox_thrift.la
 liblockbox_service_handler_la_LIBADD += libdb_manager_server.la
+liblockbox_service_handler_la_LIBADD += $(top_builddir)/base/libsha1.la
 
 bin_PROGRAMS += server
 server_SOURCES = server.cc
