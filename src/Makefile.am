@@ -32,7 +32,8 @@ lockbox_main_LDADD += $(BOOST_SYSTEM_LIBS)
 bin_PROGRAMS += leveldb_sb
 leveldb_sb_SOURCES = leveldb_sb.cc
 leveldb_sb_CXXFLAGS = $(LEVELDB_CFLAGS)
-leveldb_sb_LDADD = $(LEVELDB_BIN_CFLAGS)
+leveldb_sb_LDADD = $(LEVELDB_BIN_LIBS)
+leveldb_sb_LDADD += $(top_builddir)/base/liblogging.la
 
 # noinst_LTLIBRARIES += libleveldb_base.la
 # libleveldb_base_la_SOURCES = leveldb_base.h
