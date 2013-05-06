@@ -8,6 +8,8 @@
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/transport/TBufferTransports.h>
 
+using std::to_string;
+
 namespace lockbox {
 
 LockboxServiceHandler::LockboxServiceHandler(DBManagerServer* manager, Sync* sync)
@@ -192,9 +194,12 @@ int64_t LockboxServiceHandler::UploadPackage(const RemotePackage& pkg) {
 
   // TODO(tierney): Update the appropriate queues.
   options.type = ServerDB::UPDATE_ACTION_QUEUE;
+  options.name = "";
   manager_->Put(options,
-                pkg.top_dir + "_" + pkg.rel_path_id + "_" + hash_of_prot,
+                to_string(time(NULL)) + "_" + pkg.top_dir + "_" +
+                pkg.rel_path_id + "_" + hash_of_prot,
                 "");
+  LOG(INFO) << "Notifying the CV to wake someone up";
   sync_->cv.notify_one();
 
   return mem.size();

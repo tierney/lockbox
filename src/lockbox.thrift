@@ -106,7 +106,8 @@ enum ServerDB {
   DEVICE_SYNC,
   EMAIL_KEY,
   USER_TOP_DIR, # Maps user to directories owned.
-  UPDATE_ACTION_QUEUE, # Holds (TDN, RPI, hash) value for updates.
+  UPDATE_ACTION_QUEUE, # Holds (TS, TDN, RPI, hash) value for updates.
+  UPDATE_ACTION_LOG, # Holds (TS, TDN, RPI, hash) for creation -> completion.
 
   TOP_DIR_PLACEHOLDER,
 
