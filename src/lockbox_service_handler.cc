@@ -10,8 +10,8 @@
 
 namespace lockbox {
 
-LockboxServiceHandler::LockboxServiceHandler(DBManagerServer* manager)
-    : manager_(manager) {
+LockboxServiceHandler::LockboxServiceHandler(DBManagerServer* manager, Sync* sync)
+    : manager_(manager), sync_(sync) {
   CHECK(manager);
 }
 
@@ -191,6 +191,11 @@ int64_t LockboxServiceHandler::UploadPackage(const RemotePackage& pkg) {
   manager_->Put(options, hash_of_prot, mem);
 
   // TODO(tierney): Update the appropriate queues.
+  options.type = ServerDB::UPDATE_ACTION_QUEUE;
+  manager_->Put(options,
+                pkg.top_dir + "_" + pkg.rel_path_id + "_" + hash_of_prot,
+                "");
+  sync_->cv.notify_one();
 
   return mem.size();
 }

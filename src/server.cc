@@ -13,6 +13,7 @@
 #include <thrift/server/TNonblockingServer.h>
 #include "counter.h"
 #include "db_manager_server.h"
+#include "update_queuer.h"
 
 #include "crypto/random.h"
 #include "guid_creator.h"
@@ -41,14 +42,18 @@ int main(int argc, char **argv) {
   const int port = atoi(argv[1]);
   const int num_threads = atoi(argv[2]);
 
+  lockbox::Sync sync;
   lockbox::DBManagerServer manager("/tmp");
 
   // Thread pool of watchers that will pick off the queued results and send them
   // to the appropriate fillers.
-
+  lockbox::UpdateQueuer update_queue(&manager, &sync);
+  // TODO(tierney): Can loop over this Increment() call in order to start
+  // multiple queue helpers.
+  update_queue.Increment();
 
   shared_ptr<lockbox::LockboxServiceHandler> handler(
-      new lockbox::LockboxServiceHandler(&manager));
+      new lockbox::LockboxServiceHandler(&manager, &sync));
   shared_ptr<TProcessor> processor(
       new lockbox::LockboxServiceProcessor(handler));
   shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());

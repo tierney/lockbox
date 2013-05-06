@@ -5,6 +5,7 @@
 #include "LockboxService.h"
 #include "counter.h"
 #include "db_manager_server.h"
+#include "update_queue_sync.h"
 
 using std::string;
 
@@ -13,7 +14,7 @@ namespace lockbox {
 class LockboxServiceHandler : virtual public LockboxServiceIf {
  public:
   // Does not take ownershi of |manager|.
-  LockboxServiceHandler(DBManagerServer* manager);
+  LockboxServiceHandler(DBManagerServer* manager, Sync* sync);
 
   UserID RegisterUser(const UserAuth& user);
 
@@ -49,6 +50,7 @@ class LockboxServiceHandler : virtual public LockboxServiceIf {
                         const std::string& receiver_email);
  private:
   DBManagerServer* manager_;
+  Sync* sync_;
 };
 
 } // namespace lockbox

@@ -22,6 +22,7 @@
 #include "db_manager.h"
 #include "leveldb/db.h"
 #include "lockbox_types.h"
+#include "update_queue_sync.h"
 
 using std::mutex;
 using std::string;
@@ -30,7 +31,7 @@ namespace lockbox {
 
 class DBManagerServer : public DBManager {
  public:
-  explicit DBManagerServer(const string& db_location_base);
+  DBManagerServer(const string& db_location_base);
 
   virtual ~DBManagerServer();
 
@@ -68,6 +69,7 @@ class DBManagerServer : public DBManager {
   Counter num_top_dirs_;
 
   map<string, mutex*> db_mutex_;
+  Sync* sync_;
 
   DISALLOW_COPY_AND_ASSIGN(DBManagerServer);
 };

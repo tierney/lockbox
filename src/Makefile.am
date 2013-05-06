@@ -41,6 +41,15 @@ leveldb_sb_LDADD += $(top_builddir)/base/liblogging.la
 # libleveldb_base_la_CXXFLAGS = $(LEVELDB_CFLAGS)
 # libleveldb_base_la_LIBADD = $(LEVELDB_BIN_LIBS)
 
+
+noinst_LTLIBRARIES += libupdate_queuer.la
+libupdate_queuer_la_SOURCES = update_queuer.h
+libupdate_queuer_la_SOURCES += update_queuer.cc
+libupdate_queuer_la_CXXFLAGS = $(BOOST_THREAD_CFLAGS)
+libupdate_queuer_la_LIBADD = $(top_builddir)/base/liblogging.la
+libupdate_queuer_la_LIBADD += $(BOOST_THREAD_LIBS)
+libupdate_queuer_la_LIBADD += libdb_manager_server.la
+
 noinst_LTLIBRARIES += libclient_initialization.la
 libclient_initialization_la_SOURCES = client_initialization.h
 libclient_initialization_la_SOURCES += client_initialization.cc
@@ -90,6 +99,7 @@ server_SOURCES = server.cc
 server_CXXFLAGS = $(LEVELDB_CFLAGS)
 server_LDADD =
 server_LDADD += liblockbox_service_handler.la
+server_LDADD += libupdate_queuer.la
 server_LDADD += liblockbox_thrift.la
 server_LDADD += libdb_manager_server.la
 server_LDADD += libcounter.la

@@ -1,5 +1,6 @@
 #include "file_watcher_thread.h"
 
+#include <unistd.h>
 #include "file_util.h"
 #include "base/files/file_path.h"
 #include "base/file_util.h"
@@ -121,7 +122,7 @@ void FileWatcherThread::Run() {
     while (true) {
       file_watcher_.update();
       boost::this_thread::interruption_point();
-      sleep(1);
+      usleep(100000);
     }
   } catch (boost::thread_interrupted&) {
     return;
