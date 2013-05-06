@@ -193,6 +193,7 @@ int64_t LockboxServiceHandler::UploadPackage(const RemotePackage& pkg) {
   manager_->Put(options, hash_of_prot, mem);
 
   // TODO(tierney): Update the appropriate queues.
+  std::lock_guard<std::mutex> lock(sync_->m);
   options.type = ServerDB::UPDATE_ACTION_QUEUE;
   options.name = "";
   manager_->Put(options,
