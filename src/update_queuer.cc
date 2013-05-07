@@ -95,10 +95,11 @@ void UpdateQueuer::Run() {
       base::SplitString(users_to_update, ',', &users);
       for (const string& user : users) {
         vector<string> devices;
-        options.type = ServerDB::DEVICE_SYNC;
+        options.type = ServerDB::USER_DEVICE;
         options.name = "";
         string devices_to_update;
-        CHECK(dbm_->Get(options, user, &devices_to_update));
+        CHECK(dbm_->Get(options, user, &devices_to_update))
+            << user << " not in USER_DEVICE";
 
         base::SplitString(devices_to_update, ',', &devices);
 
@@ -111,6 +112,8 @@ void UpdateQueuer::Run() {
           string updates;
           CHECK(dbm_->Get(options, device, &updates));
           string updates_to_write = updates.empty() ? "" : updates + ",";
+          LOG(INFO) << "Updating " << device << " for " << user << " with "
+                    << updates_to_write + tuple;
           CHECK(dbm_->Put(options, device, updates_to_write + tuple));
         }
       }

@@ -119,6 +119,10 @@ noinst_LTLIBRARIES += libfile_util.la
 libfile_util_la_SOURCES = file_util.h
 libfile_util_la_SOURCES += file_util.cc
 
+noinst_LTLIBRARIES += libupdate_from_server.la
+libupdate_from_server_la_SOURCES = update_from_server.h
+libupdate_from_server_la_SOURCES += update_from_server.cc
+
 bin_PROGRAMS += client_main
 client_main_SOURCES = client_main.cc
 client_main_LDADD =

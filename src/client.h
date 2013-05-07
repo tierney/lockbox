@@ -51,8 +51,11 @@ class Client {
   virtual ~Client() {}
 
   void RegisterUser();
+
   void RegisterTopDir();
+
   void Share();
+
   void Start();
 
   // Driver for the LockboxServiceClient code.
