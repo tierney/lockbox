@@ -68,8 +68,9 @@ struct Update {
   4: string hash,
 }
 
+# TODO: Possible switch to using the struct Update.
 struct UpdateList {
-  1: list<Update> updates,
+  1: string updates,
 }
 
 # This should best match the C++ openssl expectation that we export to a
@@ -102,7 +103,7 @@ enum ServerDB {
   UNKNOWN = 0
 
   EMAIL_USER,
-  USER_DEVICE,
+  USER_DEVICE, # Email to device id
   DEVICE_SYNC,
   EMAIL_KEY,
   USER_TOP_DIR, # Maps user to directories owned.
@@ -129,8 +130,8 @@ enum ClientDB {
 
   TOP_DIR_PLACEHOLDER,
 
-  RELPATH_ID_LOCATION,
-  RELPATHS_HASH,
+  RELPATH_ID_LOCATION, # path to file system path
+  RELPATHS_HASH, #
   RELPATHS_TIME,
   UPDATE_QUEUE_SERVER,
   UPDATE_QUEUE_CLIENT,
@@ -165,6 +166,11 @@ service LockboxService {
   LocalPackage DownloadPackage(1:DownloadRequest req),
 
   UpdateList PollForUpdates(1:UserAuth auth, 2:DeviceID device),
+
+  # Update the UPDATE_ACTION_LOG and then set delete the values from the
+  # DEVICE_SYNC.
+  void PersistedUpdates(1:UserAuth auth, 2:DeviceID device,
+                        3:UpdateList updates),
 
   # Hash chain service API.
   void Send(1:UserAuth sender, 2:string receiver_email, 3:VersionInfo vinfo),

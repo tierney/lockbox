@@ -41,15 +41,25 @@ DeviceID LockboxServiceHandler::RegisterDevice(const UserAuth& user) {
   // Your implementation goes here
   printf("RegisterDevice\n");
   DBManagerServer::Options options;
-  options.type = ServerDB::USER_DEVICE;
+  options.type = ServerDB::EMAIL_USER;
+  string user_id;
+  manager_->Get(options, user.email, &user_id);
+  if (user_id.empty()) {
+    LOG(WARNING) << "User doesn't exist " << user.email;
+    return -1;
+  }
 
-  string value;
   DeviceID device_id = manager_->GetNextDeviceID();
   string device_id_to_persist = base::IntToString(device_id);
 
   // TODO(tierney): In the future, we can defensively check against an IP
   // address for an email account to throttle the accounts.
-  manager_->Update(options, user.email, device_id_to_persist);
+  options.type = ServerDB::USER_DEVICE;
+  manager_->Update(options, user_id, device_id_to_persist);
+
+  options.type = ServerDB::DEVICE_SYNC;
+  manager_->Put(options, device_id_to_persist, "");
+
   return device_id;
 }
 
@@ -234,6 +244,20 @@ void LockboxServiceHandler::PollForUpdates(UpdateList& _return,
                                            const DeviceID device) {
   // Your implementation goes here
   printf("PollForUpdates\n");
+
+  // TODO: authenticate.
+
+  // Get the updates for the device and send back to the user. DEVICE_SYNC.
+  DBManagerServer::Options options;
+  options.type = ServerDB::DEVICE_SYNC;
+  manager_->Get(options, std::to_string(device), &(_return.updates));
+}
+
+void LockboxServiceHandler::PersistedUpdates(const UserAuth& auth,
+                                             const DeviceID device,
+                                             const UpdateList& updates) {
+  LOG(INFO) << "Persisted updates.";
+
 }
 
 void LockboxServiceHandler::Send(const UserAuth& sender,

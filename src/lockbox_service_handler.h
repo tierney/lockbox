@@ -41,6 +41,9 @@ class LockboxServiceHandler : virtual public LockboxServiceIf {
                       const UserAuth& auth,
                       const DeviceID device);
 
+  void PersistedUpdates(const UserAuth& auth, const DeviceID device,
+                        const UpdateList& updates);
+
   void Send(const UserAuth& sender,
             const std::string& receiver_email,
             const VersionInfo& vinfo);
