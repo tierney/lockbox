@@ -117,6 +117,7 @@ void Client::Start() {
   // Set the event processor running.
   lockbox::QueueFilter queue_filter(dbm_);
 
+  LOG(INFO) << "Running as daemon.";
   while (true) {
     sleep(1);
   }
