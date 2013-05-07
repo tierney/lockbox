@@ -23,7 +23,7 @@ UserID LockboxServiceHandler::RegisterUser(const UserAuth& user) {
   printf("RegisterUser\n");
 
   DBManagerServer::Options options;
-  options.type = static_cast<int>(ServerDB::EMAIL_USER);
+  options.type = ServerDB::EMAIL_USER;
   string value;
   manager_->Get(options, user.email, &value);
   if (!value.empty()) {
@@ -59,7 +59,6 @@ TopDirID LockboxServiceHandler::RegisterTopDir(const UserAuth& user) {
   DBManagerServer::Options options;
   options.type = ServerDB::USER_TOP_DIR;
 
-  string value;
   TopDirID top_dir_id = manager_->GetNextTopDirID();
   string top_dir_id_to_persist = base::IntToString(top_dir_id);
 
@@ -71,6 +70,18 @@ TopDirID LockboxServiceHandler::RegisterTopDir(const UserAuth& user) {
   options.type = ServerDB::TOP_DIR_PLACEHOLDER;
   options.name = top_dir_id_to_persist;
   CHECK(manager_->NewTopDir(options));
+
+  // Get the EMAIL_USER user.
+  options.type = ServerDB::EMAIL_USER;
+  options.name = "";
+
+  string user_id;
+  CHECK(manager_->Get(options, user.email, &user_id));
+
+  // Update the editors for the top_dir.
+  options.type = ServerDB::TOP_DIR_META;
+  options.name = top_dir_id_to_persist;
+  CHECK(manager_->Put(options, "EDITORS", user_id));
 
   return top_dir_id;
 }
@@ -103,7 +114,8 @@ void LockboxServiceHandler::RegisterRelativePath(
 }
 
 
-bool LockboxServiceHandler::AssociateKey(const UserAuth& user, const PublicKey& pub) {
+bool LockboxServiceHandler::AssociateKey(const UserAuth& user,
+                                         const PublicKey& pub) {
   LOG(INFO) << "Associating " << user.email << " with "
             << string(pub.key.begin(), pub.key.end());
 
