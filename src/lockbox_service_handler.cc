@@ -1,5 +1,6 @@
 #include "lockbox_service_handler.h"
 
+#include "base/base64.h"
 #include "base/sha1.h"
 #include "base/strings/string_number_conversions.h"
 #include "scoped_mutex.h"
@@ -161,7 +162,9 @@ int64_t LockboxServiceHandler::UploadPackage(const RemotePackage& pkg) {
 
   // Hash the input content.
   // TODO(tierney): This should actually be just the encrypted contents.
-  const string hash_of_prot = base::SHA1HashString(pkg.payload.data);
+  string hash_of_prot;
+  CHECK(base::Base64Encode(base::SHA1HashString(pkg.payload.data),
+                           &hash_of_prot));
 
   // Associate the rel path GUID with the package. If the rel_path's latest is
   // empty then this is the first.
@@ -193,13 +196,15 @@ int64_t LockboxServiceHandler::UploadPackage(const RemotePackage& pkg) {
   manager_->Put(options, hash_of_prot, mem);
 
   // TODO(tierney): Update the appropriate queues.
-  std::lock_guard<std::mutex> lock(sync_->m);
   options.type = ServerDB::UPDATE_ACTION_QUEUE;
   options.name = "";
+
+  std::unique_lock<std::mutex> lock(sync_->db_mutex);
   manager_->Put(options,
                 to_string(time(NULL)) + "_" + pkg.top_dir + "_" +
                 pkg.rel_path_id + "_" + hash_of_prot,
                 "");
+  lock.unlock();
   LOG(INFO) << "Notifying the CV to wake someone up";
   sync_->cv.notify_one();
 

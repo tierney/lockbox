@@ -158,6 +158,7 @@ case $host_os in
 esac
 
 AC_CONFIG_FILES([testing/gtest/Makefile
+                 third_party/modp_b64/Makefile
                  base/Makefile
                  courgette/Makefile
                  crypto/Makefile

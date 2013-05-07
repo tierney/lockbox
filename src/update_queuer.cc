@@ -23,27 +23,50 @@ void UpdateQueuer::Decrement() {
   thread->interrupt();
 }
 
+namespace {
+
+bool DBEmpty(leveldb::DB* db, Sync* sync) {
+  LOG(INFO) << "Checking for an empty database";
+  std::unique_lock<std::mutex> lock(sync->db_mutex);
+  LOG(INFO) << "Acquired the lock";
+  leveldb::Iterator* it = db->NewIterator(leveldb::ReadOptions());
+  it->SeekToFirst();
+  bool ret = !(it->Valid());
+  LOG(INFO) << "Found DB to be " << ret;
+  lock.unlock();
+  return ret;
+}
+
+} // namespace
+
 void UpdateQueuer::Run() {
   LOG(INFO) << "Starting the thread.";
   try {
-    unique_lock<mutex> lock(sync_->m, std::defer_lock);
+    unique_lock<mutex> lock(sync_->cv_mutex, std::defer_lock);
+    unique_lock<mutex> db_lock(sync_->db_mutex, std::defer_lock);
     while (true) {
-
-      lock.lock();
-
+      LOG(INFO) << "Checking if anything interesting.";
       DBManagerServer::Options options;
       options.type = ServerDB::UPDATE_ACTION_QUEUE;
+
       leveldb::DB* db = dbm_->db(options);
+      // it->SeekToFirst();
+      // if (!it->Valid()) {
+      //   LOG(INFO) << "Waiting to work";
+      //   sync_->cv.wait(lock);
+      //   continue;
+      // }
+
+      sync_->cv.wait(lock, [&]{ return !DBEmpty(db, sync_); });
+
+      LOG(INFO) << "Woken up...";
+
+      db_lock.lock();
       leveldb::Iterator* it = db->NewIterator(leveldb::ReadOptions());
       it->SeekToFirst();
-
-      if (!it->Valid()) {
-        LOG(INFO) << "Waiting to work";
-        sync_->cv.wait(lock);
-        continue;
-      }
-
+      CHECK(it->Valid());
       string tuple = it->key().ToString();
+      LOG(INFO) << "Got " << tuple;
 
       // Write to timestamped leveldb.
       options.type = ServerDB::UPDATE_ACTION_LOG;
@@ -51,8 +74,7 @@ void UpdateQueuer::Run() {
 
       // Remove old key.
       db->Delete(leveldb::WriteOptions(), tuple);
-
-      lock.unlock();
+      db_lock.unlock();
 
       // Update appropriate queues with the |tuple|'s information.
       LOG(INFO) << "Update the queues from here.";

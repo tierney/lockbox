@@ -27,6 +27,12 @@ noinst_LTLIBRARIES += libsha1.la
 libsha1_la_SOURCES = sha1.h
 libsha1_la_SOURCES += sha1_portable.cc
 
+noinst_LTLIBRARIES += libbase64.la
+libbase64_la_SOURCES = base64.h
+libbase64_la_SOURCES += base64.cc
+libbase64_la_LIBADD = strings/libstring_piece.la
+libbase64_la_LIBADD += $(top_builddir)/third_party/modp_b64/libmodp_b64.la
+
 noinst_LTLIBRARIES += libmd5.la
 libmd5_la_SOURCES = md5.h
 libmd5_la_SOURCES += md5.cc

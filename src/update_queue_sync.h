@@ -9,8 +9,9 @@ using std::condition_variable;
 namespace lockbox {
 
 struct Sync {
-  mutex m;
+  mutex cv_mutex;
   condition_variable cv;
+  mutex db_mutex;
 };
 
 } // namespace lockbox
