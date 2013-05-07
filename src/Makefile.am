@@ -134,6 +134,7 @@ noinst_LTLIBRARIES += libclient.la
 libclient_la_SOURCES = client.h
 libclient_la_SOURCES += client.cc
 libclient_la_LIBADD =
+libclient_la_LIBADD += libupdate_from_server.la
 libclient_la_LIBADD += libqueue_filter.la
 libclient_la_LIBADD += librsa.la
 libclient_la_LIBADD += librsa_public_key_openssl.la

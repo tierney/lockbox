@@ -242,9 +242,6 @@ void LockboxServiceHandler::DownloadPackage(LocalPackage& _return,
 void LockboxServiceHandler::PollForUpdates(UpdateList& _return,
                                            const UserAuth& auth,
                                            const DeviceID device) {
-  // Your implementation goes here
-  printf("PollForUpdates\n");
-
   // TODO: authenticate.
 
   // Get the updates for the device and send back to the user. DEVICE_SYNC.
@@ -257,7 +254,13 @@ void LockboxServiceHandler::PersistedUpdates(const UserAuth& auth,
                                              const DeviceID device,
                                              const UpdateList& updates) {
   LOG(INFO) << "Persisted updates.";
-
+  // TODO: Need to grab lock on this database row.
+  DBManagerServer::Options options;
+  options.type = ServerDB::DEVICE_SYNC;
+  string db_updates;
+  manager_->Get(options, std::to_string(device), &db_updates);
+  db_updates.erase(0, updates.updates.size());
+  manager_->Put(options, std::to_string(device), db_updates);
 }
 
 void LockboxServiceHandler::Send(const UserAuth& sender,

@@ -81,8 +81,7 @@ bool DBManagerClient::NewTopDir(const Options& options) {
               << " " << new_options.name;
     // Call the function that setup up the database and store a pointer in the
     // appropriate places.
-    CHECK(this->Track(new_options));
-    LOG(INFO) << "Back from tracking...";
+    CHECK(Track(new_options));
   }
 }
 

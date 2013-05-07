@@ -18,6 +18,7 @@
 #include "queue_filter.h"
 #include "rsa.h"
 #include "rsa_public_key_openssl.h"
+#include "update_from_server.h"
 #include <openssl/bio.h>
 #include <openssl/x509.h>
 
@@ -75,7 +76,6 @@ void Client::Start() {
   map<int64, lockbox::FileWatcherThread*> top_dir_watchers;
   map<int64, lockbox::FileEventQueueHandler*> top_dir_queues;
 
-  UpdateFromServer update_from_server(1, user_auth_, this, dbm_);
 
   Encryptor encryptor(dbm_);
 
@@ -113,6 +113,9 @@ void Client::Start() {
                                            user_auth_);
     top_dir_queues[top_dir_id] = event_queue;
   }
+
+  // With DBs started, we can start interacting with the updates/server.
+  UpdateFromServer update_from_server(1, user_auth_, this, dbm_);
 
   // Use the top dir locations to seed the watcher.
 
