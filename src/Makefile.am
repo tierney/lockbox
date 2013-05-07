@@ -119,22 +119,29 @@ noinst_LTLIBRARIES += libfile_util.la
 libfile_util_la_SOURCES = file_util.h
 libfile_util_la_SOURCES += file_util.cc
 
-bin_PROGRAMS += client
-client_SOURCES = client.cc
-client_LDADD =
-client_LDADD += libqueue_filter.la
-client_LDADD += librsa.la
-client_LDADD += librsa_public_key_openssl.la
-client_LDADD += liblockbox_thrift.la
-client_LDADD += libfile_util.la
-client_LDADD += $(THRIFT_LIBS)
-client_LDADD += libdb_manager_client.la
-client_LDADD += libfile_watcher_thread.la
-client_LDADD += libfile_event_queue_handler.la
-client_LDADD += libencryptor.la
-client_LDADD += libleveldb_util.la
-client_LDADD += $(LEVELDB_BIN_LIBS)
-client_LDADD += $(BOOST_THREAD_LIBS)
+bin_PROGRAMS += client_main
+client_main_SOURCES = client_main.cc
+client_main_LDADD =
+client_main_LDADD += $(GFLAGS_LIBS)
+client_main_LDADD += libclient.la
+client_main_LDADD += $(LEVELDB_BIN_LIBS)
+
+noinst_LTLIBRARIES += libclient.la
+libclient_la_SOURCES = client.h
+libclient_la_SOURCES += client.cc
+libclient_la_LIBADD =
+libclient_la_LIBADD += libqueue_filter.la
+libclient_la_LIBADD += librsa.la
+libclient_la_LIBADD += librsa_public_key_openssl.la
+libclient_la_LIBADD += liblockbox_thrift.la
+libclient_la_LIBADD += libfile_util.la
+libclient_la_LIBADD += $(THRIFT_LIBS)
+libclient_la_LIBADD += libdb_manager_client.la
+libclient_la_LIBADD += libfile_watcher_thread.la
+libclient_la_LIBADD += libfile_event_queue_handler.la
+libclient_la_LIBADD += libencryptor.la
+libclient_la_LIBADD += libleveldb_util.la
+libclient_la_LIBADD += $(BOOST_THREAD_LIBS)
 
 # thrift compiler command. Note that the --out value for the output
 # directory.
