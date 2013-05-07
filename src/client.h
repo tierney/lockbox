@@ -55,7 +55,6 @@ class Client {
   void Share();
   void Start();
 
- private:
   // Driver for the LockboxServiceClient code.
   template <typename R, typename... Args>
   R Exec(R(LockboxServiceClient::*func)(Args...), Args... args) {
@@ -63,6 +62,7 @@ class Client {
                                     std::forward<Args>(args)...);
   }
 
+ private:
   // Specialized driver for the Thrift API. In particular, the template wrappers
   // are necessary to account for some void return types given that the Thrift
   // code offers functions with void and non-void return types.

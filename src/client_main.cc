@@ -32,7 +32,6 @@ int main(int argc, char **argv) {
   google::ParseCommandLineFlags(&argc, &argv, false);
 
   lockbox::Client::ConnInfo conn_info(FLAGS_host, FLAGS_port);
-
   lockbox::DBManagerClient client_db(FLAGS_config_path);
 
   lockbox::UserAuth user_auth;
