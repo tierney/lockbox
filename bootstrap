@@ -1,0 +1,7 @@
+#!/bin/bash
+
+cd src
+./thrift.sh
+cd -
+
+./autogen.sh
