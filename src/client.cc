@@ -75,6 +75,8 @@ void Client::Start() {
   map<int64, lockbox::FileWatcherThread*> top_dir_watchers;
   map<int64, lockbox::FileEventQueueHandler*> top_dir_queues;
 
+  UpdateFromServer update_from_server(1, user_auth_, this, dbm_);
+
   Encryptor encryptor(dbm_);
 
   // For all of the top_dirs that are associated with this account, we need to
