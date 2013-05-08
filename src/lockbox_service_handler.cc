@@ -5,6 +5,7 @@
 #include "base/strings/string_number_conversions.h"
 #include "scoped_mutex.h"
 #include "guid_creator.h"
+#include "thrift_util.h"
 
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/transport/TBufferTransports.h>
@@ -173,13 +174,14 @@ int64_t LockboxServiceHandler::UploadPackage(const RemotePackage& pkg) {
   //   LOG(INFO) << "  " << ptr.first << " : " << ptr.second;
   // }
 
-  boost::shared_ptr<apache::thrift::transport::TMemoryBuffer> mem_buf(
-      new apache::thrift::transport::TMemoryBuffer());
-  boost::shared_ptr<apache::thrift::protocol::TBinaryProtocol> bin_prot(
-      new apache::thrift::protocol::TBinaryProtocol(mem_buf));
+  // boost::shared_ptr<apache::thrift::transport::TMemoryBuffer> mem_buf(
+  //     new apache::thrift::transport::TMemoryBuffer());
+  // boost::shared_ptr<apache::thrift::protocol::TBinaryProtocol> bin_prot(
+  //     new apache::thrift::protocol::TBinaryProtocol(mem_buf));
 
-  pkg.write(bin_prot.get());
-  const string mem = mem_buf->getBufferAsString();
+  // pkg.write(bin_prot.get());
+  string mem; ///= mem_buf->getBufferAsString();
+  ThriftToString(pkg, &mem);
   LOG(INFO) << "Did it work?: " << mem.size();
 
   // Hash the input content.

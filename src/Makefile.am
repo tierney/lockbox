@@ -226,6 +226,7 @@ libfile_event_queue_handler_la_SOURCES =
 libfile_event_queue_handler_la_SOURCES += file_event_queue_handler.h
 libfile_event_queue_handler_la_SOURCES += file_event_queue_handler.cc
 libfile_event_queue_handler_la_LIBADD = $(top_builddir)/base/libmd5.la
+libfile_event_queue_handler_la_LIBADD += $(top_builddir)/base/libsha1.la
 
 # Database pieces.
 noinst_LTLIBRARIES += libdb_manager.la

@@ -131,11 +131,14 @@ enum ClientDB {
   TOP_DIR_PLACEHOLDER,
 
   RELPATH_ID_LOCATION, # path to file system path
+  LOCATION_RELPATH_ID, # path to file system path
   RELPATHS_HASH, #
   RELPATHS_TIME,
   UPDATE_QUEUE_SERVER,
   UPDATE_QUEUE_CLIENT,
   FILE_CHANGES,
+  DATA,
+  FPTRS,
 }
 
 # Unifying Service

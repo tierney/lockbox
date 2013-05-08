@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "base/md5.h"
+#include "base/sha1.h"
 #include "base/strings/string_number_conversions.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/file_util.h"
@@ -11,6 +12,7 @@
 #include "file_watcher/file_watcher.h"
 #include "util.h"
 #include "encryptor.h"
+#include "thrift_util.h"
 
 using std::vector;
 
@@ -161,13 +163,38 @@ void FileEventQueueHandler::Run() {
   }
 }
 
+bool FileEventQueueHandler::HandleModAction(const string& top_dir_path,
+                                            const string& path) {
+  // Need to lock the path.
+  DBManagerClient::Options options;
+  options.type = ClientDB::LOCATION_RELPATH_ID;
+  options.name = top_dir_id_;
+  string path_guid;
+  dbm_->Get(options, RemoveBaseFromInput(top_dir_path, path), &path_guid);
+
+  // Pull out the original file.
+
+
+  // Compute the difference.
+
+  // encrypt, bundle the package, upload as a DELTA
+
+  // unlack the path
+
+  return true;
+}
+
+// bool FileEventQueueHandler::LockPath() {
+//   return false;
+// }
+
 bool FileEventQueueHandler::HandleAddAction(const string& top_dir_path,
                                             const string& path) {
   // Register path.
   string path_guid;
   RegisterRelativePathRequest rel_path_req;
-  rel_path_req.user.email = "me2@you.com";
-  rel_path_req.user.password = "password";
+  rel_path_req.user.email = user_auth_->email;
+  rel_path_req.user.password = user_auth_->password;
   rel_path_req.top_dir = top_dir_id_;
   client_->Exec<void, string&, const RegisterRelativePathRequest&>(
       &LockboxServiceClient::RegisterRelativePath,
@@ -181,6 +208,8 @@ bool FileEventQueueHandler::HandleAddAction(const string& top_dir_path,
   options.type = ClientDB::RELPATH_ID_LOCATION;
   options.name = top_dir_id_;
   dbm_->Put(options, path_guid, RemoveBaseFromInput(top_dir_path, path));
+  options.type = ClientDB::LOCATION_RELPATH_ID;
+  dbm_->Put(options, RemoveBaseFromInput(top_dir_path, path), path_guid);
 
   // Lock the file in the cloud.
   PathLockRequest path_lock;
@@ -213,16 +242,11 @@ bool FileEventQueueHandler::HandleAddAction(const string& top_dir_path,
   package.rel_path_id = path_guid;
   package.type = PackageType::SNAPSHOT;
   encryptor_->Encrypt(top_dir_path, path, response.users, &package);
-
   // string out_path;
   // encryptor_->Decrypt(package.payload.data,
   //                     package.payload.user_enc_session,
   //                     &out_path);
   // LOG(INFO) << "Is it what we expect? " << out_path;
-
-  // for (auto& ptr : package.payload.user_enc_session) {
-  //   LOG(INFO) << "  " << ptr.first << " : " << ptr.second;
-  // }
 
   // Upload the package. Cloud needs to update the appropriate user's
   // update queues.
@@ -232,11 +256,20 @@ bool FileEventQueueHandler::HandleAddAction(const string& top_dir_path,
       package);
   LOG(INFO) << "  Uploaded " << ret;
 
+  // Store the data in the local client db.
+  options.type = ClientDB::DATA;
+  options.name = top_dir_id_;
+  const string hash(base::SHA1HashString(package.payload.data));
+  string serial_pkg;
+  ThriftToString(package, &serial_pkg);
+  dbm_->Put(options, hash, serial_pkg);
+
   // Release the lock.
   LOG(INFO) << "Releasing lock";
   client_->Exec<void, const PathLockRequest&>(
       &LockboxServiceClient::ReleaseLockRelPath,
       path_lock);
+
 
   return true;
 }
