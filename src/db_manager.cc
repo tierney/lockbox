@@ -98,6 +98,25 @@ bool DBManager::Delete(const Options& options, const string& key) {
   return s.ok();
 }
 
+bool DBManager::First(const Options& options, string* key, string* value) {
+  CHECK(key);
+  CHECK(value);
+  key->clear();
+  value->clear();
+
+  auto iter = db_map_.find(GenKey(options));
+  CHECK(iter != db_map_.end());
+  leveldb::DB* db = iter->second;
+  leveldb::Iterator* it = db->NewIterator(leveldb::ReadOptions());
+  it->SeekToFirst();
+  if (!it->Valid()) {
+    return false;
+  }
+  key->assign(it->key().ToString());
+  value->assign(it->value().ToString());
+  return true;
+}
+
 bool DBManager::NewTopDir(const Options& options) {
   CHECK(false) << "Not implemented.";
   return false;

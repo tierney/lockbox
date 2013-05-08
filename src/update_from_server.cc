@@ -53,7 +53,8 @@ void UpdateFromServer::Run() {
       vector<string> update_params;
       base::SplitString(update, '_', &update_params);
       options.name = update_params[1];
-      dbm_->Put(options, update, "");
+
+      dbm_->Append(options, update, "");
     }
 
     // Delete the updates on the server.

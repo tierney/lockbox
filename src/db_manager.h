@@ -48,6 +48,8 @@ class DBManager {
 
   virtual bool Delete(const Options& options, const string& key);
 
+  virtual bool First(const Options& options, string* key, string* value);
+
   virtual bool NewTopDir(const Options& options);
 
   virtual bool Track(const Options& options);

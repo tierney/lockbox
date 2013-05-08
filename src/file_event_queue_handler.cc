@@ -49,6 +49,13 @@ FileEventQueueHandler::FileEventQueueHandler(const string& top_dir_id,
   CHECK(encryptor);
   CHECK(user_auth);
   LOG(INFO) << "Starting FileEventQueueHandler for " << top_dir_id;
+
+  // Enumerate the files and check the latest times. We can hold off on hashes
+  // until we have more information.
+  DBManagerClient::Options options;
+  options.type = ClientDB::TOP_DIR_LOCATION;
+  CHECK(dbm_->Get(options, top_dir_id_, &top_dir_path_));
+  PrepareMaps();
 }
 
 FileEventQueueHandler::~FileEventQueueHandler() {
@@ -56,9 +63,9 @@ FileEventQueueHandler::~FileEventQueueHandler() {
 
 // Enumerate the files and check the latest times. We can hold off on hashes
 // until we have more information.
-void FileEventQueueHandler::PrepareMaps(const string& top_dir_path) {
+void FileEventQueueHandler::PrepareMaps() {
   file_util::FileEnumerator enumerator(
-      base::FilePath(top_dir_path),
+      base::FilePath(top_dir_path_),
       true /* recursive */,
       file_util::FileEnumerator::FILES |
       file_util::FileEnumerator::DIRECTORIES);
@@ -81,95 +88,84 @@ void FileEventQueueHandler::PrepareMaps(const string& top_dir_path) {
   }
 }
 
+namespace {
+
+void ParseTimestampPath(const string& ts_path_key, string* timestamp, string* path) {
+  CHECK(timestamp);
+  CHECK(path);
+
+  vector<string> ts_path;
+  // TODO(tierney): See the file_watcher_thread for updates to this code's
+  // handling of the key formatting.
+  LOG(INFO) << "ts_path_key: " << ts_path_key;
+  base::SplitString(ts_path_key, ':', &ts_path);
+  if (ts_path.size() != 2) {
+    CHECK(false) << "bad ts_path_key " << ts_path_key;
+  }
+
+  timestamp->assign(ts_path[0]);
+  path->assign(ts_path[1]);
+}
+
+} // namespace
+
 void FileEventQueueHandler::Run() {
   // Start up phase. Should get information from the RELPATHS to know which
   // files have been tracked already. Need to run through file to see if
   // anything has changed since last examined.
 
-  // Enumerate the files and check the latest times. We can hold off on hashes
-  // until we have more information.
-  DBManagerClient::Options options;
-  options.type = ClientDB::TOP_DIR_LOCATION;
-  string top_dir_path;
-  CHECK(dbm_->Get(options, top_dir_id_, &top_dir_path));
-  PrepareMaps(top_dir_path);
-
-  DBManagerClient::Options update_queue_options;
-  update_queue_options.type = ClientDB::UPDATE_QUEUE_CLIENT;
-  update_queue_options.name = top_dir_id_;
-  scoped_ptr<leveldb::Iterator> it;
-  leveldb::DB* db = dbm_->db(update_queue_options);
   while (true) {
-    // As new files become available, lock the cloud if necessary, and make any
-    // necessary computations before sending up.
-
-    it.reset(db->NewIterator(leveldb::ReadOptions()));
-    it->SeekToFirst();
-    if (!it->Valid()) {
-      sleep(1);
-      continue;
-    }
-    const string ts_path_key = it->key().ToString();
-    const string event_type = it->value().ToString();
-    LOG(INFO) << "Got an action: " << ts_path_key << " " << event_type;
-    vector<string> ts_path;
-    // TODO(tierney): See the file_watcher_thread for updates to this code's
-    // handling of the key formatting.
-    LOG(INFO) << "ts_path_key: " << ts_path_key;
-    base::SplitString(ts_path_key, ':', &ts_path);
-    if (ts_path.size() != 2) {
-      LOG(WARNING) << "bad ts_path_key " << ts_path_key;
-      dbm_->Delete(update_queue_options, it->key().ToString());
-      continue;
-    }
-    const string ts = ts_path[0];
-    const string path = ts_path[1];
-
-    // What to do in each of the |event_types| (added, deleted, modified)?
-    // We'll start by handling the added case.
-    int fw_action = 0;
-
-    UserAuth user_auth;
-    user_auth.email = "me2@you.com";
-    user_auth.password = "password";
-
-    base::StringToInt(event_type, &fw_action);
-    LOG(INFO) << "fw_action: " << fw_action;
-    bool success = false;
-    switch (fw_action) {
-      case FW::Actions::Add:
-        success = HandleAddAction(top_dir_path, path);
-        if (!success) {
-          LOG(WARNING) << "Someone else won... ";
-          CHECK(false);
-        }
-        // If not successful, consider rewriting the queue entry with the
-        // current timestamp so that we can make sure to handle any updates to
-        // the file, even if they come from the cloud.
-        LOG(INFO) << "Done.";
-        dbm_->Delete(update_queue_options, it->key().ToString());
-
-        break;
-      case FW::Actions::Delete:
-        LOG(WARNING) << "Delete not implemented.";
-        dbm_->Delete(update_queue_options, it->key().ToString());
-        break;
-      case FW::Actions::Modified:
-        success = HandleModAction(top_dir_path, path);
-        CHECK(success) << "Someone else won...";
-
-        LOG(INFO) << "Done with mod";
-
-        dbm_->Delete(update_queue_options, it->key().ToString());
-        break;
-      default:
-        CHECK(false) << "Unrecognize event " << fw_action;
+    // Should grab entries from both the server and the local client changes. If
+    // there are changes from the cloud, we should prioritize those.
+    string key, value;
+    if (dbm_->First(
+            DBManager::Options(ClientDB::UPDATE_QUEUE_CLIENT, top_dir_id_),
+            &key, &value)) {
+      HandleLocalAction(key, value);
+      LOG(INFO) << "Done.";
+      dbm_->Delete(
+          DBManager::Options(ClientDB::UPDATE_QUEUE_CLIENT, top_dir_id_),
+          key);
     }
   }
 }
 
-bool FileEventQueueHandler::HandleModAction(const string& top_dir_path,
-                                            const string& path) {
+void FileEventQueueHandler::HandleLocalAction(const string& ts_path,
+                                              const string& event_type) {
+  // For a local action.
+  string ts, path;
+  ParseTimestampPath(ts_path, &ts, &path);
+
+  // What to do in each of the |event_types| (added, deleted, modified)?
+  // We'll start by handling the added case.
+  int fw_action = 0;
+  base::StringToInt(event_type, &fw_action);
+  LOG(INFO) << "fw_action: " << fw_action;
+  bool success = false;
+  switch (fw_action) {
+    case FW::Actions::Add:
+      success = HandleAddAction(path);
+      if (!success) {
+        LOG(WARNING) << "Someone else add won... ";
+        CHECK(false);
+      }
+      // If not successful, consider rewriting the queue entry with the
+      // current timestamp so that we can make sure to handle any updates to
+      // the file, even if they come from the cloud.
+            break;
+    case FW::Actions::Delete:
+      LOG(WARNING) << "Delete not implemented.";
+      break;
+    case FW::Actions::Modified:
+      success = HandleModAction(path);
+      CHECK(success) << "Someone else mod won...";
+      break;
+    default:
+      CHECK(false) << "Unrecognize event " << fw_action;
+  }
+}
+
+bool FileEventQueueHandler::HandleModAction(const string& path) {
   // TODO(tierney): Check that the hash of the file before and after are the
   // same (unmodified). Otherwise we need to start over.
 
@@ -178,7 +174,7 @@ bool FileEventQueueHandler::HandleModAction(const string& top_dir_path,
   options.type = ClientDB::LOCATION_RELPATH_ID;
   options.name = top_dir_id_;
   string path_guid;
-  dbm_->Get(options, RemoveBaseFromInput(top_dir_path, path), &path_guid);
+  dbm_->Get(options, RemoveBaseFromInput(top_dir_path_, path), &path_guid);
 
   // Lock the file in the cloud.
   PathLockRequest path_lock;
@@ -203,7 +199,7 @@ bool FileEventQueueHandler::HandleModAction(const string& top_dir_path,
     return false;
   }
 
-  const string relative_path(RemoveBaseFromInput(top_dir_path, path));
+  const string relative_path(RemoveBaseFromInput(top_dir_path_, path));
   string serial_pkg;
 
   /*
@@ -266,7 +262,7 @@ bool FileEventQueueHandler::HandleModAction(const string& top_dir_path,
   package.rel_path_id = path_guid;
   package.type = PackageType::DELTA;
   encryptor_->EncryptString(
-      top_dir_path, path, delta, response.users, &package);
+      top_dir_path_, path, delta, response.users, &package);
 
 
 
@@ -309,8 +305,7 @@ bool FileEventQueueHandler::HandleModAction(const string& top_dir_path,
 //   return false;
 // }
 
-bool FileEventQueueHandler::HandleAddAction(const string& top_dir_path,
-                                            const string& path) {
+bool FileEventQueueHandler::HandleAddAction(const string& path) {
   // Register path.
   string path_guid;
   RegisterRelativePathRequest rel_path_req;
@@ -324,7 +319,7 @@ bool FileEventQueueHandler::HandleAddAction(const string& top_dir_path,
 
   LOG(INFO) << "ADDed file GUID from server " << path_guid;
 
-  const string relative_path(RemoveBaseFromInput(top_dir_path, path));
+  const string relative_path(RemoveBaseFromInput(top_dir_path_, path));
 
   // Store the association between the GUID and the location.
   DBManagerClient::Options options;
@@ -367,7 +362,7 @@ bool FileEventQueueHandler::HandleAddAction(const string& top_dir_path,
   package.rel_path_id = path_guid;
   package.type = PackageType::SNAPSHOT;
   encryptor_->EncryptString(
-      top_dir_path, path, current, response.users, &package);
+      top_dir_path_, path, current, response.users, &package);
 
   // string out_path;
   // encryptor_->Decrypt(package.payload.data,

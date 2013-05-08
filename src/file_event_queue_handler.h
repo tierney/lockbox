@@ -32,10 +32,12 @@ class FileEventQueueHandler {
   void Run();
 
  private:
-  void PrepareMaps(const string& top_dir_path);
+  void PrepareMaps();
 
-  bool HandleAddAction(const string& top_dir_path, const string& path);
-  bool HandleModAction(const string& top_dir_path, const string& path);
+  void HandleLocalAction(const string& ts_path, const string& event_type);
+  // Accompanying local action methods.
+  bool HandleAddAction(const string& path);
+  bool HandleModAction(const string& path);
 
   DBManagerClient* dbm_;
   Client* client_;
@@ -44,6 +46,7 @@ class FileEventQueueHandler {
 
   boost::thread* thread_;
   const string top_dir_id_;
+  string top_dir_path_;
 
   map<string, string> path_hashes_;
   map<string, time_t> path_mtime_;
