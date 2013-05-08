@@ -56,10 +56,11 @@ DeviceID LockboxServiceHandler::RegisterDevice(const UserAuth& user) {
   // TODO(tierney): In the future, we can defensively check against an IP
   // address for an email account to throttle the accounts.
   options.type = ServerDB::USER_DEVICE;
-  manager_->Update(options, user_id, device_id_to_persist);
+  manager_->Append(options, user_id, device_id_to_persist);
 
-  options.type = ServerDB::DEVICE_SYNC;
-  manager_->Put(options, device_id_to_persist, "");
+  // With GUID approach, we don't need this anymore.
+  // options.type = ServerDB::DEVICE_SYNC;
+  // manager_->Put(options, device_id_to_persist, "");
 
   return device_id;
 }
@@ -67,15 +68,15 @@ DeviceID LockboxServiceHandler::RegisterDevice(const UserAuth& user) {
 TopDirID LockboxServiceHandler::RegisterTopDir(const UserAuth& user) {
   // Your implementation goes here
   printf("RegisterTopDir\n");
-  DBManagerServer::Options options;
-  options.type = ServerDB::USER_TOP_DIR;
 
-  TopDirID top_dir_id = manager_->GetNextTopDirID();
-  string top_dir_id_to_persist = base::IntToString(top_dir_id);
+  const TopDirID top_dir_id = manager_->GetNextTopDirID();
+  const string top_dir_id_to_persist = base::IntToString(top_dir_id);
 
   // Appends the top_dir_id for the user to the end of the list of top dirs
   // owned by that user.
-  CHECK(manager_->Update(options, user.email, top_dir_id_to_persist));
+  DBManagerServer::Options options;
+  options.type = ServerDB::USER_TOP_DIR;
+  CHECK(manager_->Append(options, user.email, top_dir_id_to_persist));
 
   // TODO(tierney): Should create additional top_dir database here.
   options.type = ServerDB::TOP_DIR_PLACEHOLDER;
@@ -92,7 +93,9 @@ TopDirID LockboxServiceHandler::RegisterTopDir(const UserAuth& user) {
   // Update the editors for the top_dir.
   options.type = ServerDB::TOP_DIR_META;
   options.name = top_dir_id_to_persist;
-  CHECK(manager_->Put(options, "EDITORS", user_id));
+  string guid;
+  CreateGUIDString(&guid);
+  CHECK(manager_->Put(options, "EDITORS_" + guid, user_id));
 
   return top_dir_id;
 }
@@ -159,7 +162,7 @@ void LockboxServiceHandler::AcquireLockRelPath(PathLockResponse& _return,
 }
 
 void LockboxServiceHandler::ReleaseLockRelPath(const PathLockRequest& lock) {
-
+  printf("ReleaseLockRelPath");
 }
 
 int64_t LockboxServiceHandler::UploadPackage(const RemotePackage& pkg) {
@@ -170,25 +173,14 @@ int64_t LockboxServiceHandler::UploadPackage(const RemotePackage& pkg) {
   LOG(INFO) << "Received data (" << pkg.payload.data.size() << ") :"
             << pkg.rel_path_id;
 
-  // for (auto& ptr : pkg.payload.user_enc_session) {
-  //   LOG(INFO) << "  " << ptr.first << " : " << ptr.second;
-  // }
-
-  // boost::shared_ptr<apache::thrift::transport::TMemoryBuffer> mem_buf(
-  //     new apache::thrift::transport::TMemoryBuffer());
-  // boost::shared_ptr<apache::thrift::protocol::TBinaryProtocol> bin_prot(
-  //     new apache::thrift::protocol::TBinaryProtocol(mem_buf));
-
-  // pkg.write(bin_prot.get());
-  string mem; ///= mem_buf->getBufferAsString();
+  string mem;
   ThriftToString(pkg, &mem);
   LOG(INFO) << "Did it work?: " << mem.size();
 
   // Hash the input content.
   // TODO(tierney): This should actually be just the encrypted contents.
-  string hash_of_prot;
-  CHECK(base::Base64Encode(base::SHA1HashString(pkg.payload.data),
-                           &hash_of_prot));
+  const string sha1 = base::SHA1HashString(pkg.payload.data);
+  const string hash_of_prot = base::HexEncode(sha1.c_str(), sha1.size());
 
   // Associate the rel path GUID with the package. If the rel_path's latest is
   // empty then this is the first.

@@ -56,7 +56,7 @@ bool DBManagerClient::Put(const Options& options,
   return DBManager::Put(options, key, value);
 }
 
-bool DBManagerClient::Update(const Options& options,
+bool DBManagerClient::Append(const Options& options,
                              const string& key,
                              const string& new_value) {
   CHECK(options.type != ClientDB::UNKNOWN);
@@ -64,7 +64,7 @@ bool DBManagerClient::Update(const Options& options,
   if (options.type > ClientDB::TOP_DIR_PLACEHOLDER) {
     CHECK(!options.name.empty());
   }
-  return DBManager::Update(options, key, new_value);
+  return DBManager::Append(options, key, new_value);
 }
 
 bool DBManagerClient::NewTopDir(const Options& options) {

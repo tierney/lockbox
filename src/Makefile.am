@@ -41,6 +41,14 @@ leveldb_sb_LDADD += $(top_builddir)/base/liblogging.la
 # libleveldb_base_la_CXXFLAGS = $(LEVELDB_CFLAGS)
 # libleveldb_base_la_LIBADD = $(LEVELDB_BIN_LIBS)
 
+noinst_LTLIBRARIES += libsimple_delta.la
+libsimple_delta_la_SOURCES = \
+	simple_delta.cc \
+	simple_delta.h
+libsimple_delta_la_LIBADD = \
+	$(top_builddir)/courgette/libsimple_delta.la \
+	$(top_builddir)/courgette/libstreams.la
+
 
 noinst_LTLIBRARIES += libupdate_queuer.la
 libupdate_queuer_la_SOURCES = update_queuer.h
@@ -225,8 +233,9 @@ noinst_LTLIBRARIES += libfile_event_queue_handler.la
 libfile_event_queue_handler_la_SOURCES =
 libfile_event_queue_handler_la_SOURCES += file_event_queue_handler.h
 libfile_event_queue_handler_la_SOURCES += file_event_queue_handler.cc
-libfile_event_queue_handler_la_LIBADD = $(top_builddir)/base/libmd5.la
-libfile_event_queue_handler_la_LIBADD += $(top_builddir)/base/libsha1.la
+libfile_event_queue_handler_la_LIBADD = $(top_builddir)/base/libmd5.la \
+	$(top_builddir)/base/libsha1.la \
+	libsimple_delta.la
 
 # Database pieces.
 noinst_LTLIBRARIES += libdb_manager.la
@@ -235,6 +244,7 @@ libdb_manager_la_SOURCES = db_manager.h
 libdb_manager_la_SOURCES += db_manager.cc
 libdb_manager_la_LIBADD = libleveldb_util.la
 libdb_manager_la_LIBADD += liblockbox_thrift.la
+libdb_manager_la_LIBADD += libguid_creator.la
 
 noinst_LTLIBRARIES += libdb_manager_client.la
 libdb_manager_client_la_CXXFLAGS = $(LEVELDB_CFLAGS)

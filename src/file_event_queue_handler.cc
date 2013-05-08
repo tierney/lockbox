@@ -13,6 +13,7 @@
 #include "util.h"
 #include "encryptor.h"
 #include "thrift_util.h"
+#include "simple_delta.h"
 
 using std::vector;
 
@@ -154,7 +155,11 @@ void FileEventQueueHandler::Run() {
         dbm_->Delete(update_queue_options, it->key().ToString());
         break;
       case FW::Actions::Modified:
-        LOG(WARNING) << "Modified not implemented.";
+        success = HandleModAction(top_dir_path, path);
+        CHECK(success) << "Someone else won...";
+
+        LOG(INFO) << "Done with mod";
+
         dbm_->Delete(update_queue_options, it->key().ToString());
         break;
       default:
@@ -165,6 +170,9 @@ void FileEventQueueHandler::Run() {
 
 bool FileEventQueueHandler::HandleModAction(const string& top_dir_path,
                                             const string& path) {
+  // TODO(tierney): Check that the hash of the file before and after are the
+  // same (unmodified). Otherwise we need to start over.
+
   // Need to lock the path.
   DBManagerClient::Options options;
   options.type = ClientDB::LOCATION_RELPATH_ID;
@@ -172,14 +180,102 @@ bool FileEventQueueHandler::HandleModAction(const string& top_dir_path,
   string path_guid;
   dbm_->Get(options, RemoveBaseFromInput(top_dir_path, path), &path_guid);
 
-  // Pull out the original file.
+  // Lock the file in the cloud.
+  PathLockRequest path_lock;
+  path_lock.user.email = user_auth_->email;
+  path_lock.user.password = user_auth_->password;
+  path_lock.top_dir = top_dir_id_;
+  path_lock.rel_path = path_guid;
 
+  // Acquire the lock on the cloud.
+  LOG(INFO) << "Locking on the cloud.";
+  PathLockResponse response;
+  client_->Exec<void, PathLockResponse&, const PathLockRequest&>(
+      &LockboxServiceClient::AcquireLockRelPath,
+      response,
+      path_lock);
+  if (!response.acquired) {
+    LOG(INFO) << "Someone else already locked the file " << path;
+    CHECK(false) << "This should not happen (using GUIDs in the cloud).";
+    // TODO(tierney): Consider rewriting the queue entry with the current
+    // timestamp so that we can make sure to handle any updates to the
+    // file, even if they come from the cloud.
+    return false;
+  }
+
+  // Pull out the original file.
+  options.type = ClientDB::DATA;
+  options.name = top_dir_id_;
+
+  const string relative_path(RemoveBaseFromInput(top_dir_path, path));
+
+  // Need to find the hash of the previous and check if we have that.
+  string prev_hash;
+  dbm_->Get(DBManager::Options(ClientDB::RELPATHS_HASH, top_dir_id_),
+            relative_path, &prev_hash);
+
+  string serial_pkg;
+  dbm_->Get(options, prev_hash, &serial_pkg);
+
+  RemotePackage prev_version_pkg;
+  ThriftFromString(serial_pkg, &prev_version_pkg);
+
+  // Unwrap the data.
+  string output;
+  encryptor_->Decrypt(prev_version_pkg.payload.data,
+                      prev_version_pkg.payload.user_enc_session,
+                      &output);
+
+  // Read the file from the disk.
+  string current;
+  file_util::ReadFileToString(base::FilePath(path), &current);
 
   // Compute the difference.
+  string delta(Delta::Generate(output, current));
 
   // encrypt, bundle the package, upload as a DELTA
+  LOG(INFO) << "Encrypting.";
+  RemotePackage package;
+  package.top_dir = top_dir_id_;
+  package.rel_path_id = path_guid;
+  package.type = PackageType::SNAPSHOT;
+  encryptor_->EncryptString(
+      top_dir_path, path, delta, response.users, &package);
 
-  // unlack the path
+
+
+  // Upload the package. Cloud needs to update the appropriate user's
+  // update queues.
+  LOG(INFO) << "Uploading.";
+  int64 ret = client_->Exec<int64, const RemotePackage&>(
+      &LockboxServiceClient::UploadPackage, package);
+  LOG(INFO) << "  Uploaded " << ret;
+
+  // Store the data in the local client db. SHOULD ACTUALLY STORE THE WHOLE
+  // VERSION. THIS WAY WE CAN AVOID RECONSTRUCTION COSTS.
+  options.type = ClientDB::DATA;
+  options.name = top_dir_id_;
+  const string sha1(base::SHA1HashString(package.payload.data));
+  const string hash(base::HexEncode(sha1.c_str(), sha1.size()));
+
+  serial_pkg.clear();
+  ThriftToString(package, &serial_pkg);
+  dbm_->Put(options, hash, serial_pkg);
+
+  // Put into relpath the latest hash.
+  dbm_->Put(DBManager::Options(ClientDB::RELPATHS_HASH, top_dir_id_),
+            relative_path, hash);
+
+  // Then set the fptr.
+  dbm_->Put(DBManager::Options(ClientDB::FPTRS, top_dir_id_), hash, prev_hash);
+
+
+
+  // Release the lock.
+  LOG(INFO) << "Releasing lock";
+  client_->Exec<void, const PathLockRequest&>(
+      &LockboxServiceClient::ReleaseLockRelPath,
+      path_lock);
 
   return true;
 }
@@ -203,20 +299,21 @@ bool FileEventQueueHandler::HandleAddAction(const string& top_dir_path,
 
   LOG(INFO) << "ADDed file GUID from server " << path_guid;
 
+  const string relative_path(RemoveBaseFromInput(top_dir_path, path));
+
   // Store the association between the GUID and the location.
   DBManagerClient::Options options;
   options.type = ClientDB::RELPATH_ID_LOCATION;
   options.name = top_dir_id_;
-  dbm_->Put(options, path_guid, RemoveBaseFromInput(top_dir_path, path));
+  dbm_->Put(options, path_guid, relative_path);
   options.type = ClientDB::LOCATION_RELPATH_ID;
-  dbm_->Put(options, RemoveBaseFromInput(top_dir_path, path), path_guid);
+  dbm_->Put(options, relative_path, path_guid);
 
   // Lock the file in the cloud.
   PathLockRequest path_lock;
   path_lock.user.email = user_auth_->email;
   path_lock.user.password = user_auth_->password;
   path_lock.top_dir = top_dir_id_;
-  // path_lock.rel_path = RemoveBaseFromInput(top_dir_path, path);
   path_lock.rel_path = path_guid;
 
   // Acquire the lock on the cloud.
@@ -259,10 +356,19 @@ bool FileEventQueueHandler::HandleAddAction(const string& top_dir_path,
   // Store the data in the local client db.
   options.type = ClientDB::DATA;
   options.name = top_dir_id_;
-  const string hash(base::SHA1HashString(package.payload.data));
+  const string sha1(base::SHA1HashString(package.payload.data));
+  const string hash(base::HexEncode(sha1.c_str(), sha1.size()));
+
   string serial_pkg;
   ThriftToString(package, &serial_pkg);
   dbm_->Put(options, hash, serial_pkg);
+
+  // Put into relpath the latest hash.
+  dbm_->Put(DBManager::Options(ClientDB::RELPATHS_HASH, top_dir_id_),
+            relative_path, hash);
+
+  // Then set the fptr.
+  dbm_->Put(DBManager::Options(ClientDB::FPTRS, top_dir_id_), hash, "");
 
   // Release the lock.
   LOG(INFO) << "Releasing lock";

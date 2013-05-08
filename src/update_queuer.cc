@@ -47,13 +47,6 @@ void UpdateQueuer::Run() {
       options.type = ServerDB::UPDATE_ACTION_QUEUE;
 
       leveldb::DB* db = dbm_->db(options);
-      // it->SeekToFirst();
-      // if (!it->Valid()) {
-      //   LOG(INFO) << "Waiting to work";
-      //   sync_->cv.wait(lock);
-      //   continue;
-      // }
-
       sync_->cv.wait(lock, [&]{ return !DBEmpty(db, sync_); });
 
       db_lock.lock();
@@ -88,20 +81,18 @@ void UpdateQueuer::Run() {
       options.type = ServerDB::TOP_DIR_META;
       options.name = top_dir;
       string users_to_update;
-      CHECK(dbm_->Get(options, "EDITORS", &users_to_update));
+
+      // Iterate through the EDITORS.
+      vector<string> users;
+      CHECK(dbm_->GetList(options, "EDITORS", &users));
 
       // USER_DEVICE
-      vector<string> users;
-      base::SplitString(users_to_update, ',', &users);
       for (const string& user : users) {
-        vector<string> devices;
         options.type = ServerDB::USER_DEVICE;
         options.name = "";
-        string devices_to_update;
-        CHECK(dbm_->Get(options, user, &devices_to_update))
+        vector<string> devices;
+        CHECK(dbm_->GetList(options, user, &devices))
             << user << " not in USER_DEVICE";
-
-        base::SplitString(devices_to_update, ',', &devices);
 
         // DEVICE_SYNC append.
         for (const string& device : devices) {
@@ -109,12 +100,8 @@ void UpdateQueuer::Run() {
           options.name = "";
 
           // TODO(tierney): Lock the database entries for the prefix.
-          string updates;
-          CHECK(dbm_->Get(options, device, &updates));
-          string updates_to_write = updates.empty() ? "" : updates + ",";
-          LOG(INFO) << "Updating " << device << " for " << user << " with "
-                    << updates_to_write + tuple;
-          CHECK(dbm_->Put(options, device, updates_to_write + tuple));
+          LOG(INFO) << "Appending " << tuple;
+          CHECK(dbm_->Append(options, device, tuple));
         }
       }
 

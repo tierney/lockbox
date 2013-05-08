@@ -32,6 +32,19 @@ Encryptor::~Encryptor() {
 
 bool Encryptor::Encrypt(const string& top_dir_path, const string& path,
                         const vector<string>& users, RemotePackage* package) {
+  // Read file to string.
+  string raw_input;
+  file_util::ReadFileToString(base::FilePath(path), &raw_input);
+
+  return EncryptString(top_dir_path, path, raw_input, users, package);
+}
+
+
+bool Encryptor::EncryptString(const string& top_dir_path,
+                              const string& path,
+                              const string& raw_input,
+                              const vector<string>& users,
+                              RemotePackage* package) {
   CHECK(package);
   bool success = false;
 
@@ -41,16 +54,13 @@ bool Encryptor::Encrypt(const string& top_dir_path, const string& path,
                             &(package->path.user_enc_session));
   CHECK(success);
 
-  // Read file to string.
-  string raw_input;
-  file_util::ReadFileToString(base::FilePath(path), &raw_input);
-
   // Encrypt the data.
   success = EncryptInternal(raw_input, users, &(package->payload.data),
                             &(package->payload.user_enc_session));
   CHECK(success);
   return true;
 }
+
 
 bool Encryptor::EncryptInternal(
     const string& raw_input, const vector<string>& users,
@@ -89,8 +99,8 @@ bool Encryptor::EncryptInternal(
 
 bool Encryptor::Decrypt(const string& data,
                         const map<string, string>& user_enc_session,
-                        string* out_path) {
-  CHECK(out_path);
+                        string* output) {
+  CHECK(output);
   string encrypted_key = user_enc_session.find("me2@you.com")->second;
   CHECK(!encrypted_key.empty());
 
@@ -106,8 +116,8 @@ bool Encryptor::Decrypt(const string& data,
   // LOG(INFO) << "Decrypte " << out;
 
   BlockCipher block_cipher;
-  block_cipher.Decrypt(data, out, out_path);
-  LOG(INFO) << "Decrypted out: " << *out_path;
+  block_cipher.Decrypt(data, out, output);
+  LOG(INFO) << "Decrypted out: " << *output;
 
   return false;
 }

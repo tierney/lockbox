@@ -153,6 +153,9 @@ service LockboxService {
   # Returns the top directory's GUID.
   TopDirID RegisterTopDir(1:UserAuth user),
 
+  # Share directory.
+  # bool ShareTopDir(1:UserAuth user, 2:string email),
+
   # Attach a public key to a user.
   bool AssociateKey(1:UserAuth user, 2:PublicKey pub),
 

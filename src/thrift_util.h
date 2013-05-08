@@ -28,11 +28,12 @@ uint32_t ThriftFromString(const string& in, T* pkg) {
   CHECK(pkg);
   boost::shared_ptr<apache::thrift::transport::TMemoryBuffer> mem_buf(
       new apache::thrift::transport::TMemoryBuffer(
-          const_cast<uint8_t*>(in.c_str()), in.size()));
+          reinterpret_cast<uint8_t*>(
+              const_cast<char*>(in.c_str())), in.size()));
   boost::shared_ptr<apache::thrift::protocol::TBinaryProtocol> bin_prot(
       new apache::thrift::protocol::TBinaryProtocol(mem_buf));
 
-  return pkg->read(mem_buf);
+  return pkg->read(bin_prot.get());
 }
 
 } // namespace lockbox
