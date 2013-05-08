@@ -21,7 +21,7 @@ class DBManagerClient : public DBManager {
 
   bool Put(const Options& options, const string& key, const string& value);
 
-  bool Update(const Options& options,
+  bool Append(const Options& options,
               const string& key,
               const string& new_value);
 

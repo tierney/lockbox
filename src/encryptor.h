@@ -25,9 +25,15 @@ class Encryptor {
                const vector<string>& users,
                RemotePackage* package);
 
+  bool EncryptString(const string& top_dir_path,
+                     const string& path,
+                     const string& raw_input,
+                     const vector<string>& users,
+                     RemotePackage* package);
+
   bool Decrypt(const string& data,
                const map<string, string>& user_enc_session,
-               string* out_path);
+               string* output);
 
  private:
   bool EncryptInternal(const string& input, const vector<string>& users,

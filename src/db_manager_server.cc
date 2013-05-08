@@ -112,7 +112,7 @@ bool DBManagerServer::Put(const Options& options,
   return DBManager::Put(options, key, value);
 }
 
-bool DBManagerServer::Update(const Options& options,
+bool DBManagerServer::Append(const Options& options,
                              const string& key,
                              const string& new_value) {
   CHECK(options.type != ServerDB::UNKNOWN);
@@ -120,7 +120,7 @@ bool DBManagerServer::Update(const Options& options,
   if (options.type > ServerDB::TOP_DIR_PLACEHOLDER) {
     CHECK(!options.name.empty());
   }
-  return DBManager::Update(options, key, new_value);
+  return DBManager::Append(options, key, new_value);
 }
 
 bool DBManagerServer::NewTopDir(const Options& options) {

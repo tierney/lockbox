@@ -41,6 +41,14 @@ leveldb_sb_LDADD += $(top_builddir)/base/liblogging.la
 # libleveldb_base_la_CXXFLAGS = $(LEVELDB_CFLAGS)
 # libleveldb_base_la_LIBADD = $(LEVELDB_BIN_LIBS)
 
+noinst_LTLIBRARIES += libsimple_delta.la
+libsimple_delta_la_SOURCES = \
+	simple_delta.cc \
+	simple_delta.h
+libsimple_delta_la_LIBADD = \
+	$(top_builddir)/courgette/libsimple_delta.la \
+	$(top_builddir)/courgette/libstreams.la
+
 
 noinst_LTLIBRARIES += libupdate_queuer.la
 libupdate_queuer_la_SOURCES = update_queuer.h
@@ -119,22 +127,34 @@ noinst_LTLIBRARIES += libfile_util.la
 libfile_util_la_SOURCES = file_util.h
 libfile_util_la_SOURCES += file_util.cc
 
-bin_PROGRAMS += client
-client_SOURCES = client.cc
-client_LDADD =
-client_LDADD += libqueue_filter.la
-client_LDADD += librsa.la
-client_LDADD += librsa_public_key_openssl.la
-client_LDADD += liblockbox_thrift.la
-client_LDADD += libfile_util.la
-client_LDADD += $(THRIFT_LIBS)
-client_LDADD += libdb_manager_client.la
-client_LDADD += libfile_watcher_thread.la
-client_LDADD += libfile_event_queue_handler.la
-client_LDADD += libencryptor.la
-client_LDADD += libleveldb_util.la
-client_LDADD += $(LEVELDB_BIN_LIBS)
-client_LDADD += $(BOOST_THREAD_LIBS)
+noinst_LTLIBRARIES += libupdate_from_server.la
+libupdate_from_server_la_SOURCES = update_from_server.h
+libupdate_from_server_la_SOURCES += update_from_server.cc
+
+bin_PROGRAMS += client_main
+client_main_SOURCES = client_main.cc
+client_main_LDADD =
+client_main_LDADD += $(GFLAGS_LIBS)
+client_main_LDADD += libclient.la
+client_main_LDADD += $(LEVELDB_BIN_LIBS)
+
+noinst_LTLIBRARIES += libclient.la
+libclient_la_SOURCES = client.h
+libclient_la_SOURCES += client.cc
+libclient_la_LIBADD =
+libclient_la_LIBADD += libupdate_from_server.la
+libclient_la_LIBADD += libqueue_filter.la
+libclient_la_LIBADD += librsa.la
+libclient_la_LIBADD += librsa_public_key_openssl.la
+libclient_la_LIBADD += liblockbox_thrift.la
+libclient_la_LIBADD += libfile_util.la
+libclient_la_LIBADD += $(THRIFT_LIBS)
+libclient_la_LIBADD += libdb_manager_client.la
+libclient_la_LIBADD += libfile_watcher_thread.la
+libclient_la_LIBADD += libfile_event_queue_handler.la
+libclient_la_LIBADD += libencryptor.la
+libclient_la_LIBADD += libleveldb_util.la
+libclient_la_LIBADD += $(BOOST_THREAD_LIBS)
 
 # thrift compiler command. Note that the --out value for the output
 # directory.
@@ -213,7 +233,9 @@ noinst_LTLIBRARIES += libfile_event_queue_handler.la
 libfile_event_queue_handler_la_SOURCES =
 libfile_event_queue_handler_la_SOURCES += file_event_queue_handler.h
 libfile_event_queue_handler_la_SOURCES += file_event_queue_handler.cc
-libfile_event_queue_handler_la_LIBADD = $(top_builddir)/base/libmd5.la
+libfile_event_queue_handler_la_LIBADD = $(top_builddir)/base/libmd5.la \
+	$(top_builddir)/base/libsha1.la \
+	libsimple_delta.la
 
 # Database pieces.
 noinst_LTLIBRARIES += libdb_manager.la
@@ -222,6 +244,7 @@ libdb_manager_la_SOURCES = db_manager.h
 libdb_manager_la_SOURCES += db_manager.cc
 libdb_manager_la_LIBADD = libleveldb_util.la
 libdb_manager_la_LIBADD += liblockbox_thrift.la
+libdb_manager_la_LIBADD += libguid_creator.la
 
 noinst_LTLIBRARIES += libdb_manager_client.la
 libdb_manager_client_la_CXXFLAGS = $(LEVELDB_CFLAGS)

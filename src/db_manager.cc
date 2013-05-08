@@ -5,10 +5,12 @@
 #include "base/files/file_path.h"
 #include "base/strings/string_number_conversions.h"
 #include "base/strings/string_split.h"
+#include "base/string_util.h"
 #include "base/stl_util.h"
 #include "base/logging.h"
 #include "leveldb/write_batch.h"
 #include "leveldb/db.h"
+#include "guid_creator.h"
 
 using base::FilePath;
 
@@ -35,6 +37,25 @@ bool DBManager::Get(const Options& options,
   return s.ok();
 }
 
+bool DBManager::GetList(const Options& options,
+                        const string& key_prefix,
+                        vector<string>* values) {
+  CHECK(values);
+  values->clear();
+
+  auto iter = db_map_.find(GenKey(options));
+  CHECK(iter != db_map_.end());
+  leveldb::DB* db = iter->second;
+  leveldb::Iterator* it = db->NewIterator(leveldb::ReadOptions());
+  for (it->Seek(key_prefix);
+       it->Valid() && StartsWithASCII(it->key().ToString(), key_prefix,
+                                      true /* case sensitive */);
+       it->Next()) {
+    values->push_back(it->value().ToString());
+  }
+  return (!values->empty());
+}
+
 bool DBManager::Put(const Options& options,
                     const string& key,
                     const string& value) {
@@ -47,30 +68,25 @@ bool DBManager::Put(const Options& options,
   return s.ok();
 }
 
-bool DBManager::Update(const Options& options,
+// Append-like operation.
+bool DBManager::Append(const Options& options,
                        const string& key,
                        const string& new_value) {
   auto iter = db_map_.find(GenKey(options));
   CHECK(iter != db_map_.end());
   leveldb::DB* db = iter->second;
 
-  std::string value;
-  leveldb::Status s = db->Get(leveldb::ReadOptions(), key, &value);
-  CHECK(s.ok() || s.IsNotFound());
-  LOG(INFO) << "Update before " << value;
-  // TODO(tierney): Pull this notion of append out. We should also have
-  // facilities for getting an iterator out of this list.
-  if (!value.empty()) {
-    value.append(",");
-  }
-  value.append(new_value);
-  db->Put(leveldb::WriteOptions(), key, value);
+  // Gen key.
 
-  // TODO(tierney): Remove once we've tested the code.
-  value.clear();
-  s = db->Get(leveldb::ReadOptions(), key, &value);
-  CHECK(s.ok());
-  LOG(INFO) << "Update after " << value;
+  // Gen GUID.
+  string guid;
+  CreateGUIDString(&guid);
+
+  const string key_guid = key + "_" + guid;
+
+  // Write the key_GUID.
+  db->Put(leveldb::WriteOptions(), key, new_value);
+
   return true;
 }
 

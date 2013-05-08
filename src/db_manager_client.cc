@@ -56,7 +56,7 @@ bool DBManagerClient::Put(const Options& options,
   return DBManager::Put(options, key, value);
 }
 
-bool DBManagerClient::Update(const Options& options,
+bool DBManagerClient::Append(const Options& options,
                              const string& key,
                              const string& new_value) {
   CHECK(options.type != ClientDB::UNKNOWN);
@@ -64,7 +64,7 @@ bool DBManagerClient::Update(const Options& options,
   if (options.type > ClientDB::TOP_DIR_PLACEHOLDER) {
     CHECK(!options.name.empty());
   }
-  return DBManager::Update(options, key, new_value);
+  return DBManager::Append(options, key, new_value);
 }
 
 bool DBManagerClient::NewTopDir(const Options& options) {
@@ -81,8 +81,7 @@ bool DBManagerClient::NewTopDir(const Options& options) {
               << " " << new_options.name;
     // Call the function that setup up the database and store a pointer in the
     // appropriate places.
-    CHECK(this->Track(new_options));
-    LOG(INFO) << "Back from tracking...";
+    CHECK(Track(new_options));
   }
 }
 

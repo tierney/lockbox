@@ -19,6 +19,11 @@
 #include <thrift/transport/TBufferTransports.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 
+#include "db_manager_client.h"
+
+using std::string;
+using std::vector;
+
 namespace lockbox {
 
 class Client {
@@ -30,25 +35,35 @@ class Client {
     int port;
   };
 
-  Client(const ConnInfo& conn_info)
+  // Does not take ownership of |user_auth| or |dbm|.
+  Client(const ConnInfo& conn_info, UserAuth* user_auth, DBManagerClient* dbm)
     : socket_(new apache::thrift::transport::TSocket(conn_info.host,
                                                        conn_info.port)),
       transport_(new apache::thrift::transport::TFramedTransport(socket_)),
       protocol_(new apache::thrift::protocol::TBinaryProtocol(transport_)),
-      client_(protocol_),
+      service_client_(protocol_),
       host_(conn_info.host),
-      port_(conn_info.port) {
+      port_(conn_info.port),
+      user_auth_(user_auth),
+      dbm_(dbm) {
   }
 
   virtual ~Client() {}
 
+  void RegisterUser();
+
+  void RegisterTopDir();
+
+  void Share();
+
+  void Start();
+
   // Driver for the LockboxServiceClient code.
   template <typename R, typename... Args>
   R Exec(R(LockboxServiceClient::*func)(Args...), Args... args) {
-    return execer<R(Args...)>::exec(transport_, client_, func,
+    return execer<R(Args...)>::exec(transport_, service_client_, func,
                                     std::forward<Args>(args)...);
   }
-
 
  private:
   // Specialized driver for the Thrift API. In particular, the template wrappers
@@ -57,27 +72,28 @@ class Client {
   template <typename F>
   struct execer {};
 
+  // Executes for non-void return type service calls.
   template<typename R, typename... Args>
   struct execer<R(Args...)> {
     static R exec(
         boost::shared_ptr<apache::thrift::transport::TTransport> transport_,
-        LockboxServiceClient client_,
+        LockboxServiceClient service_client_,
         R(LockboxServiceClient::*func)(Args...), Args... args) {
       transport_->open();
-      R ret = (client_.*func)(std::forward<Args>(args)...);
+      R ret = (service_client_.*func)(std::forward<Args>(args)...);
       transport_->close();
       return ret;
     }
   };
-
+  // Executes void return type service calls.
   template<typename... Args>
   struct execer<void(Args...)> {
     static void exec(
         boost::shared_ptr<apache::thrift::transport::TTransport> transport_,
-        LockboxServiceClient client_,
+        LockboxServiceClient service_client_,
         void(LockboxServiceClient::*func)(Args...), Args... args) {
       transport_->open();
-      (client_.*func)(std::forward<Args>(args)...);
+      (service_client_.*func)(std::forward<Args>(args)...);
       transport_->close();
     }
   };
@@ -86,10 +102,12 @@ class Client {
   boost::shared_ptr<apache::thrift::transport::TTransport> transport_;
   boost::shared_ptr<apache::thrift::protocol::TProtocol> protocol_;
 
-  LockboxServiceClient client_;
+  LockboxServiceClient service_client_;
 
   std::string host_;
   int port_;
+  UserAuth* user_auth_;
+  DBManagerClient* dbm_;
 };
 
 } // namespace lockbox

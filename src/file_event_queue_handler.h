@@ -35,6 +35,7 @@ class FileEventQueueHandler {
   void PrepareMaps(const string& top_dir_path);
 
   bool HandleAddAction(const string& top_dir_path, const string& path);
+  bool HandleModAction(const string& top_dir_path, const string& path);
 
   DBManagerClient* dbm_;
   Client* client_;

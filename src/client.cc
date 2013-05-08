@@ -1,117 +1,90 @@
 #include <string>
 #include <vector>
 
-#include "LockboxService.h"
 #include "base/basictypes.h"
 #include "base/file_util.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/strings/string_number_conversions.h"
 #include "client.h"
+#include "crypto/openssl_util.h"
 #include "crypto/rsa_private_key.h"
 #include "db_manager_client.h"
 #include "file_event_queue_handler.h"
 #include "file_util.h"
 #include "file_watcher_thread.h"
+#include "gflags/gflags.h"
 #include "leveldb/db.h"
 #include "lockbox_types.h"
 #include "queue_filter.h"
-
-#include "rsa_public_key_openssl.h"
 #include "rsa.h"
-
-#include "crypto/openssl_util.h"
+#include "rsa_public_key_openssl.h"
+#include "update_from_server.h"
 #include <openssl/bio.h>
 #include <openssl/x509.h>
 
-using std::string;
-using std::vector;
+DECLARE_string(register_top_dir);
 
 namespace lockbox {
 
-
-} // namespace lockbox
-
-int main(int argc, char **argv) {
-  if (argc != 3) {
-    std::cerr << "Please check usage in code." << std::endl;
-    return 1;
-  }
-
-  lockbox::Client::ConnInfo conn_info(argv[1], atoi(argv[2]));
-  lockbox::Client client(conn_info);
-
-  string home_dir(lockbox::GetHomeDirectory());
-  lockbox::DBManagerClient client_db(home_dir.append("/.lockbox"));
-
-  lockbox::UserAuth user_auth;
-  user_auth.email = "me2@you.com";
-  user_auth.password = "password";
+void Client::RegisterUser() {
+  // Generate the key.
+  RSAPEM rsa_pem;
+  string priv_key;
+  string pub_key;
+  rsa_pem.Generate(user_auth_->password, &priv_key, &pub_key);
 
   // See if the databases are already full of interesting data.
   lockbox::DBManagerClient::Options options;
   options.type = lockbox::ClientDB::CLIENT_DATA;
-  string value;
 
-  // Initialize the private key if necessary.
-  client_db.Get(options, "PRIV_KEY", &value);
-  if (value.empty()) {
-    // Generate the key.
-    lockbox::RSAPEM rsa_pem;
+  // TODO(tierney): Check that a key doesn't already exist?
+  dbm_->Put(options, "PRIV_KEY", priv_key);
+  LOG(INFO) << "PRIV_KEY " << priv_key;
 
-    string priv_key;
-    string pub_key;
+  // Set the public key in the EMAIL_KEY db.
+  options.type = ClientDB::EMAIL_KEY;
+  dbm_->Put(options, user_auth_->email, pub_key);
 
-    rsa_pem.Generate(user_auth.password, &priv_key, &pub_key);
+  // Update the public key in the cloud.
+  PublicKey pub_key_send;
+  pub_key_send.key.clear();
+  pub_key_send.key = pub_key;
+  bool ret = Exec<bool, const UserAuth&, const PublicKey&>(
+      &LockboxServiceClient::AssociateKey,
+      *user_auth_, pub_key_send);
+  CHECK(ret);
 
-    client_db.Put(options, "PRIV_KEY", priv_key);
-    LOG(INFO) << "PRIV_KEY " << priv_key;
+  // Remote registration functions.
+  UserID user_id =
+      Exec<UserID, const UserAuth&>(
+          &LockboxServiceClient::RegisterUser, *user_auth_);
+  DeviceID device_id =
+      Exec<DeviceID, const UserAuth&>(
+          &LockboxServiceClient::RegisterDevice, *user_auth_);
+  TopDirID top_dir_id =
+      Exec<TopDirID, const UserAuth&>(
+          &LockboxServiceClient::RegisterTopDir, *user_auth_);
 
-    // Set the public key in the EMAIL_KEY db.
-    options.type = lockbox::ClientDB::EMAIL_KEY;
-    client_db.Put(options, user_auth.email, pub_key);
+  DBManagerClient::Options dir_loc_options;
+  dir_loc_options.type = ClientDB::TOP_DIR_LOCATION;
+  dbm_->Put(dir_loc_options, base::Int64ToString(top_dir_id),
+            FLAGS_register_top_dir);
+}
 
-    // Update the public key in the cloud.
-    lockbox::PublicKey pub_key_send;
-    pub_key_send.key.clear();
-    pub_key_send.key = pub_key;
-    bool ret = client.Exec<bool,
-                           const lockbox::UserAuth&, const lockbox::PublicKey&>(
-        &lockbox::LockboxServiceClient::AssociateKey,
-        user_auth, pub_key_send);
-    CHECK(ret);
-
-    // FORCE FIRST TIME STARTUP WITH THIS.
-
-    lockbox::UserID user_id =
-        client.Exec<lockbox::UserID, const lockbox::UserAuth&>(
-            &lockbox::LockboxServiceClient::RegisterUser,
-            user_auth);
-    lockbox::DeviceID device_id =
-        client.Exec<lockbox::DeviceID, const lockbox::UserAuth&>(
-            &lockbox::LockboxServiceClient::RegisterDevice,
-            user_auth);
-    lockbox::TopDirID top_dir_id =
-        client.Exec<lockbox::TopDirID, const lockbox::UserAuth&>(
-            &lockbox::LockboxServiceClient::RegisterTopDir,
-            user_auth);
-
-    lockbox::DBManagerClient::Options dir_loc_options;
-    dir_loc_options.type = lockbox::ClientDB::TOP_DIR_LOCATION;
-    client_db.Put(dir_loc_options, base::Int64ToString(top_dir_id),
-                  "/home/tierney/Lockbox");
-  }
-
+void Client::Start() {
   // Prepare to start the various watchers.
   map<int64, lockbox::FileWatcherThread*> top_dir_watchers;
   map<int64, lockbox::FileEventQueueHandler*> top_dir_queues;
 
-  lockbox::Encryptor encryptor(&client_db);
+
+  Encryptor encryptor(dbm_);
 
   // For all of the top_dirs that are associated with this account, we need to
   // start up various facilities.
+  DBManagerClient::Options options;
   options.type = lockbox::ClientDB::TOP_DIR_LOCATION;
   options.name.clear();
-  leveldb::DB* db = client_db.db(options);
+  leveldb::DB* db = dbm_->db(options);
   scoped_ptr<leveldb::Iterator> it(db->NewIterator(leveldb::ReadOptions()));
   for (it->SeekToFirst(); it->Valid(); it->Next()) {
     // Get the TOP DIR id.
@@ -123,11 +96,11 @@ int main(int argc, char **argv) {
     lockbox::DBManagerClient::Options options;
     options.type = lockbox::ClientDB::TOP_DIR_PLACEHOLDER;
     options.name = it->key().ToString();
-    client_db.NewTopDir(options);
+    dbm_->NewTopDir(options);
 
     // Per top directory init and start.
     lockbox::FileWatcherThread* file_watcher =
-        new lockbox::FileWatcherThread(&client_db);
+        new lockbox::FileWatcherThread(dbm_);
     file_watcher->Start();
     file_watcher->AddDirectory(it->value().ToString(), true /* recursive */);
     LOG(INFO) << "Starting watcher for " << top_dir_id << " --> "
@@ -136,41 +109,29 @@ int main(int argc, char **argv) {
 
     lockbox::FileEventQueueHandler* event_queue =
         new lockbox::FileEventQueueHandler(it->key().ToString(),
-                                           &client_db, &client, &encryptor,
-                                           &user_auth);
+                                           dbm_, this, &encryptor,
+                                           user_auth_);
     top_dir_queues[top_dir_id] = event_queue;
   }
+
+  // With DBs started, we can start interacting with the updates/server.
+  UpdateFromServer update_from_server(1, user_auth_, this, dbm_);
 
   // Use the top dir locations to seed the watcher.
 
   // Set the event processor running.
-  lockbox::QueueFilter queue_filter(&client_db);
+  lockbox::QueueFilter queue_filter(dbm_);
 
-
-
-
-
-
-
-  // lockbox::UserID user_id =
-  //     client.Exec<lockbox::UserID, const lockbox::UserAuth&>(
-  //         &lockbox::LockboxServiceClient::RegisterUser,
-  //         user_auth);
-  // lockbox::DeviceID device_id =
-  //     client.Exec<lockbox::DeviceID, const lockbox::UserAuth&>(
-  //         &lockbox::LockboxServiceClient::RegisterDevice,
-  //         user_auth);
-  // lockbox::TopDirID top_dir_id =
-  //     client.Exec<lockbox::TopDirID, const lockbox::UserAuth&>(
-  //         &lockbox::LockboxServiceClient::RegisterTopDir,
-  //         user_auth);
-
-  // std::cout << "UID " << user_id << std::endl;
-  // std::cout << "DeviceID " << device_id << std::endl;
-  // std::cout << "TopDirID " << top_dir_id << std::endl;
-
+  LOG(INFO) << "Running as daemon.";
   while (true) {
     sleep(1);
   }
-  return 0;
 }
+
+void Client::Share() {
+}
+
+void Client::RegisterTopDir() {
+}
+
+} // namespace lockbox
