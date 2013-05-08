@@ -132,8 +132,18 @@ enum ClientDB {
 
   RELPATH_ID_LOCATION, # path to file system path
   LOCATION_RELPATH_ID, # path to file system path
-  RELPATHS_HASH, #
-  RELPATHS_TIME,
+
+  # Points to the hash in data containing the latest entry. May contain delta or
+  # snapshot.
+  RELPATHS_HEAD_HASH,
+
+  # Contains the whole snapshot file of the previous version (that pointed to by
+  # RELPATHS_HEAD)
+  RELPATHS_HEAD_FILE,
+
+  # Contains the whole snapshot file's (RELPATHS_HEAD_FILE) SHA1 hash.
+  RELPATHS_HEAD_FILE_HASH,
+
   UPDATE_QUEUE_SERVER,
   UPDATE_QUEUE_CLIENT,
   FILE_CHANGES,

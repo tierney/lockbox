@@ -203,15 +203,17 @@ bool FileEventQueueHandler::HandleModAction(const string& top_dir_path,
     return false;
   }
 
+  const string relative_path(RemoveBaseFromInput(top_dir_path, path));
+  string serial_pkg;
+
+  /*
   // Pull out the original file.
   options.type = ClientDB::DATA;
   options.name = top_dir_id_;
 
-  const string relative_path(RemoveBaseFromInput(top_dir_path, path));
-
   // Need to find the hash of the previous and check if we have that.
   string prev_hash;
-  dbm_->Get(DBManager::Options(ClientDB::RELPATHS_HASH, top_dir_id_),
+  dbm_->Get(DBManager::Options(ClientDB::RELPATHS_HEAD_HASH, top_dir_id_),
             relative_path, &prev_hash);
 
   string serial_pkg;
@@ -225,10 +227,34 @@ bool FileEventQueueHandler::HandleModAction(const string& top_dir_path,
   encryptor_->Decrypt(prev_version_pkg.payload.data,
                       prev_version_pkg.payload.user_enc_session,
                       &output);
+  */
+  string output;
+  dbm_->Get(DBManager::Options(ClientDB::RELPATHS_HEAD_FILE, top_dir_id_),
+            relative_path, &output);
+  string prev_hash;
+  dbm_->Get(DBManager::Options(ClientDB::RELPATHS_HEAD_FILE_HASH, top_dir_id_),
+            relative_path, &prev_hash);
+  LOG(INFO) << "Prev Hash " << prev_hash;
 
   // Read the file from the disk.
   string current;
   file_util::ReadFileToString(base::FilePath(path), &current);
+
+  string current_sha1(base::SHA1HashString(current));
+  string current_sha1_hex(base::HexEncode(current_sha1.c_str(),
+                                          current_sha1.length()));
+  LOG(INFO) << "Curr Hash " << current_sha1_hex;
+  if (current_sha1_hex == prev_hash) {
+    LOG(INFO) << "File actually unchanged according to SHA1";
+
+    // Release the lock.
+    // TODO(tierney): Locking path remotely should be a scoped operation.
+    LOG(INFO) << "Releasing lock";
+    client_->Exec<void, const PathLockRequest&>(
+        &LockboxServiceClient::ReleaseLockRelPath,
+        path_lock);
+    return true;
+  }
 
   // Compute the difference.
   string delta(Delta::Generate(output, current));
@@ -238,7 +264,7 @@ bool FileEventQueueHandler::HandleModAction(const string& top_dir_path,
   RemotePackage package;
   package.top_dir = top_dir_id_;
   package.rel_path_id = path_guid;
-  package.type = PackageType::SNAPSHOT;
+  package.type = PackageType::DELTA;
   encryptor_->EncryptString(
       top_dir_path, path, delta, response.users, &package);
 
@@ -263,12 +289,11 @@ bool FileEventQueueHandler::HandleModAction(const string& top_dir_path,
   dbm_->Put(options, hash, serial_pkg);
 
   // Put into relpath the latest hash.
-  dbm_->Put(DBManager::Options(ClientDB::RELPATHS_HASH, top_dir_id_),
+  dbm_->Put(DBManager::Options(ClientDB::RELPATHS_HEAD_HASH, top_dir_id_),
             relative_path, hash);
 
   // Then set the fptr.
   dbm_->Put(DBManager::Options(ClientDB::FPTRS, top_dir_id_), hash, prev_hash);
-
 
 
   // Release the lock.
@@ -332,13 +357,18 @@ bool FileEventQueueHandler::HandleAddAction(const string& top_dir_path,
     return false;
   }
 
+  string current;
+  file_util::ReadFileToString(base::FilePath(path), &current);
+
   // Read the file, do the encryption.
   LOG(INFO) << "Encrypting.";
   RemotePackage package;
   package.top_dir = top_dir_id_;
   package.rel_path_id = path_guid;
   package.type = PackageType::SNAPSHOT;
-  encryptor_->Encrypt(top_dir_path, path, response.users, &package);
+  encryptor_->EncryptString(
+      top_dir_path, path, current, response.users, &package);
+
   // string out_path;
   // encryptor_->Decrypt(package.payload.data,
   //                     package.payload.user_enc_session,
@@ -359,12 +389,21 @@ bool FileEventQueueHandler::HandleAddAction(const string& top_dir_path,
   const string sha1(base::SHA1HashString(package.payload.data));
   const string hash(base::HexEncode(sha1.c_str(), sha1.size()));
 
+  // Place the contents of the previous file.
+  const string current_file_sha1(base::SHA1HashString(current));
+  const string current_file_sha1_hex(base::HexEncode(current_file_sha1.c_str(),
+                                                     current_file_sha1.size()));
+  dbm_->Put(DBManager::Options(ClientDB::RELPATHS_HEAD_FILE, top_dir_id_),
+            relative_path, current);
+  dbm_->Put(DBManager::Options(ClientDB::RELPATHS_HEAD_FILE_HASH, top_dir_id_),
+            relative_path, current_file_sha1_hex);
+
   string serial_pkg;
   ThriftToString(package, &serial_pkg);
   dbm_->Put(options, hash, serial_pkg);
 
   // Put into relpath the latest hash.
-  dbm_->Put(DBManager::Options(ClientDB::RELPATHS_HASH, top_dir_id_),
+  dbm_->Put(DBManager::Options(ClientDB::RELPATHS_HEAD_HASH, top_dir_id_),
             relative_path, hash);
 
   // Then set the fptr.
