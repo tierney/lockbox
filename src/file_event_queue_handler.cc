@@ -114,22 +114,91 @@ void FileEventQueueHandler::Run() {
   // files have been tracked already. Need to run through file to see if
   // anything has changed since last examined.
 
-  string key, value;
   while (true) {
     // Should grab entries from both the server and the local client changes. If
     // there are changes from the cloud, we should prioritize those.
-    key.clear();
-    value.clear();
+
+    string key, value;
+    if (dbm_->First(
+            DBManager::Options(ClientDB::UPDATE_QUEUE_SERVER, top_dir_id_),
+            &key, &value)) {
+      HandleRemoteAction(key, value);
+      LOG(INFO) << "Done with remote update.";
+      dbm_->Delete(
+          DBManager::Options(ClientDB::UPDATE_QUEUE_SERVER, top_dir_id_),
+          key);
+      LOG(INFO) << "Deleted entry on cloud after update";
+      continue;
+    }
+
     if (dbm_->First(
             DBManager::Options(ClientDB::UPDATE_QUEUE_CLIENT, top_dir_id_),
             &key, &value)) {
       HandleLocalAction(key, value);
-      LOG(INFO) << "Done.";
+      LOG(INFO) << "Done with local update";
       dbm_->Delete(
           DBManager::Options(ClientDB::UPDATE_QUEUE_CLIENT, top_dir_id_),
           key);
     }
   }
+}
+
+namespace {
+
+void SplitKey(const string& key, string* timestamp, string* top_dir,
+              string* guid, string* hash) {
+  CHECK(timestamp);
+  CHECK(top_dir);
+  CHECK(guid);
+  CHECK(hash);
+  timestamp->clear();
+  top_dir->clear();
+  guid->clear();
+  hash->clear();
+
+  vector<string> key_entries;
+  base::SplitString(key, '_', &key_entries);
+  CHECK(key_entries.size() == 4);
+  timestamp->assign(key_entries[0]);
+  top_dir->assign(key_entries[1]);
+  guid->assign(key_entries[2]);
+  hash->assign(key_entries[3]);
+}
+
+} // namespace
+void FileEventQueueHandler::HandleRemoteAction(const string& key,
+                                               const string& value) {
+  LOG(INFO) << "HandleRemoteAction() called.";
+  // Value stored in the |key|.
+  // 1367949789_1_25baec40-5a1f-108b-4ca31a19-3ab710a6_yUCJ/6CWfX2Uin3kzy6cZC7L9Wc=,
+  // ts        tdn   guid                                  hash
+  string timestamp, top_dir, guid, hash;
+  SplitKey(key, &timestamp, &top_dir, &guid, &hash);
+
+  // Local lock.
+  if (!dbm_->AcquireLockPath(guid, top_dir)) {
+    CHECK(false) << "Local change beat us.";
+  }
+
+  DownloadRequest request;
+  request.auth.email = user_auth_->email;
+  request.auth.password = user_auth_->password;
+  request.top_dir = top_dir;
+  request.pkg_name = hash;
+
+  // Grab the package from the cloud.
+  LOG(INFO) << "Getting remote package";
+  RemotePackage package;
+  client_->Exec<void, RemotePackage&, const DownloadRequest&>(
+      &LockboxServiceClient::DownloadPackage, package, request);
+
+  // Learn the action type from the type of the package (DELTA | SNAPSHOT).
+  LOG(INFO) << "Package type " << _PackageType_VALUES_TO_NAMES.at(package.type);
+  LOG(INFO) << "   " << hash;
+
+
+  // Release local lock.
+  dbm_->ReleaseLockPath(guid, top_dir);
 }
 
 void FileEventQueueHandler::HandleLocalAction(const string& ts_path,

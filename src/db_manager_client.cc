@@ -1,6 +1,10 @@
 #include "db_manager_client.h"
 
+#include "base/memory/scoped_ptr.h"
 #include "leveldb_util.h"
+#include "base/stl_util.h"
+#include "scoped_mutex.h"
+
 namespace lockbox {
 
 // TODO(tierney): Consider moving most of this activity to an init function
@@ -104,6 +108,74 @@ bool DBManagerClient::Track(const Options& options) {
 
 uint64_t DBManagerClient::MaxID(const Options& options) {
   return DBManager::MaxID(options);
+}
+
+void DBManagerClient::Clean(const Options& options) {
+  LOG(INFO) << "Cleaning database " << options.type << " for "
+            << options.name;
+  auto iter = db_map_.find(GenKey(options));
+  CHECK(iter != db_map_.end());
+  leveldb::DB* db = iter->second;
+  scoped_ptr<leveldb::Iterator> it(db->NewIterator(leveldb::ReadOptions()));
+  for (it->SeekToFirst(); it->Valid(); it->Next()) {
+    Delete(options, it->key().ToString());
+  }
+}
+
+string DBManagerClient::RelpathGuidToPath(const string& guid,
+                                          const string& top_dir) {
+  DBManager::Options options;
+  options.type = ClientDB::RELPATH_ID_LOCATION;
+  options.name = top_dir;
+
+  string location;
+  Get(options, guid, &location);
+
+  return location;
+}
+
+bool DBManagerClient::AcquireLockPath(const string& guid,
+                                      const string& top_dir) {
+  const string path(RelpathGuidToPath(guid, top_dir));
+
+  if (!ContainsKey(path_locks_, path)) {
+    path_locks_[path] = new mutex();
+  }
+
+  ScopedMutexLock(path_locks_.at(path));
+
+  // do something to the locked path.
+  DBManager::Options options;
+  options.type = ClientDB::RELPATH_LOCK;
+  options.name = top_dir;
+
+  string status;
+  Get(options, path, &status);
+  if (status == "LOCKED") {
+    return false;
+  }
+
+  Put(options, path, "LOCKED");
+}
+
+bool DBManagerClient::ReleaseLockPath(const string& guid,
+                                      const string& top_dir) {
+  const string path(RelpathGuidToPath(guid, top_dir));
+
+  CHECK(ContainsKey(path_locks_, path));
+
+  ScopedMutexLock(path_locks_.at(path));
+
+  // do something to the locked path.
+  DBManager::Options options;
+  options.type = ClientDB::RELPATH_LOCK;
+  options.name = top_dir;
+
+  string status;
+  Get(options, path, &status);
+  CHECK(status == "LOCKED");
+  Delete(options, path);
+  return true;
 }
 
 } // namespace lockbox

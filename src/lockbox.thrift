@@ -16,12 +16,6 @@ enum PackageType {
   DELTA,
 }
 
-struct LocalPackage {
-  1: required string base_abs_path,
-  2: required string base_rel_path,
-  3: PackageType type,
-  4: string contents,
-}
 
 struct HybridCrypto {
   1: required string data,
@@ -128,10 +122,12 @@ enum ClientDB {
   CLIENT_DATA, #
   UNFILTERED_QUEUE,
 
-  TOP_DIR_PLACEHOLDER,
+  TOP_DIR_PLACEHOLDER, # All TOP_DIR-specific DBs follow.
 
   RELPATH_ID_LOCATION, # path to file system path
   LOCATION_RELPATH_ID, # path to file system path
+
+  RELPATH_LOCK,
 
   # Points to the hash in data containing the latest entry. May contain delta or
   # snapshot.
@@ -179,7 +175,7 @@ service LockboxService {
 
   i64 UploadPackage(1:RemotePackage pkg),
 
-  LocalPackage DownloadPackage(1:DownloadRequest req),
+  RemotePackage DownloadPackage(1:DownloadRequest req),
 
   UpdateList PollForUpdates(1:UserAuth auth, 2:DeviceID device),
 

@@ -76,7 +76,6 @@ void Client::Start() {
   map<int64, lockbox::FileWatcherThread*> top_dir_watchers;
   map<int64, lockbox::FileEventQueueHandler*> top_dir_queues;
 
-
   Encryptor encryptor(dbm_);
 
   // For all of the top_dirs that are associated with this account, we need to
@@ -97,6 +96,9 @@ void Client::Start() {
     options.type = lockbox::ClientDB::TOP_DIR_PLACEHOLDER;
     options.name = it->key().ToString();
     dbm_->NewTopDir(options);
+
+    options.type = ClientDB::RELPATH_LOCK;
+    dbm_->Clean(options);
 
     // Per top directory init and start.
     lockbox::FileWatcherThread* file_watcher =

@@ -227,10 +227,21 @@ int64_t LockboxServiceHandler::UploadPackage(const RemotePackage& pkg) {
   return mem.size();
 }
 
-void LockboxServiceHandler::DownloadPackage(LocalPackage& _return,
+void LockboxServiceHandler::DownloadPackage(RemotePackage& _return,
                                             const DownloadRequest& req) {
   // Your implementation goes here
   printf("DownloadPackage\n");
+
+  // Authenticate.
+
+  // Get the package.
+  string package_str;
+  manager_->Get(DBManager::Options(ServerDB::TOP_DIR_DATA, req.top_dir),
+            req.pkg_name, &package_str);
+
+  RemotePackage package;
+  ThriftFromString(package_str, &package);
+  _return = package;
 }
 
 void LockboxServiceHandler::PollForUpdates(UpdateList& _return,

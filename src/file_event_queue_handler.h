@@ -34,6 +34,8 @@ class FileEventQueueHandler {
  private:
   void PrepareMaps();
 
+  void HandleRemoteAction(const string& key, const string& value);
+
   void HandleLocalAction(const string& ts_path, const string& event_type);
   // Accompanying local action methods.
   bool HandleAddAction(const string& path);

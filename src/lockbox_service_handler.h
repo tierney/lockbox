@@ -35,7 +35,7 @@ class LockboxServiceHandler : virtual public LockboxServiceIf {
 
   int64_t UploadPackage(const RemotePackage& pkg);
 
-  void DownloadPackage(LocalPackage& _return, const DownloadRequest& req);
+  void DownloadPackage(RemotePackage& _return, const DownloadRequest& req);
 
   void PollForUpdates(UpdateList& _return,
                       const UserAuth& auth,
