@@ -3,6 +3,7 @@
 #include "leveldb_util.h"
 
 #include "base/files/file_path.h"
+#include "base/memory/scoped_ptr.h"
 #include "base/strings/string_number_conversions.h"
 #include "base/strings/string_split.h"
 #include "base/string_util.h"
@@ -107,7 +108,7 @@ bool DBManager::First(const Options& options, string* key, string* value) {
   auto iter = db_map_.find(GenKey(options));
   CHECK(iter != db_map_.end());
   leveldb::DB* db = iter->second;
-  leveldb::Iterator* it = db->NewIterator(leveldb::ReadOptions());
+  scoped_ptr<leveldb::Iterator> it(db->NewIterator(leveldb::ReadOptions()));
   it->SeekToFirst();
   if (!it->Valid()) {
     return false;

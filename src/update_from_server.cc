@@ -32,9 +32,14 @@ void UpdateFromServer::Run() {
 
     // Grab updates from the server.
     UpdateList updates;
-    client_->Exec<void, UpdateList&, const UserAuth&, const DeviceID>(
-        &LockboxServiceClient::PollForUpdates, updates,
-        *user_auth_, device_id_);
+    try {
+      client_->Exec<void, UpdateList&, const UserAuth&, const DeviceID>(
+          &LockboxServiceClient::PollForUpdates, updates,
+          *user_auth_, device_id_);
+    } catch (std::exception& e) {
+      LOG(WARNING) << "Well polling kind of broke." << e.what();
+      continue;
+    }
     if (updates.updates.empty()) {
       std::chrono::milliseconds dura(1000);
       std::this_thread::sleep_for(dura);

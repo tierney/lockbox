@@ -114,10 +114,12 @@ void FileEventQueueHandler::Run() {
   // files have been tracked already. Need to run through file to see if
   // anything has changed since last examined.
 
+  string key, value;
   while (true) {
     // Should grab entries from both the server and the local client changes. If
     // there are changes from the cloud, we should prioritize those.
-    string key, value;
+    key.clear();
+    value.clear();
     if (dbm_->First(
             DBManager::Options(ClientDB::UPDATE_QUEUE_CLIENT, top_dir_id_),
             &key, &value)) {
