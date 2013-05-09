@@ -119,6 +119,7 @@ void FileEventQueueHandler::Run() {
     // there are changes from the cloud, we should prioritize those.
 
     string key, value;
+    // Prioritize the remote actions first.
     if (dbm_->First(
             DBManager::Options(ClientDB::UPDATE_QUEUE_SERVER, top_dir_id_),
             &key, &value)) {
@@ -202,19 +203,32 @@ void FileEventQueueHandler::HandleRemoteAction(const string& key,
   LOG(INFO) << "Package type " << _PackageType_VALUES_TO_NAMES.at(package.type);
   LOG(INFO) << "   " << hash;
 
-  // Case: Snapshot.
-  string current_file;
-  string path = top_dir_path + rel_path;
-  LOG(INFO) << "Path " << path;
-  file_util::ReadFileToString(base::FilePath(path), &current_file);
+  // Case: Delta.
+  if (package.type == PackageType::DELTA) {
+    // Check that the prev is what we have. If we have the latest, then quit.
 
-  // See if the current file and the decrypted file are the same.
-  string payload;
-  encryptor_->Decrypt(package.payload.data,
-                      package.payload.user_enc_session,
-                      &payload);
-  LOG(INFO) << "Downloaded " << payload;
-  LOG(INFO) << "Current Fh " << current_file;
+    // Decrypt the delta.
+
+    // Apply the delta.
+
+    // Write the updated file.
+  }
+
+  // Case: Snapshot.
+  if (package.type == PackageType::SNAPSHOT) {
+    string current_file;
+    string path = top_dir_path + rel_path;
+    LOG(INFO) << "Path " << path;
+    file_util::ReadFileToString(base::FilePath(path), &current_file);
+
+    // See if the current file and the decrypted file are the same.
+    string payload;
+    encryptor_->Decrypt(package.payload.data,
+                        package.payload.user_enc_session,
+                        &payload);
+    LOG(INFO) << "Downloaded " << payload;
+    LOG(INFO) << "Current Fh " << current_file;
+  }
 
   // Release local lock.
   dbm_->ReleaseLockPath(guid, top_dir);
