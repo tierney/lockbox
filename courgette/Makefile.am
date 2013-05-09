@@ -17,24 +17,28 @@ libsimple_delta_la_SOURCES = simple_delta.h
 libsimple_delta_la_SOURCES += simple_delta.cc
 libsimple_delta_la_SOURCES += courgette.h
 libsimple_delta_la_LIBADD = $(top_builddir)/base/liblogging.la
-libsimple_delta_la_LIBADD += third_party/libbsdiff.la
+libsimple_delta_la_LIBADD += third_party/libbsdiff.la \
+	$(top_builddir)/base/libprocess_util.la
 
-bin_PROGRAMS += courgette_tool
-courgette_tool_SOURCES = courgette_tool.cc
-courgette_tool_LDADD = $(top_builddir)/base/files/libfile_path.la
-courgette_tool_LDADD += $(top_builddir)/base/libfile_util.la
-courgette_tool_LDADD += libdisassembler.la
-courgette_tool_LDADD += libstreams.la
-courgette_tool_LDADD += third_party/libbsdiff.la
-courgette_tool_LDADD += libadjustment_method.la
-courgette_tool_LDADD += libensemble.la
+# bin_PROGRAMS += courgette_tool
+# courgette_tool_SOURCES = courgette_tool.cc
+# courgette_tool_LDADD = $(top_builddir)/base/files/libfile_path.la
+# courgette_tool_LDADD += $(top_builddir)/base/libfile_util.la
+# courgette_tool_LDADD += libdisassembler.la
+# courgette_tool_LDADD += libstreams.la
+# courgette_tool_LDADD += third_party/libbsdiff.la
+# courgette_tool_LDADD += libadjustment_method.la
+# courgette_tool_LDADD += libensemble.la \
+# 	$(top_builddir)/base/libcommand_line.la \
+# 	$(top_builddir)/base/strings/libstring_number_conversions.la
 
 noinst_LTLIBRARIES += libstreams.la
 libstreams_la_SOURCES = streams.h
 libstreams_la_SOURCES += streams.cc
 libstreams_la_SOURCES += region.h
 libstreams_la_LIBADD = libmemory_allocator.la
-libstreams_la_LIBADD += $(top_builddir)/base/memory/libsingleton.la
+libstreams_la_LIBADD += $(top_builddir)/base/memory/libsingleton.la \
+	$(top_builddir)/base/libat_exit.la
 
 TESTS += streams_unittest
 bin_PROGRAMS += streams_unittest
@@ -44,6 +48,7 @@ streams_unittest_LDADD += libstreams.la
 streams_unittest_LDADD += $(top_builddir)/testing/gtest/lib/libgtest.la
 streams_unittest_LDADD += $(top_builddir)/testing/gtest/lib/libgtest_main.la
 streams_unittest_LDADD += $(top_builddir)/base/liblogging.la
+streams_unittest_LDADD += $(top_builddir)/base/threading/libplatform_thread.la
 
 noinst_LTLIBRARIES += third_party/libbsdiff.la
 third_party_libbsdiff_la_SOURCES = third_party/bsdiff.h
@@ -84,6 +89,7 @@ noinst_LTLIBRARIES += libadjustment_method.la
 libadjustment_method_la_SOURCES = adjustment_method.h
 libadjustment_method_la_SOURCES += adjustment_method.cc
 libadjustment_method_la_SOURCES += adjustment_method_2.cc
+libadjustment_method_la_LIBADD = $(top_builddir)/base/libstringprintf.la
 
 noinst_LTLIBRARIES += libensemble.la
 libensemble_la_SOURCES = ensemble.h

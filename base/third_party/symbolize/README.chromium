@@ -13,6 +13,6 @@ http://code.google.com/p/google-glog/source/browse/#svn/trunk/src (r76)
 The following files are minimal stubs created for use in Chromium:
 
 - config.h
-- glog/logging.h
+- base/logging.h
 - glog/raw_logging.h
 - utilities.h

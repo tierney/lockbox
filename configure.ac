@@ -26,7 +26,9 @@ AC_PROG_GREP
 AC_PROG_EGREP
 AC_PROG_CXX
 AC_PROG_CC
+AC_PROG_OBJCXX
 AX_CXX_COMPILE_STDCXX_11
+
 # Checks for libraries.
 
 # First look for Boost, maybe for a specific minimum version:
@@ -87,13 +89,14 @@ AC_SUBST(PTHREAD_CFLAGS)
 AC_SUBST(PTHREAD_LIBS)
 
 # Should create two variables DEPS_CFLAGS and DEPS_LIBS that allows us to ...
-PKG_CHECK_MODULES([GLIB], [glib-2.0 >= 2.24.1])
-PKG_CHECK_MODULES([GTK], [gtk+-2.0])
+dnl PKG_CHECK_MODULES([GLIB], [glib-2.0 >= 2.24.1])
+dnl PKG_CHECK_MODULES([GTK], [gtk+-2.0])
 PKG_CHECK_MODULES([LIBEVENT], [libevent >= 2.0.0])
 PKG_CHECK_MODULES([ZLIB], [zlib])
 PKG_CHECK_MODULES([THRIFT], [thrift-nb])
 PKG_CHECK_MODULES([NSS], [nss])
 PKG_CHECK_MODULES([GFLAGS], [libgflags])
+PKG_CHECK_MODULES([GLOG], [libglog])
 PKG_CHECK_MODULES([OPENSSL], [openssl])
 
 # Checks for header files.
