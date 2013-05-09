@@ -78,6 +78,9 @@ class Client {
   template <typename F>
   struct execer {};
 
+  // These execer functions use a mutex to enforce only one method per process
+  // is using this client. Thrift is not able to support multi-threaded sockets.
+
   // Executes for non-void return type service calls.
   template<typename R, typename... Args>
   struct execer<R(Args...)> {

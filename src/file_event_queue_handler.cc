@@ -175,6 +175,12 @@ void FileEventQueueHandler::HandleRemoteAction(const string& key,
   string timestamp, top_dir, guid, hash;
   SplitKey(key, &timestamp, &top_dir, &guid, &hash);
 
+  string top_dir_path;
+  dbm_->Get(DBManager::Options(ClientDB::TOP_DIR_LOCATION, ""),
+            top_dir, &top_dir_path);
+
+  const string rel_path(dbm_->RelpathGuidToPath(guid, top_dir));
+
   // Local lock.
   if (!dbm_->AcquireLockPath(guid, top_dir)) {
     CHECK(false) << "Local change beat us.";
@@ -196,6 +202,19 @@ void FileEventQueueHandler::HandleRemoteAction(const string& key,
   LOG(INFO) << "Package type " << _PackageType_VALUES_TO_NAMES.at(package.type);
   LOG(INFO) << "   " << hash;
 
+  // Case: Snapshot.
+  string current_file;
+  string path = top_dir_path + rel_path;
+  LOG(INFO) << "Path " << path;
+  file_util::ReadFileToString(base::FilePath(path), &current_file);
+
+  // See if the current file and the decrypted file are the same.
+  string payload;
+  encryptor_->Decrypt(package.payload.data,
+                      package.payload.user_enc_session,
+                      &payload);
+  LOG(INFO) << "Downloaded " << payload;
+  LOG(INFO) << "Current Fh " << current_file;
 
   // Release local lock.
   dbm_->ReleaseLockPath(guid, top_dir);

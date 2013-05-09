@@ -113,7 +113,6 @@ bool Encryptor::Decrypt(const string& data,
   RSAPEM rsa_pem;
   string out;
   rsa_pem.PrivateDecrypt("password", priv_key, encrypted_key, &out);
-  // LOG(INFO) << "Decrypte " << out;
 
   BlockCipher block_cipher;
   block_cipher.Decrypt(data, out, output);
