@@ -130,16 +130,20 @@ string DBManagerClient::RelpathGuidToPath(const string& guid,
 
   string location;
   Get(options, guid, &location);
+  CHECK(!location.empty());
 
   return location;
 }
 
 bool DBManagerClient::AcquireLockPath(const string& guid,
                                       const string& top_dir) {
+  LOG(INFO) << "AcquireLockPath";
   const string path(RelpathGuidToPath(guid, top_dir));
+  CHECK(!path.empty());
 
   if (!ContainsKey(path_locks_, path)) {
-    path_locks_[path] = new mutex();
+    LOG(INFO) << "Inserting path " << path;
+    path_locks_.insert(make_pair(path, new mutex()));
   }
 
   ScopedMutexLock(path_locks_.at(path));
@@ -160,8 +164,10 @@ bool DBManagerClient::AcquireLockPath(const string& guid,
 
 bool DBManagerClient::ReleaseLockPath(const string& guid,
                                       const string& top_dir) {
+  LOG(INFO) << "ReleaseLockPath";
   const string path(RelpathGuidToPath(guid, top_dir));
 
+  LOG(INFO) << "Looking for path " << path;
   CHECK(ContainsKey(path_locks_, path));
 
   ScopedMutexLock(path_locks_.at(path));

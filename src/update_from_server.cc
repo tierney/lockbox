@@ -37,7 +37,8 @@ void UpdateFromServer::Run() {
           &LockboxServiceClient::PollForUpdates, updates,
           *user_auth_, device_id_);
     } catch (std::exception& e) {
-      LOG(WARNING) << "Well polling kind of broke." << e.what();
+      LOG(WARNING) << "Well polling kind of broke: " << e.what();
+      sleep(7);
       continue;
     }
     if (updates.updates.empty()) {

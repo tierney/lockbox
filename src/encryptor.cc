@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "base/memory/scoped_ptr.h"
+#include "base/sha1.h"
 #include "crypto/random.h"
 #include "crypto/encryptor.h"
 #include "crypto/rsa_private_key.h"
@@ -16,6 +17,7 @@
 #include "rsa_public_key_openssl.h"
 #include "rsa.h"
 #include "util.h"
+#include "hash_util.h"
 
 using std::string;
 using std::vector;
@@ -52,11 +54,14 @@ bool Encryptor::EncryptString(const string& top_dir_path,
   string rel_path(RemoveBaseFromInput(top_dir_path, path));
   success = EncryptInternal(rel_path, users, &(package->path.data),
                             &(package->path.user_enc_session));
+  package->path.data_sha1 = SHA1Hex(package->path.data);
+
   CHECK(success);
 
   // Encrypt the data.
   success = EncryptInternal(raw_input, users, &(package->payload.data),
                             &(package->payload.user_enc_session));
+  package->payload.data_sha1 = SHA1Hex(package->payload.data);
   CHECK(success);
   return true;
 }
@@ -116,7 +121,6 @@ bool Encryptor::Decrypt(const string& data,
 
   BlockCipher block_cipher;
   block_cipher.Decrypt(data, out, output);
-  LOG(INFO) << "Decrypted out: " << *output;
 
   return false;
 }

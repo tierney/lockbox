@@ -12,6 +12,7 @@
 #include "base/strings/string_split.h"
 #include "base/stl_util.h"
 #include "base/logging.h"
+#include "guid_creator.h"
 #include "leveldb/write_batch.h"
 #include "leveldb/db.h"
 
@@ -171,16 +172,16 @@ string DBManagerServer::GenKey(const Options& options) {
   return DBManager::GenKey(options);
 }
 
-uint64_t DBManagerServer::GetNextUserID() {
+UserID DBManagerServer::GetNextUserID() {
   return num_users_.Increment();
 }
 
-uint64_t DBManagerServer::GetNextDeviceID() {
+DeviceID DBManagerServer::GetNextDeviceID() {
   return num_devices_.Increment();
 }
 
-uint64_t DBManagerServer::GetNextTopDirID() {
-  return num_top_dirs_.Increment();
+TopDirID DBManagerServer::GetNextTopDirID() {
+  return CreateGUIDString();
 }
 
 mutex* DBManagerServer::get_mutex(const Options& options) {
@@ -189,5 +190,10 @@ mutex* DBManagerServer::get_mutex(const Options& options) {
   CHECK(ret_mutex != db_mutex_.end()) << "Couldn't find mutex for " << key;
   return ret_mutex->second;
 }
+
+UserID DBManagerServer::EmailToUserID(const string& email) {
+}
+
+
 
 } // namespace lockbox

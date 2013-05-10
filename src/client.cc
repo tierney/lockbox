@@ -61,20 +61,28 @@ void Client::RegisterUser() {
   DeviceID device_id =
       Exec<DeviceID, const UserAuth&>(
           &LockboxServiceClient::RegisterDevice, *user_auth_);
-  TopDirID top_dir_id =
-      Exec<TopDirID, const UserAuth&>(
-          &LockboxServiceClient::RegisterTopDir, *user_auth_);
+  dbm_->Put(DBManager::Options(ClientDB::CLIENT_DATA, ""),
+            "DEVICE", std::to_string(device_id));
+
+  TopDirID top_dir_id;
+  Exec<void, TopDirID&, const UserAuth&>(
+      &LockboxServiceClient::RegisterTopDir, top_dir_id, *user_auth_);
+
 
   DBManagerClient::Options dir_loc_options;
   dir_loc_options.type = ClientDB::TOP_DIR_LOCATION;
-  dbm_->Put(dir_loc_options, base::Int64ToString(top_dir_id),
-            FLAGS_register_top_dir);
+  dbm_->Put(dir_loc_options, top_dir_id, FLAGS_register_top_dir);
 }
 
 void Client::Start() {
   // Prepare to start the various watchers.
   map<int64, lockbox::FileWatcherThread*> top_dir_watchers;
   map<int64, lockbox::FileEventQueueHandler*> top_dir_queues;
+
+  string device_id_str;
+  dbm_->Get(DBManagerClient::Options(ClientDB::CLIENT_DATA, ""),
+            "DEVICE", &device_id_str);
+  base::StringToInt64(device_id_str, &(user_auth_->device));
 
   Encryptor encryptor(dbm_);
 
@@ -131,6 +139,13 @@ void Client::Start() {
 }
 
 void Client::Share() {
+  // Split the DIRECTORY, EMAIL.
+
+  // CHECK that the directory exists.
+
+  // CHECK that we can grab the public key.
+
+  //
 }
 
 void Client::RegisterTopDir() {

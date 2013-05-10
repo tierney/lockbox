@@ -72,10 +72,12 @@ void UpdateQueuer::Run() {
 
       vector<string> update;
       base::SplitString(tuple, '_', &update);
+      CHECK(update.size() == 5);
       const string& ts = update[0];
       const string& top_dir = update[1];
       const string& rel_path = update[2];
-      const string& hash = update[3];
+      const string& uploading_device = update[3];
+      const string& hash = update[4];
 
       // TOP_DIR_META editors.
       options.type = ServerDB::TOP_DIR_META;
@@ -95,9 +97,14 @@ void UpdateQueuer::Run() {
             << user << " not in USER_DEVICE";
 
         // DEVICE_SYNC append.
+        options.type = ServerDB::DEVICE_SYNC;
+        options.name = "";
         for (const string& device : devices) {
-          options.type = ServerDB::DEVICE_SYNC;
-          options.name = "";
+          LOG(INFO) << "Device " << device << " for user " << user;
+          if (device == uploading_device) {
+            LOG(INFO) << "Skipping the uploading device.";
+            continue;
+          }
 
           // TODO(tierney): Lock the database entries for the prefix.
           LOG(INFO) << "Appending " << tuple;

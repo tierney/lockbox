@@ -1,14 +1,8 @@
 namespace cpp lockbox
 
-# Basic authentication.
-struct UserAuth {
-  1: required string email,
-  2: required string password,
-}
-
 typedef i64 DeviceID
 typedef i64 UserID
-typedef i64 TopDirID
+typedef string TopDirID
 
 # Packages uploaded for storage and sharing on Lockbox.
 enum PackageType {
@@ -16,10 +10,17 @@ enum PackageType {
   DELTA,
 }
 
+# Basic authentication.
+struct UserAuth {
+  1: required string email,
+  2: required string password,
+  3: DeviceID device,
+}
 
 struct HybridCrypto {
   1: required string data,
   2: map<string, string> user_enc_session,
+  3: string data_sha1,
 }
 
 struct RemotePackage {
@@ -160,7 +161,7 @@ service LockboxService {
   TopDirID RegisterTopDir(1:UserAuth user),
 
   # Share directory.
-  # bool ShareTopDir(1:UserAuth user, 2:string email),
+  bool ShareTopDir(1:UserAuth user, 2:string email, 3:TopDirID top_dir_id),
 
   # Attach a public key to a user.
   bool AssociateKey(1:UserAuth user, 2:PublicKey pub),
@@ -173,7 +174,7 @@ service LockboxService {
 
   void ReleaseLockRelPath(1:PathLockRequest lock),
 
-  i64 UploadPackage(1:RemotePackage pkg),
+  i64 UploadPackage(1:UserAuth user, 2:RemotePackage pkg),
 
   RemotePackage DownloadPackage(1:DownloadRequest req),
 

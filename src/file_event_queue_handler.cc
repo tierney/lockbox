@@ -14,6 +14,7 @@
 #include "encryptor.h"
 #include "thrift_util.h"
 #include "simple_delta.h"
+#include "hash_util.h"
 
 using std::vector;
 
@@ -147,44 +148,51 @@ void FileEventQueueHandler::Run() {
 namespace {
 
 void SplitKey(const string& key, string* timestamp, string* top_dir,
-              string* guid, string* hash) {
+              string* rel_path_guid, string* device, string* hash) {
   CHECK(timestamp);
   CHECK(top_dir);
-  CHECK(guid);
+  CHECK(rel_path_guid);
+  CHECK(device);
   CHECK(hash);
+
   timestamp->clear();
   top_dir->clear();
-  guid->clear();
+  rel_path_guid->clear();
+  device->clear();
   hash->clear();
 
   vector<string> key_entries;
   base::SplitString(key, '_', &key_entries);
-  CHECK(key_entries.size() == 4);
+  CHECK(key_entries.size() == 5);
+
   timestamp->assign(key_entries[0]);
   top_dir->assign(key_entries[1]);
-  guid->assign(key_entries[2]);
-  hash->assign(key_entries[3]);
+  rel_path_guid->assign(key_entries[2]);
+  device->assign(key_entries[3]);
+  hash->assign(key_entries[4]);
 }
 
 } // namespace
+
 void FileEventQueueHandler::HandleRemoteAction(const string& key,
                                                const string& value) {
   LOG(INFO) << "HandleRemoteAction() called.";
   // Value stored in the |key|.
   // 1367949789_1_25baec40-5a1f-108b-4ca31a19-3ab710a6_yUCJ/6CWfX2Uin3kzy6cZC7L9Wc=,
   // ts        tdn   guid                                  hash
-  string timestamp, top_dir, guid, hash;
-  SplitKey(key, &timestamp, &top_dir, &guid, &hash);
+  string timestamp, top_dir, rel_path_guid, device, hash;
+  SplitKey(key, &timestamp, &top_dir, &rel_path_guid, &device, &hash);
 
   string top_dir_path;
   dbm_->Get(DBManager::Options(ClientDB::TOP_DIR_LOCATION, ""),
             top_dir, &top_dir_path);
 
-  const string rel_path(dbm_->RelpathGuidToPath(guid, top_dir));
+  const string rel_path(dbm_->RelpathGuidToPath(rel_path_guid, top_dir));
 
   // Local lock.
-  if (!dbm_->AcquireLockPath(guid, top_dir)) {
-    CHECK(false) << "Local change beat us.";
+  while (!dbm_->AcquireLockPath(rel_path_guid, top_dir)) {
+    LOG(INFO) << "Waiting to get local lock.";
+    sleep(1);
   }
 
   DownloadRequest request;
@@ -201,16 +209,28 @@ void FileEventQueueHandler::HandleRemoteAction(const string& key,
 
   // Learn the action type from the type of the package (DELTA | SNAPSHOT).
   LOG(INFO) << "Package type " << _PackageType_VALUES_TO_NAMES.at(package.type);
-  LOG(INFO) << "   " << hash;
 
   // Case: Delta.
   if (package.type == PackageType::DELTA) {
     // Check that the prev is what we have. If we have the latest, then quit.
 
+    // Read the current file.
+    string current_file;
+    string path = top_dir_path + rel_path;
+    LOG(INFO) << "Path " << path;
+    file_util::ReadFileToString(base::FilePath(path), &current_file);
+
+
     // Decrypt the delta.
+    string payload;
+    encryptor_->Decrypt(package.payload.data,
+                        package.payload.user_enc_session,
+                        &payload);
 
     // Apply the delta.
+    string reconstructed = Delta::Apply(current_file, payload);
 
+    LOG(INFO) << "Reconstructed " << reconstructed;
     // Write the updated file.
   }
 
@@ -231,7 +251,7 @@ void FileEventQueueHandler::HandleRemoteAction(const string& key,
   }
 
   // Release local lock.
-  dbm_->ReleaseLockPath(guid, top_dir);
+  dbm_->ReleaseLockPath(rel_path_guid, top_dir);
 }
 
 void FileEventQueueHandler::HandleLocalAction(const string& ts_path,
@@ -279,6 +299,7 @@ bool FileEventQueueHandler::HandleModAction(const string& path) {
   options.name = top_dir_id_;
   string path_guid;
   dbm_->Get(options, RemoveBaseFromInput(top_dir_path_, path), &path_guid);
+  CHECK(!path_guid.empty());
 
   // Lock the file in the cloud.
   PathLockRequest path_lock;
@@ -340,9 +361,7 @@ bool FileEventQueueHandler::HandleModAction(const string& path) {
   string current;
   file_util::ReadFileToString(base::FilePath(path), &current);
 
-  string current_sha1(base::SHA1HashString(current));
-  string current_sha1_hex(base::HexEncode(current_sha1.c_str(),
-                                          current_sha1.length()));
+  const string current_sha1_hex(SHA1Hex(current));
   LOG(INFO) << "Curr Hash " << current_sha1_hex;
   if (current_sha1_hex == prev_hash) {
     LOG(INFO) << "File actually unchanged according to SHA1";
@@ -369,20 +388,18 @@ bool FileEventQueueHandler::HandleModAction(const string& path) {
       top_dir_path_, path, delta, response.users, &package);
 
 
-
   // Upload the package. Cloud needs to update the appropriate user's
   // update queues.
   LOG(INFO) << "Uploading.";
-  int64 ret = client_->Exec<int64, const RemotePackage&>(
-      &LockboxServiceClient::UploadPackage, package);
+  int64 ret = client_->Exec<int64, const UserAuth&, const RemotePackage&>(
+      &LockboxServiceClient::UploadPackage, *user_auth_, package);
   LOG(INFO) << "  Uploaded " << ret;
 
   // Store the data in the local client db. SHOULD ACTUALLY STORE THE WHOLE
   // VERSION. THIS WAY WE CAN AVOID RECONSTRUCTION COSTS.
   options.type = ClientDB::DATA;
   options.name = top_dir_id_;
-  const string sha1(base::SHA1HashString(package.payload.data));
-  const string hash(base::HexEncode(sha1.c_str(), sha1.size()));
+  const string hash(SHA1Hex(package.payload.data));
 
   serial_pkg.clear();
   ThriftToString(package, &serial_pkg);
@@ -420,18 +437,23 @@ bool FileEventQueueHandler::HandleAddAction(const string& path) {
       &LockboxServiceClient::RegisterRelativePath,
       path_guid,
       rel_path_req);
+  CHECK(!path_guid.empty());
 
   LOG(INFO) << "ADDed file GUID from server " << path_guid;
-
   const string relative_path(RemoveBaseFromInput(top_dir_path_, path));
+
 
   // Store the association between the GUID and the location.
   DBManagerClient::Options options;
   options.type = ClientDB::RELPATH_ID_LOCATION;
   options.name = top_dir_id_;
   dbm_->Put(options, path_guid, relative_path);
+  LOG(INFO) << "Mapped " << path_guid << " to " << relative_path;
   options.type = ClientDB::LOCATION_RELPATH_ID;
   dbm_->Put(options, relative_path, path_guid);
+
+  // Lock the file locally.
+  CHECK(dbm_->AcquireLockPath(path_guid, top_dir_id_));
 
   // Lock the file in the cloud.
   PathLockRequest path_lock;
@@ -477,21 +499,17 @@ bool FileEventQueueHandler::HandleAddAction(const string& path) {
   // Upload the package. Cloud needs to update the appropriate user's
   // update queues.
   LOG(INFO) << "Uploading.";
-  int64 ret = client_->Exec<int64, const RemotePackage&>(
-      &LockboxServiceClient::UploadPackage,
-      package);
+  int64 ret = client_->Exec<int64, const UserAuth&, const RemotePackage&>(
+      &LockboxServiceClient::UploadPackage, *user_auth_, package);
   LOG(INFO) << "  Uploaded " << ret;
 
   // Store the data in the local client db.
   options.type = ClientDB::DATA;
   options.name = top_dir_id_;
-  const string sha1(base::SHA1HashString(package.payload.data));
-  const string hash(base::HexEncode(sha1.c_str(), sha1.size()));
+  const string hash(SHA1Hex(package.payload.data));
 
   // Place the contents of the previous file.
-  const string current_file_sha1(base::SHA1HashString(current));
-  const string current_file_sha1_hex(base::HexEncode(current_file_sha1.c_str(),
-                                                     current_file_sha1.size()));
+  const string current_file_sha1_hex(SHA1Hex(current));
   dbm_->Put(DBManager::Options(ClientDB::RELPATHS_HEAD_FILE, top_dir_id_),
             relative_path, current);
   dbm_->Put(DBManager::Options(ClientDB::RELPATHS_HEAD_FILE_HASH, top_dir_id_),
@@ -514,6 +532,7 @@ bool FileEventQueueHandler::HandleAddAction(const string& path) {
       &LockboxServiceClient::ReleaseLockRelPath,
       path_lock);
 
+  dbm_->ReleaseLockPath(path_guid, top_dir_id_);
 
   return true;
 }

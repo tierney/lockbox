@@ -55,11 +55,14 @@ class DBManagerServer : public DBManager {
   // Creates keys of the name THIS_IS_A_TYPE and THIS_IS_A_TYPEOPTIONS_NAME.
   string GenKey(const Options& options);
 
-  uint64_t GetNextUserID();
-  uint64_t GetNextDeviceID();
-  uint64_t GetNextTopDirID();
+  UserID GetNextUserID();
+  DeviceID GetNextDeviceID();
+  TopDirID GetNextTopDirID();
 
   mutex* get_mutex(const Options& options);
+
+  UserID EmailToUserID(const string& email);
+  void AddEmailToTopDir(const UserID& user, const TopDirID& top_dir);
 
  private:
   void InitTopDirs();

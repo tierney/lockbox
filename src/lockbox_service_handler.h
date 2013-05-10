@@ -20,7 +20,10 @@ class LockboxServiceHandler : virtual public LockboxServiceIf {
 
   DeviceID RegisterDevice(const UserAuth& user);
 
-  TopDirID RegisterTopDir(const UserAuth& user);
+  void RegisterTopDir(TopDirID& _return, const UserAuth& user);
+
+  bool ShareTopDir(const UserAuth& user, const string& email,
+                   const TopDirID& top_dir_id);
 
   void RegisterRelativePath(string& _return,
                             const RegisterRelativePathRequest& req);
@@ -33,7 +36,7 @@ class LockboxServiceHandler : virtual public LockboxServiceIf {
 
   void ReleaseLockRelPath(const PathLockRequest& lock);
 
-  int64_t UploadPackage(const RemotePackage& pkg);
+  int64_t UploadPackage(const UserAuth& user, const RemotePackage& pkg);
 
   void DownloadPackage(RemotePackage& _return, const DownloadRequest& req);
 

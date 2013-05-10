@@ -54,3 +54,5 @@ bool GUIDToString(const GUID *guid, char *buf, int buf_len);
 
 // Create a GUID and return its string value.
 void CreateGUIDString(string* sguid);
+
+string CreateGUIDString();

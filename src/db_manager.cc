@@ -80,8 +80,7 @@ bool DBManager::Append(const Options& options,
   // Gen key.
 
   // Gen GUID.
-  string guid;
-  CreateGUIDString(&guid);
+  const string guid = CreateGUIDString();
 
   const string key_guid = key + "_" + guid;
 

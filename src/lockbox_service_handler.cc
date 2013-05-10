@@ -65,22 +65,37 @@ DeviceID LockboxServiceHandler::RegisterDevice(const UserAuth& user) {
   return device_id;
 }
 
-TopDirID LockboxServiceHandler::RegisterTopDir(const UserAuth& user) {
+bool LockboxServiceHandler::ShareTopDir(const UserAuth& user,
+                                        const string& email,
+                                        const TopDirID& top_dir_id) {
+  // Authenticate.
+
+  // Check that we have the email of the user.
+
+
+  // Add the user from |email| (who |user| wants to share |top_dir_id| with) to
+  // the list for |top_dir_id|.
+
+  return true;
+}
+
+
+void LockboxServiceHandler::RegisterTopDir(TopDirID& top_dir_id,
+                                           const UserAuth& user) {
   // Your implementation goes here
   printf("RegisterTopDir\n");
 
-  const TopDirID top_dir_id = manager_->GetNextTopDirID();
-  const string top_dir_id_to_persist = base::IntToString(top_dir_id);
+  top_dir_id = manager_->GetNextTopDirID();
 
   // Appends the top_dir_id for the user to the end of the list of top dirs
   // owned by that user.
   DBManagerServer::Options options;
   options.type = ServerDB::USER_TOP_DIR;
-  CHECK(manager_->Append(options, user.email, top_dir_id_to_persist));
+  CHECK(manager_->Append(options, user.email, top_dir_id));
 
   // TODO(tierney): Should create additional top_dir database here.
   options.type = ServerDB::TOP_DIR_PLACEHOLDER;
-  options.name = top_dir_id_to_persist;
+  options.name = top_dir_id;
   CHECK(manager_->NewTopDir(options));
 
   // Get the EMAIL_USER user.
@@ -92,12 +107,10 @@ TopDirID LockboxServiceHandler::RegisterTopDir(const UserAuth& user) {
 
   // Update the editors for the top_dir.
   options.type = ServerDB::TOP_DIR_META;
-  options.name = top_dir_id_to_persist;
-  string guid;
-  CreateGUIDString(&guid);
-  CHECK(manager_->Put(options, "EDITORS_" + guid, user_id));
+  options.name = top_dir_id;
 
-  return top_dir_id;
+  const string guid = CreateGUIDString();
+  CHECK(manager_->Put(options, "EDITORS_" + guid, user_id));
 }
 
 void LockboxServiceHandler::RegisterRelativePath(
@@ -165,7 +178,8 @@ void LockboxServiceHandler::ReleaseLockRelPath(const PathLockRequest& lock) {
   printf("ReleaseLockRelPath");
 }
 
-int64_t LockboxServiceHandler::UploadPackage(const RemotePackage& pkg) {
+int64_t LockboxServiceHandler::UploadPackage(const UserAuth& user,
+                                             const RemotePackage& pkg) {
   // Your implementation goes here
   printf("UploadPackage\n");
   int64_t ret = pkg.payload.data.size();
@@ -179,8 +193,7 @@ int64_t LockboxServiceHandler::UploadPackage(const RemotePackage& pkg) {
 
   // Hash the input content.
   // TODO(tierney): This should actually be just the encrypted contents.
-  const string sha1 = base::SHA1HashString(pkg.payload.data);
-  const string hash_of_prot = base::HexEncode(sha1.c_str(), sha1.size());
+  const string& hash_of_prot = pkg.payload.data_sha1;
 
   // Associate the rel path GUID with the package. If the rel_path's latest is
   // empty then this is the first.
@@ -218,7 +231,8 @@ int64_t LockboxServiceHandler::UploadPackage(const RemotePackage& pkg) {
   std::unique_lock<std::mutex> lock(sync_->db_mutex);
   manager_->Put(options,
                 to_string(time(NULL)) + "_" + pkg.top_dir + "_" +
-                pkg.rel_path_id + "_" + hash_of_prot,
+                pkg.rel_path_id + "_" + to_string(user.device) + "_" +
+                hash_of_prot,
                 "");
   lock.unlock();
   LOG(INFO) << "Notifying the CV to wake someone up";
