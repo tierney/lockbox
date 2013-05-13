@@ -24,9 +24,10 @@ using std::vector;
 
 namespace lockbox {
 
-Encryptor::Encryptor(DBManagerClient* dbm)
-    : dbm_(dbm) {
+Encryptor::Encryptor(DBManagerClient* dbm, UserAuth* user_auth)
+    : dbm_(dbm), user_auth_(user_auth) {
   CHECK(dbm);
+  CHECK(user_auth);
 }
 
 Encryptor::~Encryptor() {
@@ -91,9 +92,11 @@ bool Encryptor::EncryptInternal(
   for (const string& user : users) {
     string key;
     dbm_->Get(email_key_options, user, &key);
+    CHECK(!key.empty());
 
     string enc_session;
     RSAPEM rsa_pem;
+    LOG(INFO) << "Encrypting for " << user;
     rsa_pem.PublicEncrypt(key, password, &enc_session);
 
     user_enc_session->insert(std::make_pair(user, enc_session));
@@ -106,7 +109,7 @@ bool Encryptor::Decrypt(const string& data,
                         const map<string, string>& user_enc_session,
                         string* output) {
   CHECK(output);
-  string encrypted_key = user_enc_session.find("me2@you.com")->second;
+  string encrypted_key = user_enc_session.find(user_auth_->email)->second;
   CHECK(!encrypted_key.empty());
 
   DBManagerClient::Options client_data_options;
@@ -117,12 +120,18 @@ bool Encryptor::Decrypt(const string& data,
 
   RSAPEM rsa_pem;
   string out;
-  rsa_pem.PrivateDecrypt("password", priv_key, encrypted_key, &out);
+  LOG(WARNING) << "Using user auth password for PEM password. Correct?";
+  rsa_pem.PrivateDecrypt(user_auth_->password, priv_key, encrypted_key, &out);
 
   BlockCipher block_cipher;
   block_cipher.Decrypt(data, out, output);
 
-  return false;
+  return true;
+}
+
+bool Encryptor::HybridDecrypt(const HybridCrypto& hybrid,
+                              string* output) {
+  return Decrypt(hybrid.data, hybrid.user_enc_session, output);
 }
 
 } // namespace lockbox

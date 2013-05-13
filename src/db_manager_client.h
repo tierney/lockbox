@@ -45,9 +45,12 @@ class DBManagerClient : public DBManager {
 
   void Clean(const Options& options);
 
+  TopDirID TopDirPathToID(const string& path);
   string RelpathGuidToPath(const string& guid, const string& top_dir);
   bool AcquireLockPath(const string& guid, const string& top_dir);
   bool ReleaseLockPath(const string& guid, const string& top_dir);
+  void NewRelPathGUIDLocalPath(const string& top_dir, const string& rel_path_guid,
+                               const string& rel_path);
 
  private:
   map<string, mutex*> path_locks_;

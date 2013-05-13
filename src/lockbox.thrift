@@ -1,7 +1,7 @@
 namespace cpp lockbox
 
-typedef i64 DeviceID
-typedef i64 UserID
+typedef string DeviceID
+typedef string UserID
 typedef string TopDirID
 
 # Packages uploaded for storage and sharing on Lockbox.
@@ -64,8 +64,12 @@ struct Update {
 }
 
 # TODO: Possible switch to using the struct Update.
+struct UpdateMap {
+  1: map<string, string> updates,
+}
+
 struct UpdateList {
-  1: string updates,
+  1: list<string> updates,
 }
 
 # This should best match the C++ openssl expectation that we export to a
@@ -101,7 +105,7 @@ enum ServerDB {
   USER_DEVICE, # Email to device id
   DEVICE_SYNC,
   EMAIL_KEY,
-  USER_TOP_DIR, # Maps user to directories owned.
+  USER_TOP_DIR, # Maps user to directories managed.
   UPDATE_ACTION_QUEUE, # Holds (TS, TDN, RPI, hash) value for updates.
   UPDATE_ACTION_LOG, # Holds (TS, TDN, RPI, hash) for creation -> completion.
 
@@ -119,6 +123,7 @@ enum ClientDB {
   UNKNOWN = 0,
 
   TOP_DIR_LOCATION,
+  LOCATION_TOP_DIR,
   EMAIL_KEY,
   CLIENT_DATA, #
   UNFILTERED_QUEUE,
@@ -163,8 +168,12 @@ service LockboxService {
   # Share directory.
   bool ShareTopDir(1:UserAuth user, 2:string email, 3:TopDirID top_dir_id),
 
+  list<TopDirID> GetTopDirs(1:UserAuth user);
+
   # Attach a public key to a user.
   bool AssociateKey(1:UserAuth user, 2:PublicKey pub),
+
+  PublicKey GetKeyFromEmail(1:string email),
 
   # Get relative path ID for the TDN.
   string RegisterRelativePath(1:RegisterRelativePathRequest req),
@@ -178,7 +187,7 @@ service LockboxService {
 
   RemotePackage DownloadPackage(1:DownloadRequest req),
 
-  UpdateList PollForUpdates(1:UserAuth auth, 2:DeviceID device),
+  UpdateMap PollForUpdates(1:UserAuth auth, 2:DeviceID device),
 
   # Update the UPDATE_ACTION_LOG and then set delete the values from the
   # DEVICE_SYNC.

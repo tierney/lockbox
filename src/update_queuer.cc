@@ -107,7 +107,7 @@ void UpdateQueuer::Run() {
           }
 
           // TODO(tierney): Lock the database entries for the prefix.
-          LOG(INFO) << "Appending " << tuple;
+          LOG(INFO) << "Appending to device " << device << ": " << tuple;
           CHECK(dbm_->Append(options, device, tuple));
         }
       }

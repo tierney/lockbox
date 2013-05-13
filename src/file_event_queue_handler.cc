@@ -15,8 +15,10 @@
 #include "thrift_util.h"
 #include "simple_delta.h"
 #include "hash_util.h"
+#include "scoped_mutex.h"
 
 using std::vector;
+using std::to_string;
 
 namespace lockbox {
 
@@ -188,10 +190,80 @@ void FileEventQueueHandler::HandleRemoteAction(const string& key,
             top_dir, &top_dir_path);
 
   const string rel_path(dbm_->RelpathGuidToPath(rel_path_guid, top_dir));
+  if (!rel_path.empty()) {
+    HandleRemoteModAction(timestamp, top_dir, top_dir_path,
+                          rel_path_guid, rel_path, device, hash);
+  } else {
+    // TODO(tierney): Haven't seen this file before.
+    LOG(WARNING) << "Haven't seen this file before.";
+
+    HandleRemoteAddAction(timestamp, top_dir, top_dir_path,
+                          rel_path_guid, device, hash);
+  }
+}
+
+void FileEventQueueHandler::HandleRemoteAddAction(const string& timestamp,
+                                                  const string& top_dir,
+                                                  const string& top_dir_path,
+                                                  const string& rel_path_guid,
+                                                  const string& device,
+                                                  const string& hash) {
+  // Download the file.
+  LOG(INFO) << "Downloading the package.";
+  DownloadRequest request;
+  request.auth.email = user_auth_->email;
+  request.auth.password = user_auth_->password;
+  request.top_dir = top_dir;
+  request.pkg_name = hash;
+
+  RemotePackage package;
+  client_->Exec<void, RemotePackage&, const DownloadRequest&>(
+      &LockboxServiceClient::DownloadPackage, package, request);
+  CHECK(package.type == PackageType::SNAPSHOT) << "New path not a snapshot";
+
+  // Decrypt the path.
+  string rel_path;
+  encryptor_->HybridDecrypt(package.path, &rel_path);
+  CHECK(!rel_path.empty());
+
+  // Map the RelPath GUID to the local path.
+  dbm_->NewRelPathGUIDLocalPath(top_dir, rel_path_guid, rel_path);
+
+  // Lock the path locally.
+  dbm_->AcquireLockPath(rel_path_guid, top_dir);
+
+  // Unpack the file to the location.
+  string full_path;
+  dbm_->Get(DBManager::Options(ClientDB::TOP_DIR_LOCATION, ""),
+            top_dir, &full_path);
+  full_path.append(rel_path);
+
+  string file_contents;
+  encryptor_->HybridDecrypt(package.payload, &file_contents);
+
+  LOG(INFO) << "Writing new file to " << full_path;
+  SetIgnorableAction(full_path, to_string(FW::Actions::Add));
+
+  const int bytes_written = file_util::WriteFile(base::FilePath(full_path),
+                                                 file_contents.c_str(),
+                                                 file_contents.size());
+  CHECK(bytes_written == file_contents.size());
+
+  // Unlock the path.
+  dbm_->ReleaseLockPath(rel_path_guid, top_dir);
+}
+
+void FileEventQueueHandler::HandleRemoteModAction(const string& timestamp,
+                                                  const string& top_dir,
+                                                  const string& top_dir_path,
+                                                  const string& rel_path_guid,
+                                                  const string& rel_path,
+                                                  const string& device,
+                                                  const string& hash) {
 
   // Local lock.
   while (!dbm_->AcquireLockPath(rel_path_guid, top_dir)) {
-    LOG(INFO) << "Waiting to get local lock.";
+    LOG(WARNING) << "Waiting to get local lock.";
     sleep(1);
   }
 
@@ -216,10 +288,9 @@ void FileEventQueueHandler::HandleRemoteAction(const string& key,
 
     // Read the current file.
     string current_file;
-    string path = top_dir_path + rel_path;
-    LOG(INFO) << "Path " << path;
-    file_util::ReadFileToString(base::FilePath(path), &current_file);
-
+    const string full_path = top_dir_path + rel_path;
+    LOG(INFO) << "Full_Path " << full_path;
+    file_util::ReadFileToString(base::FilePath(full_path), &current_file);
 
     // Decrypt the delta.
     string payload;
@@ -230,8 +301,12 @@ void FileEventQueueHandler::HandleRemoteAction(const string& key,
     // Apply the delta.
     string reconstructed = Delta::Apply(current_file, payload);
 
-    LOG(INFO) << "Reconstructed " << reconstructed;
-    // Write the updated file.
+    LOG(INFO) << "Writing reconstructed " << reconstructed;
+    SetIgnorableAction(full_path, to_string(FW::Actions::Modified));
+    const int bytes_written = file_util::WriteFile(base::FilePath(full_path),
+                                                   reconstructed.c_str(),
+                                                   reconstructed.size());
+    CHECK(bytes_written == reconstructed.size());
   }
 
   // Case: Snapshot.
@@ -254,11 +329,34 @@ void FileEventQueueHandler::HandleRemoteAction(const string& key,
   dbm_->ReleaseLockPath(rel_path_guid, top_dir);
 }
 
+bool FileEventQueueHandler::IgnorableAction(const string& abs_path,
+                                            const string& event_type) {
+  ScopedMutexLock lock(&ignorables_mutex_);
+  const string key = abs_path + event_type;
+  return (ignorable_actions_.erase(key) > 0);
+}
+
+void FileEventQueueHandler::SetIgnorableAction(const string& abs_path,
+                                               const string& event_type) {
+  ScopedMutexLock lock(&ignorables_mutex_);
+  const string key = abs_path + event_type;
+
+  CHECK(ignorable_actions_.end() == ignorable_actions_.find(key));
+
+  ignorable_actions_.insert(key);
+}
+
 void FileEventQueueHandler::HandleLocalAction(const string& ts_path,
                                               const string& event_type) {
   // For a local action.
   string ts, path;
   ParseTimestampPath(ts_path, &ts, &path);
+
+  // Check if cancelled.
+  if (IgnorableAction(path, event_type)) {
+    LOG(INFO) << "Ignoring " << path << " : " << event_type;
+    return;
+  }
 
   // What to do in each of the |event_types| (added, deleted, modified)?
   // We'll start by handling the added case.

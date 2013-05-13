@@ -39,6 +39,8 @@ class DBManager {
 
   virtual bool GetList(const Options& options, const string& key_prefix,
                        vector<string>* values);
+  virtual bool GetMap(const Options& options, const string& key_prefix,
+                      map<string, string>* kvs);
 
   virtual bool Put(const Options& options, const string& key, const string& value);
 

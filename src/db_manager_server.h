@@ -62,7 +62,7 @@ class DBManagerServer : public DBManager {
   mutex* get_mutex(const Options& options);
 
   UserID EmailToUserID(const string& email);
-  void AddEmailToTopDir(const UserID& user, const TopDirID& top_dir);
+  bool AddEmailToTopDir(const string& email, const TopDirID& top_dir);
 
  private:
   void InitTopDirs();

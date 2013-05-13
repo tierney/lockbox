@@ -130,7 +130,7 @@ string DBManagerClient::RelpathGuidToPath(const string& guid,
 
   string location;
   Get(options, guid, &location);
-  CHECK(!location.empty());
+  // CHECK(!location.empty());
 
   return location;
 }
@@ -184,4 +184,27 @@ bool DBManagerClient::ReleaseLockPath(const string& guid,
   return true;
 }
 
+TopDirID DBManagerClient::TopDirPathToID(const string& path) {
+  TopDirID top_dir_id;
+  Get(DBManager::Options(ClientDB::LOCATION_TOP_DIR, ""), path, &top_dir_id);
+  return top_dir_id;
+}
+
+void DBManagerClient::NewRelPathGUIDLocalPath(const string& top_dir,
+                                              const string& rel_path_guid,
+                                              const string& rel_path) {
+  CHECK(!top_dir.empty());
+  CHECK(!rel_path.empty());
+  CHECK(!rel_path_guid.empty());
+
+  Options options;
+  options.type = ClientDB::RELPATH_ID_LOCATION;
+  options.name = top_dir;
+  Put(options, rel_path_guid, rel_path);
+  LOG(INFO) << "[" << top_dir << "] Mapped " << rel_path_guid << " : "
+            << rel_path;
+
+  options.type = ClientDB::LOCATION_RELPATH_ID;
+  Put(options, rel_path, rel_path_guid);
+}
 } // namespace lockbox

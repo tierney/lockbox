@@ -57,6 +57,25 @@ bool DBManager::GetList(const Options& options,
   return (!values->empty());
 }
 
+bool DBManager::GetMap(const Options& options,
+                       const string& key_prefix,
+                       map<string, string>* kvs) {
+  CHECK(kvs);
+  kvs->clear();
+
+  auto iter = db_map_.find(GenKey(options));
+  CHECK(iter != db_map_.end());
+  leveldb::DB* db = iter->second;
+  leveldb::Iterator* it = db->NewIterator(leveldb::ReadOptions());
+  for (it->Seek(key_prefix);
+       it->Valid() && StartsWithASCII(it->key().ToString(), key_prefix,
+                                      true /* case sensitive */);
+       it->Next()) {
+    kvs->insert(make_pair(it->key().ToString(), it->value().ToString()));
+  }
+  return (!kvs->empty());
+}
+
 bool DBManager::Put(const Options& options,
                     const string& key,
                     const string& value) {
