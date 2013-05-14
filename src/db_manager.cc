@@ -71,6 +71,7 @@ bool DBManager::GetMap(const Options& options,
        it->Valid() && StartsWithASCII(it->key().ToString(), key_prefix,
                                       true /* case sensitive */);
        it->Next()) {
+    LOG(INFO) << "Adding update (key): " << it->key().ToString();
     kvs->insert(make_pair(it->key().ToString(), it->value().ToString()));
   }
   return (!kvs->empty());
@@ -90,7 +91,7 @@ bool DBManager::Put(const Options& options,
 
 // Append-like operation.
 bool DBManager::Append(const Options& options,
-                       const string& key,
+                       const string& key_prefix,
                        const string& new_value) {
   auto iter = db_map_.find(GenKey(options));
   CHECK(iter != db_map_.end());
@@ -100,11 +101,11 @@ bool DBManager::Append(const Options& options,
 
   // Gen GUID.
   const string guid = CreateGUIDString();
-
-  const string key_guid = key + "_" + guid;
+  const string key_guid = key_prefix + "_" + guid;
 
   // Write the key_GUID.
-  db->Put(leveldb::WriteOptions(), key, new_value);
+  LOG(INFO) << "Appending " << key_guid << " : " << new_value;
+  db->Put(leveldb::WriteOptions(), key_guid, new_value);
 
   return true;
 }

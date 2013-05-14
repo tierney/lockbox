@@ -165,13 +165,14 @@ void SplitKey(const string& key, string* timestamp, string* top_dir,
 
   vector<string> key_entries;
   base::SplitString(key, '_', &key_entries);
-  CHECK(key_entries.size() == 5);
+  CHECK(key_entries.size() == 6);
 
   timestamp->assign(key_entries[0]);
   top_dir->assign(key_entries[1]);
   rel_path_guid->assign(key_entries[2]);
   device->assign(key_entries[3]);
   hash->assign(key_entries[4]);
+  // the entry guid is key_entries[5]
 }
 
 } // namespace
@@ -540,6 +541,10 @@ bool FileEventQueueHandler::HandleModAction(const string& path) {
   // Put into relpath the latest hash.
   dbm_->Put(DBManager::Options(ClientDB::RELPATHS_HEAD_HASH, top_dir_id_),
             relative_path, hash);
+  dbm_->Put(DBManager::Options(ClientDB::RELPATHS_HEAD_FILE, top_dir_id_),
+            relative_path, current);
+  dbm_->Put(DBManager::Options(ClientDB::RELPATHS_HEAD_FILE_HASH, top_dir_id_),
+            relative_path, current_sha1_hex);
 
   // Then set the fptr.
   dbm_->Put(DBManager::Options(ClientDB::FPTRS, top_dir_id_), hash, prev_hash);

@@ -299,6 +299,7 @@ void LockboxServiceHandler::PersistedUpdates(const UserAuth& auth,
   DBManagerServer::Options options;
   options.type = ServerDB::DEVICE_SYNC;
   for (const string& update : updates.updates) {
+    LOG(INFO) << "  Deleting Update: " << update;
     manager_->Delete(options, update);
   }
 }
