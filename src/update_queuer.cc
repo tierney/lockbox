@@ -85,11 +85,20 @@ void UpdateQueuer::Run() {
       string users_to_update;
 
       // Iterate through the EDITORS.
-      vector<string> users;
-      CHECK(dbm_->GetList(options, "EDITORS", &users));
+      vector<string> emails;
+      CHECK(dbm_->GetList(options, "EDITORS", &emails));
+
+      vector<string> user_ids;
+      for (const string& email : emails) {
+        string user_id;
+        CHECK(dbm_->Get(
+            DBManager::Options(ServerDB::EMAIL_USER, ""), email, &user_id))
+            << email;
+        user_ids.push_back(user_id);
+      }
 
       // USER_DEVICE
-      for (const string& user : users) {
+      for (const string& user : user_ids) {
         options.type = ServerDB::USER_DEVICE;
         options.name = "";
         vector<string> devices;

@@ -48,11 +48,6 @@ DBManagerServer::DBManagerServer(const string& db_location_base)
   }
 
   InitTopDirs();
-
-  // Set the counters for the ID-valued databases.
-  Options options;
-  options.type = ServerDB::USER_DEVICE;
-  num_devices_.Set(MaxID(options));
 }
 
 DBManagerServer::~DBManagerServer() {
@@ -203,7 +198,7 @@ bool DBManagerServer::AddEmailToTopDir(const string& email,
   Append(DBManager::Options(ServerDB::USER_TOP_DIR, ""),
          user, top_dir);
   Put(DBManager::Options(ServerDB::TOP_DIR_META, top_dir),
-      "EDITORS_" + user, user);
+      "EDITORS_" + user, email);
   return true;
 }
 

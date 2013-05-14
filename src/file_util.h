@@ -11,7 +11,7 @@ using std::string;
 
 namespace lockbox {
 
-bool IsDirectory(const base::FilePath& fpath);
+bool IsDirectory(const base::FilePath& fpath, bool* is_dir);
 
 string GetHomeDirectory();
 

@@ -24,8 +24,9 @@ using std::vector;
 
 namespace lockbox {
 
-Encryptor::Encryptor(DBManagerClient* dbm, UserAuth* user_auth)
-    : dbm_(dbm), user_auth_(user_auth) {
+Encryptor::Encryptor(Client* client, DBManagerClient* dbm, UserAuth* user_auth)
+    : client_(client), dbm_(dbm), user_auth_(user_auth) {
+  CHECK(client);
   CHECK(dbm);
   CHECK(user_auth);
 }
@@ -69,7 +70,7 @@ bool Encryptor::EncryptString(const string& top_dir_path,
 
 
 bool Encryptor::EncryptInternal(
-    const string& raw_input, const vector<string>& users,
+    const string& raw_input, const vector<string>& emails,
     string* data, map<string, string>* user_enc_session) {
   CHECK(data);
   CHECK(user_enc_session);
@@ -89,17 +90,24 @@ bool Encryptor::EncryptInternal(
   // Encrypt the session key per user using RSA.
   DBManagerClient::Options email_key_options;
   email_key_options.type = ClientDB::EMAIL_KEY;
-  for (const string& user : users) {
+  for (const string& email : emails) {
     string key;
-    dbm_->Get(email_key_options, user, &key);
-    CHECK(!key.empty());
+    dbm_->Get(email_key_options, email, &key);
+    if (key.empty()) {
+      LOG(INFO) << "Going to the cloud for the user's key " << email;
+      PublicKey pub;
+      client_->Exec<void, PublicKey&, const string&>(
+          &LockboxServiceClient::GetKeyFromEmail, pub, email);
+      key = pub.key;
+    }
+    CHECK(!key.empty()) << "Could not find user's key anywhere " << email;
 
     string enc_session;
     RSAPEM rsa_pem;
-    LOG(INFO) << "Encrypting for " << user;
+    LOG(INFO) << "Encrypting for " << email;
     rsa_pem.PublicEncrypt(key, password, &enc_session);
 
-    user_enc_session->insert(std::make_pair(user, enc_session));
+    user_enc_session->insert(std::make_pair(email, enc_session));
 }
 
   return true;

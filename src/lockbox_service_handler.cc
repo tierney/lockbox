@@ -101,7 +101,7 @@ void LockboxServiceHandler::RegisterTopDir(TopDirID& top_dir_id,
 
   // Update the editors for the top_dir.
   CHECK(manager_->Put(DBManager::Options(ServerDB::TOP_DIR_META, top_dir_id),
-                      "EDITORS_" + user_id, user_id));
+                      "EDITORS_" + user_id, user.email));
 }
 
 void LockboxServiceHandler::RegisterRelativePath(
@@ -174,7 +174,8 @@ void LockboxServiceHandler::AcquireLockRelPath(PathLockResponse& _return,
   _return.acquired = true;
 
   // Get the names of the individuals with whom to share the directory.
-  _return.users.push_back("me2@you.com");
+  manager_->GetList(DBManager::Options(ServerDB::TOP_DIR_META, lock.top_dir),
+                    "EDITORS", &(_return.users));
 
   // Send the data back in the response.
   return;
@@ -276,6 +277,18 @@ void LockboxServiceHandler::PollForUpdates(UpdateMap& _return,
   // TODO(tierney): This should be first or a list...
   LOG(INFO) << "Requesting updates for " << device;
   manager_->GetMap(options, device, &(_return.updates));
+}
+
+void LockboxServiceHandler::GetFptrs(vector<string>& _return,
+                                     const UserAuth& auth,
+                                     const string& top_dir,
+                                     const string& hash) {
+  // Authenticate.
+
+  string prev;
+  manager_->Get(DBManager::Options(ServerDB::TOP_DIR_FPTRS, top_dir),
+                hash, &prev);
+  _return.push_back(prev);
 }
 
 void LockboxServiceHandler::PersistedUpdates(const UserAuth& auth,

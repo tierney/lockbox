@@ -10,6 +10,8 @@
 
 namespace lockbox {
 
+const int kNumAttempts = 3;
+
 FileWatcherThread::FileWatcherThread(DBManagerClient* db_manager)
     : db_manager_(db_manager) {
 }
@@ -53,16 +55,44 @@ void FileWatcherThread::EnumerateDirectories(const string& path,
   }
 }
 
+namespace {
+
+bool IgnorableFile(const string& filename) {
+  // swp, swpx, or . files
+  return true;
+}
+
+} // namespace
+
 void FileWatcherThread::handleFileAction(FW::WatchID watchid,
                                          const string& dir,
                                          const string& filename,
                                          FW::Action action) {
   base::FilePath potential_dir(base::FilePath(dir).Append(filename));
+
+
+  int i = 0;
+  bool is_dir = false;
   switch(action) {
     case FW::Actions::Add:
       std::cout << "File (" << dir + "/" + filename << ") Added! "
                 << std::endl;
-      if (IsDirectory(potential_dir)) {
+      // There are problems with getting inotify updates without a file to look
+      // at.
+      for (i = 0; i < kNumAttempts; i++) {
+        if (!IsDirectory(potential_dir, &is_dir)) {
+          LOG(WARNING) << "Something broke about the file. Just ignore for now.";
+          sleep(1);
+          continue;
+        } else {
+          break;
+        }
+      }
+      if (i == kNumAttempts) {
+        LOG(WARNING) << "Dropping file: " << dir << "/" << filename;
+      }
+
+      if (is_dir) {
         LOG(INFO) << "Watching new directory " << potential_dir.value();
         AddDirectory(potential_dir.value(), true);
       }

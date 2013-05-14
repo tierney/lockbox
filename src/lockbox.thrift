@@ -29,6 +29,10 @@ struct RemotePackage {
   3: required PackageType type,
   4: required HybridCrypto path,
   5: required HybridCrypto payload,
+
+  # Contains the SHA1 hash of the delta's previous whole file hash; i.e., the
+  # hash of the file that this delta should be applied to.
+  6: required HybridCrypto delta_prev_hash,
 }
 
 struct DownloadRequest {
@@ -102,6 +106,7 @@ enum ServerDB {
   UNKNOWN = 0
 
   EMAIL_USER,
+
   USER_DEVICE, # Email to device id
   DEVICE_SYNC,
   EMAIL_KEY,
@@ -111,11 +116,12 @@ enum ServerDB {
 
   TOP_DIR_PLACEHOLDER,
 
-  TOP_DIR_META, # Who's sharing the data "EDITORS"
+  TOP_DIR_META, # Who's sharing the data "EDITORS" (emails)
   TOP_DIR_RELPATH, # RELPATH_ID -> latest hash for the relpath.
   TOP_DIR_RELPATH_LOCK, # RELPATH_ID -> lock
   TOP_DIR_SNAPSHOTS, # RELPATH_ID -> list of all snapshots, in order.
   TOP_DIR_DATA, # HASH -> bytes...
+  TOP_DIR_DATA_TYPE, # snapshot or delta?
   TOP_DIR_FPTRS, # HASH_i -> HASH_(i-1)
 }
 
@@ -188,6 +194,8 @@ service LockboxService {
   RemotePackage DownloadPackage(1:DownloadRequest req),
 
   UpdateMap PollForUpdates(1:UserAuth auth, 2:DeviceID device),
+
+  list<string> GetFptrs(1:UserAuth auth, 2:string top_dir, 3:string hash);
 
   # Update the UPDATE_ACTION_LOG and then set delete the values from the
   # DEVICE_SYNC.

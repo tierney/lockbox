@@ -91,7 +91,7 @@ void Client::Start() {
   dbm_->Get(DBManagerClient::Options(ClientDB::CLIENT_DATA, ""),
             "DEVICE", &(user_auth_->device));
 
-  Encryptor encryptor(dbm_, user_auth_);
+  Encryptor encryptor(this, dbm_, user_auth_);
 
   // Check if there are shared directories from the cloud that we should add to
   // our set.

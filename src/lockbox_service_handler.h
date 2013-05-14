@@ -47,6 +47,9 @@ class LockboxServiceHandler : virtual public LockboxServiceIf {
                       const UserAuth& auth,
                       const DeviceID& device);
 
+  void GetFptrs(vector<string>& _return, const UserAuth& auth,
+                const string& top_dir, const string& hash);
+
   void PersistedUpdates(const UserAuth& auth, const DeviceID& device,
                         const UpdateList& updates);
 

@@ -267,6 +267,14 @@ void FileEventQueueHandler::HandleRemoteModAction(const string& timestamp,
     sleep(1);
   }
 
+  // Determine what the deltas previous is supposed to be and if we have that
+  // previous file on disk.
+  // if (hash == ) {
+  // }
+
+  // Get downloaded packages hash.
+
+
   DownloadRequest request;
   request.auth.email = user_auth_->email;
   request.auth.password = user_auth_->password;
@@ -292,6 +300,18 @@ void FileEventQueueHandler::HandleRemoteModAction(const string& timestamp,
     LOG(INFO) << "Full_Path " << full_path;
     file_util::ReadFileToString(base::FilePath(full_path), &current_file);
 
+    // Determine what the deltas previous is supposed to be and if we have that
+    // previous file on disk.
+    const string current_file_hash = SHA1Hex(current_file);
+    LOG(INFO) << "Current file hash " << current_file_hash;
+
+    // Get downloaded packages hash.
+
+    // Get hash fptr.
+    // client_->Exec();
+
+    // if hash fptr is our current versions fptr, then apply delta.
+
     // Decrypt the delta.
     string payload;
     encryptor_->Decrypt(package.payload.data,
@@ -307,6 +327,13 @@ void FileEventQueueHandler::HandleRemoteModAction(const string& timestamp,
                                                    reconstructed.c_str(),
                                                    reconstructed.size());
     CHECK(bytes_written == reconstructed.size());
+
+    // Store the reconstructed hash and keep the pointers.
+    dbm_->Put(DBManager::Options(ClientDB::RELPATHS_HEAD_FILE, top_dir),
+              rel_path, reconstructed);
+    const string reconstructed_hash = SHA1Hex(reconstructed);
+    dbm_->Put(DBManager::Options(ClientDB::RELPATHS_HEAD_FILE_HASH, top_dir),
+              rel_path, reconstructed_hash);
   }
 
   // Case: Snapshot.
@@ -323,6 +350,13 @@ void FileEventQueueHandler::HandleRemoteModAction(const string& timestamp,
                         &payload);
     LOG(INFO) << "Downloaded " << payload;
     LOG(INFO) << "Current Fh " << current_file;
+
+    // Store the payload hash and keep the pointers.
+    dbm_->Put(DBManager::Options(ClientDB::RELPATHS_HEAD_FILE, top_dir),
+              rel_path, payload);
+    const string payload_hash = SHA1Hex(payload);
+    dbm_->Put(DBManager::Options(ClientDB::RELPATHS_HEAD_FILE_HASH, top_dir),
+              rel_path, payload_hash);
   }
 
   // Release local lock.
@@ -509,7 +543,6 @@ bool FileEventQueueHandler::HandleModAction(const string& path) {
 
   // Then set the fptr.
   dbm_->Put(DBManager::Options(ClientDB::FPTRS, top_dir_id_), hash, prev_hash);
-
 
   // Release the lock.
   LOG(INFO) << "Releasing lock";

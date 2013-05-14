@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "base/logging.h"
+#include "client.h"
 #include "gflags/gflags.h"
 #include "db_manager_client.h"
 #include "lockbox_types.h"
@@ -18,7 +19,8 @@ namespace lockbox {
 class Encryptor {
  public:
 
-  Encryptor(DBManagerClient* dbm, UserAuth* user_auth);
+  // Does not take ownership of |client|, |dbm|, or |user_auth|.
+  Encryptor(Client* client, DBManagerClient* dbm, UserAuth* user_auth);
 
   virtual ~Encryptor();
 
@@ -43,6 +45,7 @@ class Encryptor {
   bool EncryptInternal(const string& input, const vector<string>& users,
                        string* payload, map<string, string>* enc_session);
 
+  Client* client_;
   DBManagerClient* dbm_;
   UserAuth* user_auth_;
 

@@ -137,16 +137,16 @@ string DBManagerClient::RelpathGuidToPath(const string& guid,
 
 bool DBManagerClient::AcquireLockPath(const string& guid,
                                       const string& top_dir) {
-  LOG(INFO) << "AcquireLockPath";
   const string path(RelpathGuidToPath(guid, top_dir));
   CHECK(!path.empty());
+  LOG(INFO) << "AcquireLockPath " << path;
 
   if (!ContainsKey(path_locks_, path)) {
     LOG(INFO) << "Inserting path " << path;
     path_locks_.insert(make_pair(path, new mutex()));
   }
 
-  ScopedMutexLock(path_locks_.at(path));
+  ScopedMutexLock lock(path_locks_.at(path));
 
   // do something to the locked path.
   DBManager::Options options;
@@ -160,17 +160,18 @@ bool DBManagerClient::AcquireLockPath(const string& guid,
   }
 
   Put(options, path, "LOCKED");
+  return true;
 }
 
 bool DBManagerClient::ReleaseLockPath(const string& guid,
                                       const string& top_dir) {
-  LOG(INFO) << "ReleaseLockPath";
   const string path(RelpathGuidToPath(guid, top_dir));
+  LOG(INFO) << "ReleaseLockPath " << path;
 
   LOG(INFO) << "Looking for path " << path;
   CHECK(ContainsKey(path_locks_, path));
 
-  ScopedMutexLock(path_locks_.at(path));
+  ScopedMutexLock lock(path_locks_.at(path));
 
   // do something to the locked path.
   DBManager::Options options;
@@ -180,7 +181,10 @@ bool DBManagerClient::ReleaseLockPath(const string& guid,
   string status;
   Get(options, path, &status);
   CHECK(status == "LOCKED");
-  Delete(options, path);
+  CHECK(Delete(options, path));
+  Put(options, path, "");
+  Get(options, path, &status);
+  CHECK(status.empty()) << status;
   return true;
 }
 
