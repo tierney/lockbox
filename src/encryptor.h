@@ -41,10 +41,11 @@ class Encryptor {
   bool HybridDecrypt(const HybridCrypto& hybrid,
                      string* output);
 
- private:
   bool EncryptInternal(const string& input, const vector<string>& users,
                        string* payload, map<string, string>* enc_session);
 
+
+ private:
   Client* client_;
   DBManagerClient* dbm_;
   UserAuth* user_auth_;

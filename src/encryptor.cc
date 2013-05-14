@@ -64,6 +64,7 @@ bool Encryptor::EncryptString(const string& top_dir_path,
   success = EncryptInternal(raw_input, users, &(package->payload.data),
                             &(package->payload.user_enc_session));
   package->payload.data_sha1 = SHA1Hex(package->payload.data);
+
   CHECK(success);
   return true;
 }
@@ -125,14 +126,16 @@ bool Encryptor::Decrypt(const string& data,
 
   string priv_key;
   dbm_->Get(client_data_options, "PRIV_KEY", &priv_key);
+  CHECK(!priv_key.empty());
 
   RSAPEM rsa_pem;
   string out;
   LOG(WARNING) << "Using user auth password for PEM password. Correct?";
   rsa_pem.PrivateDecrypt(user_auth_->password, priv_key, encrypted_key, &out);
+  CHECK(!out.empty());
 
   BlockCipher block_cipher;
-  block_cipher.Decrypt(data, out, output);
+  CHECK(block_cipher.Decrypt(data, out, output));
 
   return true;
 }

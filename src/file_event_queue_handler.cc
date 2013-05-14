@@ -179,6 +179,7 @@ void SplitKey(const string& key, string* timestamp, string* top_dir,
 
 void FileEventQueueHandler::HandleRemoteAction(const string& key,
                                                const string& value) {
+  (void)value;
   LOG(INFO) << "HandleRemoteAction() called.";
   // Value stored in the |key|.
   // 1367949789_1_25baec40-5a1f-108b-4ca31a19-3ab710a6_yUCJ/6CWfX2Uin3kzy6cZC7L9Wc=,
@@ -209,6 +210,10 @@ void FileEventQueueHandler::HandleRemoteAddAction(const string& timestamp,
                                                   const string& rel_path_guid,
                                                   const string& device,
                                                   const string& hash) {
+  (void)timestamp;
+  (void)top_dir_path;
+  (void)device;
+
   // Download the file.
   LOG(INFO) << "Downloading the package.";
   DownloadRequest request;
@@ -224,7 +229,7 @@ void FileEventQueueHandler::HandleRemoteAddAction(const string& timestamp,
 
   // Decrypt the path.
   string rel_path;
-  encryptor_->HybridDecrypt(package.path, &rel_path);
+  CHECK(encryptor_->HybridDecrypt(package.path, &rel_path));
   CHECK(!rel_path.empty());
 
   // Map the RelPath GUID to the local path.
@@ -245,9 +250,9 @@ void FileEventQueueHandler::HandleRemoteAddAction(const string& timestamp,
   LOG(INFO) << "Writing new file to " << full_path;
   SetIgnorableAction(full_path, to_string(FW::Actions::Add));
 
-  const int bytes_written = file_util::WriteFile(base::FilePath(full_path),
-                                                 file_contents.c_str(),
-                                                 file_contents.size());
+  const unsigned bytes_written = file_util::WriteFile(base::FilePath(full_path),
+                                                      file_contents.c_str(),
+                                                      file_contents.size());
   CHECK(bytes_written == file_contents.size());
 
   // Unlock the path.
@@ -261,6 +266,10 @@ void FileEventQueueHandler::HandleRemoteModAction(const string& timestamp,
                                                   const string& rel_path,
                                                   const string& device,
                                                   const string& hash) {
+  (void)timestamp;
+  (void)device;
+
+  LOG(INFO) << "HandleRemoteModAction() called.";
 
   // Local lock.
   while (!dbm_->AcquireLockPath(rel_path_guid, top_dir)) {
@@ -324,9 +333,9 @@ void FileEventQueueHandler::HandleRemoteModAction(const string& timestamp,
 
     LOG(INFO) << "Writing reconstructed " << reconstructed;
     SetIgnorableAction(full_path, to_string(FW::Actions::Modified));
-    const int bytes_written = file_util::WriteFile(base::FilePath(full_path),
-                                                   reconstructed.c_str(),
-                                                   reconstructed.size());
+    const unsigned bytes_written = file_util::WriteFile(base::FilePath(full_path),
+                                                        reconstructed.c_str(),
+                                                        reconstructed.size());
     CHECK(bytes_written == reconstructed.size());
 
     // Store the reconstructed hash and keep the pointers.
@@ -340,9 +349,9 @@ void FileEventQueueHandler::HandleRemoteModAction(const string& timestamp,
   // Case: Snapshot.
   if (package.type == PackageType::SNAPSHOT) {
     string current_file;
-    string path = top_dir_path + rel_path;
-    LOG(INFO) << "Path " << path;
-    file_util::ReadFileToString(base::FilePath(path), &current_file);
+    string abs_path = top_dir_path + rel_path;
+    LOG(INFO) << "Path " << abs_path;
+    file_util::ReadFileToString(base::FilePath(abs_path), &current_file);
 
     // See if the current file and the decrypted file are the same.
     string payload;
@@ -352,12 +361,20 @@ void FileEventQueueHandler::HandleRemoteModAction(const string& timestamp,
     LOG(INFO) << "Downloaded " << payload;
     LOG(INFO) << "Current Fh " << current_file;
 
+    LOG(INFO) << "Writing downloaded " << payload;
+    SetIgnorableAction(abs_path, to_string(FW::Actions::Modified));
+    const unsigned bytes_written = file_util::WriteFile(base::FilePath(abs_path),
+                                                        payload.c_str(),
+                                                        payload.size());
+    CHECK(bytes_written == payload.size());
+
     // Store the payload hash and keep the pointers.
     dbm_->Put(DBManager::Options(ClientDB::RELPATHS_HEAD_FILE, top_dir),
               rel_path, payload);
     const string payload_hash = SHA1Hex(payload);
     dbm_->Put(DBManager::Options(ClientDB::RELPATHS_HEAD_FILE_HASH, top_dir),
               rel_path, payload_hash);
+
   }
 
   // Release local lock.
@@ -509,17 +526,33 @@ bool FileEventQueueHandler::HandleModAction(const string& path) {
   }
 
   // Compute the difference.
-  string delta(Delta::Generate(output, current));
+  const string delta = Delta::Generate(output, current);
+  LOG(INFO) << "Delta size produced " << delta.size();
+
+  // Model for changing between the delta and the snapshot.
+  bool use_delta = true;
+  if (delta.size() >= current.size()) {
+    LOG(INFO) << "But creating a new SNAPSHOT.";
+    use_delta = false;
+  }
+  const string& to_encrypt = use_delta ? delta : current;
 
   // encrypt, bundle the package, upload as a DELTA
   LOG(INFO) << "Encrypting.";
   RemotePackage package;
   package.top_dir = top_dir_id_;
   package.rel_path_id = path_guid;
-  package.type = PackageType::DELTA;
+  package.type = use_delta ? PackageType::DELTA : PackageType::SNAPSHOT;
   encryptor_->EncryptString(
-      top_dir_path_, path, delta, response.users, &package);
+      top_dir_path_, path, to_encrypt, response.users, &package);
 
+  // Encrypt the previous hash that corresponds to this update.
+  if (use_delta) {
+    encryptor_->EncryptInternal(
+        prev_hash, response.users, &(package.delta_prev_hash.data),
+        &(package.delta_prev_hash.user_enc_session));
+    package.delta_prev_hash.data_sha1 = SHA1Hex(package.delta_prev_hash.data);
+  }
 
   // Upload the package. Cloud needs to update the appropriate user's
   // update queues.
