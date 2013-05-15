@@ -21,6 +21,7 @@ class FileWatcherThread : public FW::FileWatchListener {
 
   virtual ~FileWatcherThread();
 
+  void EnumerateFiles(const string& directory, vector<string>* files);
   void EnumerateDirectories(const string& path, vector<string>* dirs);
 
   void AddDirectory(const string& path, bool recursive);

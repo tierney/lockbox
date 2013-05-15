@@ -51,6 +51,9 @@ class DBManagerClient : public DBManager {
   bool ReleaseLockPath(const string& guid, const string& top_dir);
   void NewRelPathGUIDLocalPath(const string& top_dir, const string& rel_path_guid,
                                const string& rel_path);
+  bool AddNewFileToUnfilteredQueue(const string& dirname,
+                                   const string& filename,
+                                   const int action);
 
  private:
   map<string, mutex*> path_locks_;

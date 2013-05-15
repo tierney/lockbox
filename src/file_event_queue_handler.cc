@@ -250,7 +250,12 @@ void FileEventQueueHandler::HandleRemoteAddAction(const string& timestamp,
   LOG(INFO) << "Writing new file to " << full_path;
   SetIgnorableAction(full_path, to_string(FW::Actions::Add));
 
-  const unsigned bytes_written = file_util::WriteFile(base::FilePath(full_path),
+  // Need to create the directory if not already present.
+  base::FilePath abs_file_path(full_path);
+  base::FilePath abs_dir(abs_file_path.DirName());
+
+  CHECK(file_util::CreateDirectory(abs_dir));
+  const unsigned bytes_written = file_util::WriteFile(abs_file_path,
                                                       file_contents.c_str(),
                                                       file_contents.size());
   CHECK(bytes_written == file_contents.size());
