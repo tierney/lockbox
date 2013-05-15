@@ -3,8 +3,10 @@ DEFAULT_INCLUDES =
 AM_CPPFLAGS = -I$(top_srcdir) -I$(top_builddir)
 AM_CFLAGS = -I$(top_srcdir)
 AM_CXXFLAGS = -g -O0 -DOS_POSIX
+
 if DARWIN
-AM_LDFLAGS = -framework foundation
+AM_LDFLAGS = -framework Foundation
+AM_CXXFLAGS += --stdlib=libc++
 endif
 
 EXTRA_DIST =
@@ -55,6 +57,9 @@ noinst_LTLIBRARIES += libtime.la
 libtime_la_SOURCES = time.h
 libtime_la_SOURCES += time.cc
 libtime_la_SOURCES += time_posix.cc
+if DARWIN
+libtime_la_SOURCES += time_mac.cc
+endif
 libtime_la_LIBADD = third_party/nspr/libprtime.la
 
 noinst_LTLIBRARIES += third_party/nspr/libprtime.la
@@ -282,6 +287,38 @@ noinst_LTLIBRARIES += third_party/dynamic_annotations/libdynamic_annotations.la
 third_party_dynamic_annotations_libdynamic_annotations_la_SOURCES = third_party/dynamic_annotations/dynamic_annotations.h
 third_party_dynamic_annotations_libdynamic_annotations_la_SOURCES += third_party/dynamic_annotations/dynamic_annotations.c
 
+# Mac-specific libraries.
+if DARWIN
+noinst_LTLIBRARIES += mac/libmac_logging.la
+mac_libmac_logging_la_SOURCES = \
+  mac/mac_logging.h \
+  mac/mac_logging.cc
+
+noinst_LTLIBRARIES += mac/libscoped_mach_port.la
+mac_libscoped_mach_port_la_SOURCES = \
+  mac/scoped_mach_port.h \
+  mac/scoped_mach_port.cc
+
+noinst_LTLIBRARIES += mac/libmac_util.la
+mac_libmac_util_la_SOURCES = \
+  mac/mac_util.h \
+  mac/mac_util.mm
+
+noinst_LTLIBRARIES += mac/libbundle_locations.la
+mac_libbundle_locations_la_SOURCES = \
+  mac/bundle_locations.h \
+  mac/bundle_locations.mm
+
+noinst_LTLIBRARIES += mac/libfoundation_util.la
+mac_libfoundation_util_la_SOURCES = \
+  mac/foundation_util.h \
+  mac/foundation_util.mm
+mac_libfoundation_util_la_LIBADD = \
+  mac/libbundle_locations.la \
+  mac/libmac_logging.la
+
+endif
+
 noinst_LTLIBRARIES += libprocess_util.la
 libprocess_util_la_SOURCES = process_util.h
 libprocess_util_la_SOURCES += process_util.cc
@@ -299,6 +336,11 @@ libprocess_util_la_SOURCES += files/dir_reader_posix.h
 libprocess_util_la_SOURCES += process_util_posix.cc
 libprocess_util_la_SOURCES += strings/string_tokenizer.h
 libprocess_util_la_LIBADD = libcommand_line.la
+if DARWIN
+libprocess_util_la_LIBADD += mac/libscoped_mach_port.la
+libprocess_util_la_LIBADD += mac/libmac_util.la
+libprocess_util_la_LIBADD += mac/libfoundation_util.la
+endif
 libprocess_util_la_LIBADD += threading/libthread_restrictions.la
 libprocess_util_la_LIBADD += files/libfile_path.la
 libprocess_util_la_LIBADD += threading/libthread_local.la
@@ -311,6 +353,7 @@ libprocess_util_la_LIBADD += libprocess.la
 libprocess_util_la_LIBADD += allocator/libtype_profiler_control.la
 libprocess_util_la_LIBADD += posix/libfile_descriptor_shuffle.la
 libprocess_util_la_LIBADD += libfile_util.la
+
 
 noinst_LTLIBRARIES += libtimer.la
 libtimer_la_SOURCES = timer.h
@@ -369,6 +412,9 @@ libpickle_la_SOURCES += pickle.cc
 noinst_LTLIBRARIES += strings/libsys_string_conversions.la
 strings_libsys_string_conversions_la_SOURCES = strings/sys_string_conversions.h
 strings_libsys_string_conversions_la_SOURCES += strings/sys_string_conversions_posix.cc
+if DARWIN
+strings_libsys_string_conversions_la_SOURCES += strings/sys_string_conversions_mac.mm
+endif
 
 noinst_LTLIBRARIES += libstring16.la
 libstring16_la_SOURCES = string16.h
@@ -656,8 +702,8 @@ threading_libplatform_thread_la_SOURCES += threading/platform_thread_mac.mm
 endif
 
 threading_libplatform_thread_la_LIBADD =
-threading_libplatform_thread_la_LIBADD += libtracked_objects.la
 threading_libplatform_thread_la_LIBADD += threading/libthread_id_name_manager.la
+threading_libplatform_thread_la_LIBADD += libtracked_objects.la
 
 noinst_LTLIBRARIES += libutf_string_conversions.la
 libutf_string_conversions_la_SOURCES = utf_string_conversions.cc

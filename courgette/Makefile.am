@@ -4,7 +4,7 @@ AM_LDFLAGS =
 AM_CXXFLAGS =
 
 if DARWIN
-AM_LDFLAGS += -framework foundation
+AM_LDFLAGS += -framework Foundation -framework Cocoa -framework IOKit -framework Security
 AM_CXXFLAGS += --stdlib=libc++
 endif
 
@@ -24,6 +24,7 @@ libsimple_delta_la_SOURCES = simple_delta.h
 libsimple_delta_la_SOURCES += simple_delta.cc
 libsimple_delta_la_SOURCES += courgette.h
 libsimple_delta_la_LIBADD = \
+	$(top_builddir)/base/libtime.la \
 	$(top_builddir)/base/libprocess_util.la \
 	$(top_builddir)/base/liblogging.la \
 	third_party/libbsdiff.la

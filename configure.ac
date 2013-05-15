@@ -174,10 +174,12 @@ echo
 echo $arch
 echo
 
-AM_CONDITIONAL([LINUX], test "$arch" = linux)
-AM_CONDITIONAL([NETBSD], test "$arch" = netbsd)
-AM_CONDITIONAL([BSD], test "$arch" = bsd)
-AM_CONDITIONAL([DARWIN], test "$arch" = darwin)
+AM_CONDITIONAL(LINUX, test "$arch" = linux)
+AM_CONDITIONAL(NETBSD, test "$arch" = netbsd)
+AM_CONDITIONAL(BSD, test "$arch" = bsd)
+AM_CONDITIONAL(DARWIN, test "$arch" = darwin)
+
+
 
 AC_CONFIG_FILES([testing/gtest/Makefile
                  third_party/modp_b64/Makefile
