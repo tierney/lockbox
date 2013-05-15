@@ -1,3 +1,65 @@
+README for Lockbox.
+
+Thrift Dependency
+=================
+
+thrift (for serialization and non-blocking server installation)
+
+YOU NEED TO INSTALL libevent DEVELOPMENT LIBRARIES BEFORE BUILDING thrift. See
+the OS-specific package management sections below.
+
+    # Download from the list provided here:
+    # http://www.apache.org/dyn/closer.cgi?path=/thrift/0.9.0/thrift-0.9.0.tar.gz
+
+    wget http://mirrors.ibiblio.org/apache/thrift/0.9.0/thrift-0.9.0.tar.gz
+
+    # Make sure the non-blocking server option in configured to be built, if you
+    # want to run a server.
+
+    ./configure --with-libevent
+    make
+    make install
+
+    # Verify the nonblocking installation worked.
+
+    pkg-config --libs thrift-nb
+
+
+Ubuntu
+======
+
+     sudo apt-get install libboost-dev libboost-test-dev \
+       libboost-program-options-dev libevent-dev automake \
+       libtool flex bison pkg-config build-essential libssl-dev libnss3-dev \
+       libgtk2.0-dev libglib2.0-dev  \
+       libgflags-dev \
+       autoconf libsnappy-dev
+
+
+Mac OS X
+========
+
+    brew install glib gtk zlib nss
+
+    ./bootstrap
+
+    PKG_CONFIG_PATH=/opt/X11/lib/pkgconfig \
+    ZLIB_CFLAGS=/usr/local/Cellar/lzlib/1.3/include \
+    ZLIB_LIBS=/usr/local/Cellar/lzlib/1.3/lib \
+    NSS_LIBS=/usr/local/opt/nss/lib NSS_CFLAGS=/usr/local/opt/nss/include \
+    ./configure
+
+
+Running a Server
+================
+
+  o If you plan to manage many users' data, then your server will need the
+    ability to have many files open concurrently (I'm not doing anything smart
+    about this for the time being).
+
+    ulimit -Sn unlimited
+
+
 Major components
 
   o Zipping.
@@ -31,36 +93,3 @@ Major components
     o Use python watchdog in order to generate events.
 
     o Chromium interface may work on Linux...
-
-Dependencies
-
-
-libboost-dev libboost-test-dev libboost-program-options-dev libevent-dev automake libtool flex bison pkg-config g++ libssl-dev libnss3-dev libgtk2.0-dev libglib2.0-dev
-
-thrift
-
-libgflags-dev
-
-autoconf
-
-libsnappy-dev
-
-Mac OS X
-
-    brew install glib gtk zlib nss
-
-    ./bootstrap
-
-    PKG_CONFIG_PATH=/opt/X11/lib/pkgconfig \
-    ZLIB_CFLAGS=/usr/local/Cellar/lzlib/1.3/include \
-    ZLIB_LIBS=/usr/local/Cellar/lzlib/1.3/lib \
-    NSS_LIBS=/usr/local/opt/nss/lib NSS_CFLAGS=/usr/local/opt/nss/include \
-    ./configure
-
-Running a Server
-
-  o If you plan to manage many users' data, then your server will need the
-    ability to have many files open concurrently (I'm not doing anything smart
-    about this for the time being).
-
-    ulimit -Sn unlimited
