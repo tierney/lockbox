@@ -1,5 +1,10 @@
 AM_CPPFLAGS = -I$(top_srcdir)/testing/gtest/include -DCOURGETTE_USE_CRC_LIB
 AM_CPPFLAGS += -I$(top_srcdir) -I$(top_builddir)
+if DARWIN
+	AM_LDFLAGS = -framework foundation
+endif
+
+AM_CXXFLAGS = --stdlib=libc++
 
 noinst_LTLIBRARIES =
 bin_PROGRAMS =
@@ -16,9 +21,10 @@ noinst_LTLIBRARIES += libsimple_delta.la
 libsimple_delta_la_SOURCES = simple_delta.h
 libsimple_delta_la_SOURCES += simple_delta.cc
 libsimple_delta_la_SOURCES += courgette.h
-libsimple_delta_la_LIBADD = $(top_builddir)/base/liblogging.la
-libsimple_delta_la_LIBADD += third_party/libbsdiff.la \
-	$(top_builddir)/base/libprocess_util.la
+libsimple_delta_la_LIBADD = \
+	$(top_builddir)/base/libprocess_util.la \
+	$(top_builddir)/base/liblogging.la \
+	third_party/libbsdiff.la
 
 # bin_PROGRAMS += courgette_tool
 # courgette_tool_SOURCES = courgette_tool.cc
@@ -48,7 +54,8 @@ streams_unittest_LDADD += libstreams.la
 streams_unittest_LDADD += $(top_builddir)/testing/gtest/lib/libgtest.la
 streams_unittest_LDADD += $(top_builddir)/testing/gtest/lib/libgtest_main.la
 streams_unittest_LDADD += $(top_builddir)/base/liblogging.la
-streams_unittest_LDADD += $(top_builddir)/base/threading/libplatform_thread.la
+streams_unittest_LDADD += $(top_builddir)/base/threading/libplatform_thread.la \
+	$(top_builddir)/base/libprocess_util.la
 
 noinst_LTLIBRARIES += third_party/libbsdiff.la
 third_party_libbsdiff_la_SOURCES = third_party/bsdiff.h

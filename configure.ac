@@ -24,10 +24,12 @@ AC_PROG_LIBTOOL
 
 AC_PROG_GREP
 AC_PROG_EGREP
-AC_PROG_CXX
+AC_PROG_CXX([clang++])
 AC_PROG_CC
-AC_PROG_OBJCXX
+AC_PROG_OBJCXX([clang++])
 AX_CXX_COMPILE_STDCXX_11
+
+AC_SUBST([AM_CXXFLAGS], [-fpic -Wall -Wextra -g -O0 --stdlib=libc++ -std=gnu++11])
 
 # Checks for libraries.
 
@@ -159,6 +161,18 @@ case $host_os in
         AC_MSG_ERROR([Your platform is not currently supported])
         ;;
 esac
+
+case $target_os in
+     *linux*)	arch=linux;;
+     *netbsd*)  arch=netbsd;;
+     *bsd*)	arch=bsd;;
+     *darwin*)	arch=darwin;;
+     *)		arch=unknown;;
+esac
+AM_CONDITIONAL(LINUX, test "$arch" = linux)
+AM_CONDITIONAL(NETBSD, test "$arch" = netbsd)
+AM_CONDITIONAL(BSD, test "$arch" = bsd)
+AM_CONDITIONAL(DARWIN, test "$arch" = darwin)
 
 AC_CONFIG_FILES([testing/gtest/Makefile
                  third_party/modp_b64/Makefile

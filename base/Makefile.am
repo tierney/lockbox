@@ -1,9 +1,11 @@
 SUBDIRS =
 DEFAULT_INCLUDES =
-# AM_CPPFLAGS = -I$(builddir) -I$(top_srcdir)
 AM_CPPFLAGS = -I$(top_srcdir) -I$(top_builddir)
 AM_CFLAGS = -I$(top_srcdir)
 AM_CXXFLAGS = -g -O0 -DOS_POSIX
+if DARWIN
+	AM_LDFLAGS = -framework foundation
+endif
 
 EXTRA_DIST =
 EXTRA_DIST += auto_reset.h
@@ -283,11 +285,19 @@ third_party_dynamic_annotations_libdynamic_annotations_la_SOURCES += third_party
 noinst_LTLIBRARIES += libprocess_util.la
 libprocess_util_la_SOURCES = process_util.h
 libprocess_util_la_SOURCES += process_util.cc
+
+if DARWIN
+	libprocess_util_la_SOURCES += process_util_mac.mm
+endif
+
+if LINUX
+	libprocess_util_la_SOURCES += process_util_linux.cc
+endif
+
 libprocess_util_la_SOURCES += files/dir_reader_posix.h
 # libprocess_util_la_SOURCES += files/dir_reader_linux.h
 libprocess_util_la_SOURCES += process_util_posix.cc
 libprocess_util_la_SOURCES += strings/string_tokenizer.h
-libprocess_util_la_SOURCES += process_util_@GENERIC_OS_SUFFIX@.@OS_LANG_EXT@
 libprocess_util_la_LIBADD = libcommand_line.la
 libprocess_util_la_LIBADD += threading/libthread_restrictions.la
 libprocess_util_la_LIBADD += files/libfile_path.la
@@ -419,7 +429,13 @@ noinst_LTLIBRARIES += libfile_util.la
 libfile_util_la_SOURCES = file_util.h
 libfile_util_la_SOURCES += posix/eintr_wrapper.h
 libfile_util_la_SOURCES += file_util.cc
-libfile_util_la_SOURCES += file_util_@GENERIC_OS_SUFFIX@.@OS_LANG_EXT@
+if DARWIN
+	libfile_util_la_SOURCES += file_util_mac.mm
+endif
+
+if LINUX
+	libfile_util_la_SOURCES += file_util_linux.cc
+endif
 libfile_util_la_SOURCES += file_util_posix.cc
 libfile_util_la_CXXFLAGS = $(GLIB_CFLAGS)
 libfile_util_la_LIBADD = libplatform_file.la
@@ -635,7 +651,10 @@ noinst_LTLIBRARIES += threading/libplatform_thread.la
 threading_libplatform_thread_la_SOURCES =
 threading_libplatform_thread_la_SOURCES += threading/platform_thread.h
 threading_libplatform_thread_la_SOURCES += threading/platform_thread_posix.cc
-threading_libplatform_thread_la_SOURCES += threading/platform_thread_mac.mm
+if DARWIN
+	threading_libplatform_thread_la_SOURCES += threading/platform_thread_mac.mm
+endif
+
 threading_libplatform_thread_la_LIBADD =
 threading_libplatform_thread_la_LIBADD += libtracked_objects.la
 threading_libplatform_thread_la_LIBADD += threading/libthread_id_name_manager.la

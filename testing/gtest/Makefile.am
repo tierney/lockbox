@@ -169,12 +169,13 @@ EXTRA_DIST += $(m4data_DATA)
 # directories.
 AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/include
 
+AM_CXXFLAGS = --stdlib=libc++ -std=gnu++11
 # Modifies compiler and linker flags for pthreads compatibility.
 if HAVE_PTHREADS
-  AM_CXXFLAGS = @PTHREAD_CFLAGS@ -DGTEST_HAS_PTHREAD=1
+  AM_CXXFLAGS += @PTHREAD_CFLAGS@ -DGTEST_HAS_PTHREAD=1
   AM_LIBS = @PTHREAD_LIBS@
 else
-  AM_CXXFLAGS = -DGTEST_HAS_PTHREAD=0
+  AM_CXXFLAGS += -DGTEST_HAS_PTHREAD=0
 endif
 
 # Build rules for libraries.
