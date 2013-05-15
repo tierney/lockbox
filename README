@@ -47,8 +47,15 @@ libsnappy-dev
 
 Mac OS X
 
-    PKG_CONFIG_PATH=/opt/X11/lib/pkgconfig
+    brew install glib gtk zlib nss
 
+    ./bootstrap
+
+    PKG_CONFIG_PATH=/opt/X11/lib/pkgconfig \
+    ZLIB_CFLAGS=/usr/local/Cellar/lzlib/1.3/include \
+    ZLIB_LIBS=/usr/local/Cellar/lzlib/1.3/lib \
+    NSS_LIBS=/usr/local/opt/nss/lib NSS_CFLAGS=/usr/local/opt/nss/include \
+    ./configure
 
 Running a Server
 
