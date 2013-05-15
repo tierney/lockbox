@@ -169,6 +169,11 @@ case $host_os in
      *darwin*)	arch=darwin;;
      *)		arch=unknown;;
 esac
+
+echo
+echo $arch
+echo
+
 AM_CONDITIONAL([LINUX], test "$arch" = linux)
 AM_CONDITIONAL([NETBSD], test "$arch" = netbsd)
 AM_CONDITIONAL([BSD], test "$arch" = bsd)

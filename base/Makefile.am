@@ -4,7 +4,7 @@ AM_CPPFLAGS = -I$(top_srcdir) -I$(top_builddir)
 AM_CFLAGS = -I$(top_srcdir)
 AM_CXXFLAGS = -g -O0 -DOS_POSIX
 if DARWIN
-	AM_LDFLAGS = -framework foundation
+AM_LDFLAGS = -framework foundation
 endif
 
 EXTRA_DIST =
@@ -287,11 +287,11 @@ libprocess_util_la_SOURCES = process_util.h
 libprocess_util_la_SOURCES += process_util.cc
 
 if DARWIN
-	libprocess_util_la_SOURCES += process_util_mac.mm
+libprocess_util_la_SOURCES += process_util_mac.mm
 endif
 
 if LINUX
-	libprocess_util_la_SOURCES += process_util_linux.cc
+libprocess_util_la_SOURCES += process_util_linux.cc
 endif
 
 libprocess_util_la_SOURCES += files/dir_reader_posix.h
@@ -430,11 +430,11 @@ libfile_util_la_SOURCES = file_util.h
 libfile_util_la_SOURCES += posix/eintr_wrapper.h
 libfile_util_la_SOURCES += file_util.cc
 if DARWIN
-	libfile_util_la_SOURCES += file_util_mac.mm
+libfile_util_la_SOURCES += file_util_mac.mm
 endif
 
 if LINUX
-	libfile_util_la_SOURCES += file_util_linux.cc
+libfile_util_la_SOURCES += file_util_linux.cc
 endif
 libfile_util_la_SOURCES += file_util_posix.cc
 libfile_util_la_CXXFLAGS = $(GLIB_CFLAGS)
@@ -652,7 +652,7 @@ threading_libplatform_thread_la_SOURCES =
 threading_libplatform_thread_la_SOURCES += threading/platform_thread.h
 threading_libplatform_thread_la_SOURCES += threading/platform_thread_posix.cc
 if DARWIN
-	threading_libplatform_thread_la_SOURCES += threading/platform_thread_mac.mm
+threading_libplatform_thread_la_SOURCES += threading/platform_thread_mac.mm
 endif
 
 threading_libplatform_thread_la_LIBADD =
