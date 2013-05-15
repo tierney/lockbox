@@ -1,10 +1,12 @@
 AM_CPPFLAGS = -I$(top_srcdir)/testing/gtest/include -DCOURGETTE_USE_CRC_LIB
 AM_CPPFLAGS += -I$(top_srcdir) -I$(top_builddir)
+AM_LDFLAGS =
+AM_CXXFLAGS =
 if DARWIN
-	AM_LDFLAGS = -framework foundation
+	AM_LDFLAGS += -framework foundation
+	AM_CXXFLAGS += --stdlib=libc++
 endif
 
-AM_CXXFLAGS = --stdlib=libc++
 
 noinst_LTLIBRARIES =
 bin_PROGRAMS =
