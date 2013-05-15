@@ -14,15 +14,20 @@
 //         auth);
 #pragma once
 
+#include <mutex>
+
 #include "LockboxService.h"
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TBufferTransports.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 
+#include "scoped_mutex.h"
 #include "db_manager_client.h"
 
 using std::string;
 using std::vector;
+using std::mutex;
+using std::unique_lock;
 
 namespace lockbox {
 
@@ -61,7 +66,8 @@ class Client {
   // Driver for the LockboxServiceClient code.
   template <typename R, typename... Args>
   R Exec(R(LockboxServiceClient::*func)(Args...), Args... args) {
-    return execer<R(Args...)>::exec(transport_, service_client_, func,
+    return execer<R(Args...)>::exec(&socket_mutex_, transport_,
+                                    service_client_, func,
                                     std::forward<Args>(args)...);
   }
 
@@ -72,16 +78,22 @@ class Client {
   template <typename F>
   struct execer {};
 
+  // These execer functions use a mutex to enforce only one method per process
+  // is using this client. Thrift is not able to support multi-threaded sockets.
+
   // Executes for non-void return type service calls.
   template<typename R, typename... Args>
   struct execer<R(Args...)> {
     static R exec(
+        mutex* socket_mutex,
         boost::shared_ptr<apache::thrift::transport::TTransport> transport_,
         LockboxServiceClient service_client_,
         R(LockboxServiceClient::*func)(Args...), Args... args) {
+      unique_lock<mutex> lock(*socket_mutex);
       transport_->open();
       R ret = (service_client_.*func)(std::forward<Args>(args)...);
       transport_->close();
+      lock.unlock();
       return ret;
     }
   };
@@ -89,12 +101,15 @@ class Client {
   template<typename... Args>
   struct execer<void(Args...)> {
     static void exec(
+        mutex* socket_mutex,
         boost::shared_ptr<apache::thrift::transport::TTransport> transport_,
         LockboxServiceClient service_client_,
         void(LockboxServiceClient::*func)(Args...), Args... args) {
+      unique_lock<mutex> lock(*socket_mutex);
       transport_->open();
       (service_client_.*func)(std::forward<Args>(args)...);
       transport_->close();
+      lock.unlock();
     }
   };
 
@@ -103,6 +118,7 @@ class Client {
   boost::shared_ptr<apache::thrift::protocol::TProtocol> protocol_;
 
   LockboxServiceClient service_client_;
+  mutex socket_mutex_;
 
   std::string host_;
   int port_;

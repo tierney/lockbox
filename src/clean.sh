@@ -1,6 +1,7 @@
 #!/bin/bash
 
 rm -rf ~/.lockbox
+rm -rf ~/.lockbox2
 rm -rf \
 /tmp/EMAIL_USER \
 /tmp/USER_DEVICE \

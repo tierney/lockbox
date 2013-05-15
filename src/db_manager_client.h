@@ -1,6 +1,8 @@
 #pragma once
 
 #include <string>
+#include <mutex>
+#include <map>
 
 #include "base/basictypes.h"
 #include "base/logging.h"
@@ -8,6 +10,10 @@
 #include "lockbox_types.h"
 #include "counter.h"
 #include "db_manager.h"
+
+using std::string;
+using std::mutex;
+using std::map;
 
 namespace lockbox {
 
@@ -37,7 +43,18 @@ class DBManagerClient : public DBManager {
   // Creates keys of the name THIS_IS_A_TYPE and THIS_IS_A_TYPEOPTIONS_NAME.
   string GenKey(const Options& options);
 
+  void Clean(const Options& options);
+
+  TopDirID TopDirPathToID(const string& path);
+  string RelpathGuidToPath(const string& guid, const string& top_dir);
+  bool AcquireLockPath(const string& guid, const string& top_dir);
+  bool ReleaseLockPath(const string& guid, const string& top_dir);
+  void NewRelPathGUIDLocalPath(const string& top_dir, const string& rel_path_guid,
+                               const string& rel_path);
+
  private:
+  map<string, mutex*> path_locks_;
+
   DISALLOW_COPY_AND_ASSIGN(DBManagerClient);
 };
 

@@ -19,7 +19,7 @@ LockboxServiceHandler::LockboxServiceHandler(DBManagerServer* manager, Sync* syn
   CHECK(manager);
 }
 
-UserID LockboxServiceHandler::RegisterUser(const UserAuth& user) {
+void LockboxServiceHandler::RegisterUser(UserID& _return, const UserAuth& user) {
   // Your implementation goes here
   printf("RegisterUser\n");
 
@@ -29,16 +29,17 @@ UserID LockboxServiceHandler::RegisterUser(const UserAuth& user) {
   manager_->Get(options, user.email, &value);
   if (!value.empty()) {
     LOG(INFO) << "User already registered " << user.email;
-    return -1;
+    _return = "";
+    return;
   }
 
-  UserID uid = manager_->GetNextUserID();
-  string uid_to_persist = base::IntToString(uid);
-  manager_->Put(options, user.email, uid_to_persist);
-  return uid;
+  _return = manager_->GetNextUserID();
+  manager_->Put(options, user.email, _return);
+  return;
 }
 
-DeviceID LockboxServiceHandler::RegisterDevice(const UserAuth& user) {
+void LockboxServiceHandler::RegisterDevice(DeviceID& _return,
+                                           const UserAuth& user) {
   // Your implementation goes here
   printf("RegisterDevice\n");
   DBManagerServer::Options options;
@@ -47,57 +48,60 @@ DeviceID LockboxServiceHandler::RegisterDevice(const UserAuth& user) {
   manager_->Get(options, user.email, &user_id);
   if (user_id.empty()) {
     LOG(WARNING) << "User doesn't exist " << user.email;
-    return -1;
+    _return = "";
+    return;
   }
 
-  DeviceID device_id = manager_->GetNextDeviceID();
-  string device_id_to_persist = base::IntToString(device_id);
+  _return = manager_->GetNextDeviceID();
 
   // TODO(tierney): In the future, we can defensively check against an IP
   // address for an email account to throttle the accounts.
   options.type = ServerDB::USER_DEVICE;
-  manager_->Append(options, user_id, device_id_to_persist);
-
-  // With GUID approach, we don't need this anymore.
-  // options.type = ServerDB::DEVICE_SYNC;
-  // manager_->Put(options, device_id_to_persist, "");
-
-  return device_id;
+  manager_->Append(options, user_id, _return);
 }
 
-TopDirID LockboxServiceHandler::RegisterTopDir(const UserAuth& user) {
+bool LockboxServiceHandler::ShareTopDir(const UserAuth& user,
+                                        const string& email,
+                                        const TopDirID& top_dir_id) {
+  LOG(INFO) << "ShareTopDir";
+  // Authenticate.
+
+
+  // Add the user from |email| (who |user| wants to share |top_dir_id| with) to
+  // the list for |top_dir_id|.
+  return manager_->AddEmailToTopDir(email, top_dir_id);
+}
+
+void LockboxServiceHandler::GetTopDirs(vector<TopDirID>& _return,
+                                       const UserAuth& user) {
+  // Authenticate.
+
+  // Get the shared directories for the user.
+  const UserID user_id(manager_->EmailToUserID(user.email));
+  manager_->GetList(DBManager::Options(ServerDB::USER_TOP_DIR, ""),
+                    user_id, &_return);
+}
+
+void LockboxServiceHandler::RegisterTopDir(TopDirID& top_dir_id,
+                                           const UserAuth& user) {
   // Your implementation goes here
   printf("RegisterTopDir\n");
 
-  const TopDirID top_dir_id = manager_->GetNextTopDirID();
-  const string top_dir_id_to_persist = base::IntToString(top_dir_id);
+  top_dir_id = manager_->GetNextTopDirID();
 
   // Appends the top_dir_id for the user to the end of the list of top dirs
   // owned by that user.
-  DBManagerServer::Options options;
-  options.type = ServerDB::USER_TOP_DIR;
-  CHECK(manager_->Append(options, user.email, top_dir_id_to_persist));
+  UserID user_id(manager_->EmailToUserID(user.email));
+  CHECK(manager_->Append(DBManager::Options(ServerDB::USER_TOP_DIR, ""),
+                         user_id, top_dir_id));
 
   // TODO(tierney): Should create additional top_dir database here.
-  options.type = ServerDB::TOP_DIR_PLACEHOLDER;
-  options.name = top_dir_id_to_persist;
-  CHECK(manager_->NewTopDir(options));
-
-  // Get the EMAIL_USER user.
-  options.type = ServerDB::EMAIL_USER;
-  options.name = "";
-
-  string user_id;
-  CHECK(manager_->Get(options, user.email, &user_id));
+  CHECK(manager_->NewTopDir(
+      DBManager::Options(ServerDB::TOP_DIR_PLACEHOLDER, top_dir_id)));
 
   // Update the editors for the top_dir.
-  options.type = ServerDB::TOP_DIR_META;
-  options.name = top_dir_id_to_persist;
-  string guid;
-  CreateGUIDString(&guid);
-  CHECK(manager_->Put(options, "EDITORS_" + guid, user_id));
-
-  return top_dir_id;
+  CHECK(manager_->Put(DBManager::Options(ServerDB::TOP_DIR_META, top_dir_id),
+                      "EDITORS_" + user_id, user.email));
 }
 
 void LockboxServiceHandler::RegisterRelativePath(
@@ -132,8 +136,23 @@ bool LockboxServiceHandler::AssociateKey(const UserAuth& user,
                                          const PublicKey& pub) {
   LOG(INFO) << "Associating " << user.email << " with "
             << string(pub.key.begin(), pub.key.end());
+  string key;
+  manager_->Get(DBManager::Options(ServerDB::EMAIL_KEY, ""),
+                user.email, &key);
+  if (!key.empty()) {
+    LOG(WARNING) << "Overwriting keys";
+  }
 
+  manager_->Put(DBManager::Options(ServerDB::EMAIL_KEY, ""),
+                user.email, pub.key);
   return true;
+}
+
+void LockboxServiceHandler::GetKeyFromEmail(PublicKey& _return,
+                                            const string& email) {
+  LOG(INFO) << "Looking up key for " << email;
+  manager_->Get(DBManager::Options(ServerDB::EMAIL_KEY, ""), email,
+                &(_return.key));
 }
 
 void LockboxServiceHandler::AcquireLockRelPath(PathLockResponse& _return,
@@ -155,7 +174,8 @@ void LockboxServiceHandler::AcquireLockRelPath(PathLockResponse& _return,
   _return.acquired = true;
 
   // Get the names of the individuals with whom to share the directory.
-  _return.users.push_back("me2@you.com");
+  manager_->GetList(DBManager::Options(ServerDB::TOP_DIR_META, lock.top_dir),
+                    "EDITORS", &(_return.users));
 
   // Send the data back in the response.
   return;
@@ -165,7 +185,8 @@ void LockboxServiceHandler::ReleaseLockRelPath(const PathLockRequest& lock) {
   printf("ReleaseLockRelPath");
 }
 
-int64_t LockboxServiceHandler::UploadPackage(const RemotePackage& pkg) {
+int64_t LockboxServiceHandler::UploadPackage(const UserAuth& user,
+                                             const RemotePackage& pkg) {
   // Your implementation goes here
   printf("UploadPackage\n");
   int64_t ret = pkg.payload.data.size();
@@ -179,8 +200,7 @@ int64_t LockboxServiceHandler::UploadPackage(const RemotePackage& pkg) {
 
   // Hash the input content.
   // TODO(tierney): This should actually be just the encrypted contents.
-  const string sha1 = base::SHA1HashString(pkg.payload.data);
-  const string hash_of_prot = base::HexEncode(sha1.c_str(), sha1.size());
+  const string& hash_of_prot = pkg.payload.data_sha1;
 
   // Associate the rel path GUID with the package. If the rel_path's latest is
   // empty then this is the first.
@@ -218,7 +238,8 @@ int64_t LockboxServiceHandler::UploadPackage(const RemotePackage& pkg) {
   std::unique_lock<std::mutex> lock(sync_->db_mutex);
   manager_->Put(options,
                 to_string(time(NULL)) + "_" + pkg.top_dir + "_" +
-                pkg.rel_path_id + "_" + hash_of_prot,
+                pkg.rel_path_id + "_" + user.device + "_" +
+                hash_of_prot,
                 "");
   lock.unlock();
   LOG(INFO) << "Notifying the CV to wake someone up";
@@ -227,34 +248,60 @@ int64_t LockboxServiceHandler::UploadPackage(const RemotePackage& pkg) {
   return mem.size();
 }
 
-void LockboxServiceHandler::DownloadPackage(LocalPackage& _return,
+void LockboxServiceHandler::DownloadPackage(RemotePackage& _return,
                                             const DownloadRequest& req) {
   // Your implementation goes here
   printf("DownloadPackage\n");
+
+  // Authenticate.
+
+  // Get the package.
+  string package_str;
+  manager_->Get(DBManager::Options(ServerDB::TOP_DIR_DATA, req.top_dir),
+            req.pkg_name, &package_str);
+
+  RemotePackage package;
+  ThriftFromString(package_str, &package);
+  _return = package;
 }
 
-void LockboxServiceHandler::PollForUpdates(UpdateList& _return,
+void LockboxServiceHandler::PollForUpdates(UpdateMap& _return,
                                            const UserAuth& auth,
-                                           const DeviceID device) {
+                                           const DeviceID& device) {
   // TODO: authenticate.
 
   // Get the updates for the device and send back to the user. DEVICE_SYNC.
   DBManagerServer::Options options;
   options.type = ServerDB::DEVICE_SYNC;
-  manager_->Get(options, std::to_string(device), &(_return.updates));
+
+  // TODO(tierney): This should be first or a list...
+  LOG(INFO) << "Requesting updates for " << device;
+  manager_->GetMap(options, device, &(_return.updates));
+}
+
+void LockboxServiceHandler::GetFptrs(vector<string>& _return,
+                                     const UserAuth& auth,
+                                     const string& top_dir,
+                                     const string& hash) {
+  // Authenticate.
+
+  string prev;
+  manager_->Get(DBManager::Options(ServerDB::TOP_DIR_FPTRS, top_dir),
+                hash, &prev);
+  _return.push_back(prev);
 }
 
 void LockboxServiceHandler::PersistedUpdates(const UserAuth& auth,
-                                             const DeviceID device,
+                                             const DeviceID& device,
                                              const UpdateList& updates) {
   LOG(INFO) << "Persisted updates.";
   // TODO: Need to grab lock on this database row.
   DBManagerServer::Options options;
   options.type = ServerDB::DEVICE_SYNC;
-  string db_updates;
-  manager_->Get(options, std::to_string(device), &db_updates);
-  db_updates.erase(0, updates.updates.size());
-  manager_->Put(options, std::to_string(device), db_updates);
+  for (const string& update : updates.updates) {
+    LOG(INFO) << "  Deleting Update: " << update;
+    manager_->Delete(options, update);
+  }
 }
 
 void LockboxServiceHandler::Send(const UserAuth& sender,

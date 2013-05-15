@@ -36,6 +36,27 @@ namespace lockbox {
 //   }
 // }
 
+// #include <iostream>
+// #include <fstream>
+// #include <boost/iostreams/filtering_stream.hpp>
+// #include <boost/iostreams/filter/gzip.hpp>
+// int main()
+// {
+//     std::ifstream file("file.gz", std::ios_base::in | std::ios_base::binary);
+//     try {
+//         boost::iostreams::filtering_istream in;
+//         in.push(boost::iostreams::gzip_decompressor());
+//         in.push(file);
+//         for(std::string str; std::getline(in, str); )
+//         {
+//             std::cout << "Processed line " << str << '\n';
+//         }
+//     }
+//     catch(const boost::iostreams::gzip_error& e) {
+//          std::cout << e.what() << '\n';
+//     }
+// }
+
 // static
 // This implementation is based on the Firefox MetricsService implementation.
 bool Compressor::Bzip2Compress(const std::string& input,

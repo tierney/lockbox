@@ -12,8 +12,8 @@ namespace lockbox {
 class UpdateFromServer {
  public:
   // Does not take ownership of |client|.
-  explicit UpdateFromServer(DeviceID device_id, UserAuth* user_auth,
-                            Client* client, DBManagerClient* dbm);
+  explicit UpdateFromServer(UserAuth* user_auth, Client* client,
+                            DBManagerClient* dbm);
 
   virtual ~UpdateFromServer();
 

@@ -1,14 +1,8 @@
 namespace cpp lockbox
 
-# Basic authentication.
-struct UserAuth {
-  1: required string email,
-  2: required string password,
-}
-
-typedef i64 DeviceID
-typedef i64 UserID
-typedef i64 TopDirID
+typedef string DeviceID
+typedef string UserID
+typedef string TopDirID
 
 # Packages uploaded for storage and sharing on Lockbox.
 enum PackageType {
@@ -16,16 +10,17 @@ enum PackageType {
   DELTA,
 }
 
-struct LocalPackage {
-  1: required string base_abs_path,
-  2: required string base_rel_path,
-  3: PackageType type,
-  4: string contents,
+# Basic authentication.
+struct UserAuth {
+  1: required string email,
+  2: required string password,
+  3: DeviceID device,
 }
 
 struct HybridCrypto {
   1: required string data,
   2: map<string, string> user_enc_session,
+  3: string data_sha1,
 }
 
 struct RemotePackage {
@@ -34,6 +29,10 @@ struct RemotePackage {
   3: required PackageType type,
   4: required HybridCrypto path,
   5: required HybridCrypto payload,
+
+  # Contains the SHA1 hash of the delta's previous whole file hash; i.e., the
+  # hash of the file that this delta should be applied to.
+  6: required HybridCrypto delta_prev_hash,
 }
 
 struct DownloadRequest {
@@ -69,8 +68,12 @@ struct Update {
 }
 
 # TODO: Possible switch to using the struct Update.
+struct UpdateMap {
+  1: map<string, string> updates,
+}
+
 struct UpdateList {
-  1: string updates,
+  1: list<string> updates,
 }
 
 # This should best match the C++ openssl expectation that we export to a
@@ -103,20 +106,22 @@ enum ServerDB {
   UNKNOWN = 0
 
   EMAIL_USER,
+
   USER_DEVICE, # Email to device id
   DEVICE_SYNC,
   EMAIL_KEY,
-  USER_TOP_DIR, # Maps user to directories owned.
+  USER_TOP_DIR, # Maps user to directories managed.
   UPDATE_ACTION_QUEUE, # Holds (TS, TDN, RPI, hash) value for updates.
   UPDATE_ACTION_LOG, # Holds (TS, TDN, RPI, hash) for creation -> completion.
 
   TOP_DIR_PLACEHOLDER,
 
-  TOP_DIR_META, # Who's sharing the data "EDITORS"
+  TOP_DIR_META, # Who's sharing the data "EDITORS" (emails)
   TOP_DIR_RELPATH, # RELPATH_ID -> latest hash for the relpath.
   TOP_DIR_RELPATH_LOCK, # RELPATH_ID -> lock
   TOP_DIR_SNAPSHOTS, # RELPATH_ID -> list of all snapshots, in order.
   TOP_DIR_DATA, # HASH -> bytes...
+  TOP_DIR_DATA_TYPE, # snapshot or delta?
   TOP_DIR_FPTRS, # HASH_i -> HASH_(i-1)
 }
 
@@ -124,14 +129,17 @@ enum ClientDB {
   UNKNOWN = 0,
 
   TOP_DIR_LOCATION,
+  LOCATION_TOP_DIR,
   EMAIL_KEY,
   CLIENT_DATA, #
   UNFILTERED_QUEUE,
 
-  TOP_DIR_PLACEHOLDER,
+  TOP_DIR_PLACEHOLDER, # All TOP_DIR-specific DBs follow.
 
   RELPATH_ID_LOCATION, # path to file system path
   LOCATION_RELPATH_ID, # path to file system path
+
+  RELPATH_LOCK,
 
   # Points to the hash in data containing the latest entry. May contain delta or
   # snapshot.
@@ -164,10 +172,14 @@ service LockboxService {
   TopDirID RegisterTopDir(1:UserAuth user),
 
   # Share directory.
-  # bool ShareTopDir(1:UserAuth user, 2:string email),
+  bool ShareTopDir(1:UserAuth user, 2:string email, 3:TopDirID top_dir_id),
+
+  list<TopDirID> GetTopDirs(1:UserAuth user);
 
   # Attach a public key to a user.
   bool AssociateKey(1:UserAuth user, 2:PublicKey pub),
+
+  PublicKey GetKeyFromEmail(1:string email),
 
   # Get relative path ID for the TDN.
   string RegisterRelativePath(1:RegisterRelativePathRequest req),
@@ -177,11 +189,13 @@ service LockboxService {
 
   void ReleaseLockRelPath(1:PathLockRequest lock),
 
-  i64 UploadPackage(1:RemotePackage pkg),
+  i64 UploadPackage(1:UserAuth user, 2:RemotePackage pkg),
 
-  LocalPackage DownloadPackage(1:DownloadRequest req),
+  RemotePackage DownloadPackage(1:DownloadRequest req),
 
-  UpdateList PollForUpdates(1:UserAuth auth, 2:DeviceID device),
+  UpdateMap PollForUpdates(1:UserAuth auth, 2:DeviceID device),
+
+  list<string> GetFptrs(1:UserAuth auth, 2:string top_dir, 3:string hash);
 
   # Update the UPDATE_ACTION_LOG and then set delete the values from the
   # DEVICE_SYNC.

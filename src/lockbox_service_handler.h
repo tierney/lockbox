@@ -16,32 +16,41 @@ class LockboxServiceHandler : virtual public LockboxServiceIf {
   // Does not take ownershi of |manager|.
   LockboxServiceHandler(DBManagerServer* manager, Sync* sync);
 
-  UserID RegisterUser(const UserAuth& user);
+  void RegisterUser(UserID& _return, const UserAuth& user);
 
-  DeviceID RegisterDevice(const UserAuth& user);
+  void RegisterDevice(DeviceID& _return, const UserAuth& user);
 
-  TopDirID RegisterTopDir(const UserAuth& user);
+  void RegisterTopDir(TopDirID& _return, const UserAuth& user);
+
+  bool ShareTopDir(const UserAuth& user, const string& email,
+                   const TopDirID& top_dir_id);
+
+  void GetTopDirs(vector<TopDirID>& _return, const UserAuth& user);
 
   void RegisterRelativePath(string& _return,
                             const RegisterRelativePathRequest& req);
 
   bool AssociateKey(const UserAuth& user, const PublicKey& pub);
 
+  void GetKeyFromEmail(PublicKey& _return, const string& email);
 
   void AcquireLockRelPath(PathLockResponse& _return,
                           const PathLockRequest& lock);
 
   void ReleaseLockRelPath(const PathLockRequest& lock);
 
-  int64_t UploadPackage(const RemotePackage& pkg);
+  int64_t UploadPackage(const UserAuth& user, const RemotePackage& pkg);
 
-  void DownloadPackage(LocalPackage& _return, const DownloadRequest& req);
+  void DownloadPackage(RemotePackage& _return, const DownloadRequest& req);
 
-  void PollForUpdates(UpdateList& _return,
+  void PollForUpdates(UpdateMap& _return,
                       const UserAuth& auth,
-                      const DeviceID device);
+                      const DeviceID& device);
 
-  void PersistedUpdates(const UserAuth& auth, const DeviceID device,
+  void GetFptrs(vector<string>& _return, const UserAuth& auth,
+                const string& top_dir, const string& hash);
+
+  void PersistedUpdates(const UserAuth& auth, const DeviceID& device,
                         const UpdateList& updates);
 
   void Send(const UserAuth& sender,

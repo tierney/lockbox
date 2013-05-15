@@ -5,8 +5,10 @@
 #include <vector>
 
 #include "base/logging.h"
+#include "client.h"
 #include "gflags/gflags.h"
 #include "db_manager_client.h"
+#include "lockbox_types.h"
 
 using std::map;
 using std::string;
@@ -17,7 +19,8 @@ namespace lockbox {
 class Encryptor {
  public:
 
-  explicit Encryptor(DBManagerClient* dbm);
+  // Does not take ownership of |client|, |dbm|, or |user_auth|.
+  Encryptor(Client* client, DBManagerClient* dbm, UserAuth* user_auth);
 
   virtual ~Encryptor();
 
@@ -35,11 +38,17 @@ class Encryptor {
                const map<string, string>& user_enc_session,
                string* output);
 
- private:
+  bool HybridDecrypt(const HybridCrypto& hybrid,
+                     string* output);
+
   bool EncryptInternal(const string& input, const vector<string>& users,
                        string* payload, map<string, string>* enc_session);
 
+
+ private:
+  Client* client_;
   DBManagerClient* dbm_;
+  UserAuth* user_auth_;
 
   DISALLOW_COPY_AND_ASSIGN(Encryptor);
 };

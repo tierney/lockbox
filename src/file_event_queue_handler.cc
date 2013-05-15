@@ -14,8 +14,11 @@
 #include "encryptor.h"
 #include "thrift_util.h"
 #include "simple_delta.h"
+#include "hash_util.h"
+#include "scoped_mutex.h"
 
 using std::vector;
+using std::to_string;
 
 namespace lockbox {
 
@@ -117,12 +120,26 @@ void FileEventQueueHandler::Run() {
   while (true) {
     // Should grab entries from both the server and the local client changes. If
     // there are changes from the cloud, we should prioritize those.
+
     string key, value;
+    // Prioritize the remote actions first.
+    if (dbm_->First(
+            DBManager::Options(ClientDB::UPDATE_QUEUE_SERVER, top_dir_id_),
+            &key, &value)) {
+      HandleRemoteAction(key, value);
+      LOG(INFO) << "Done with remote update.";
+      dbm_->Delete(
+          DBManager::Options(ClientDB::UPDATE_QUEUE_SERVER, top_dir_id_),
+          key);
+      LOG(INFO) << "Deleted entry on cloud after update";
+      continue;
+    }
+
     if (dbm_->First(
             DBManager::Options(ClientDB::UPDATE_QUEUE_CLIENT, top_dir_id_),
             &key, &value)) {
       HandleLocalAction(key, value);
-      LOG(INFO) << "Done.";
+      LOG(INFO) << "Done with local update";
       dbm_->Delete(
           DBManager::Options(ClientDB::UPDATE_QUEUE_CLIENT, top_dir_id_),
           key);
@@ -130,11 +147,268 @@ void FileEventQueueHandler::Run() {
   }
 }
 
+namespace {
+
+void SplitKey(const string& key, string* timestamp, string* top_dir,
+              string* rel_path_guid, string* device, string* hash) {
+  CHECK(timestamp);
+  CHECK(top_dir);
+  CHECK(rel_path_guid);
+  CHECK(device);
+  CHECK(hash);
+
+  timestamp->clear();
+  top_dir->clear();
+  rel_path_guid->clear();
+  device->clear();
+  hash->clear();
+
+  vector<string> key_entries;
+  base::SplitString(key, '_', &key_entries);
+  CHECK(key_entries.size() == 6);
+
+  timestamp->assign(key_entries[0]);
+  top_dir->assign(key_entries[1]);
+  rel_path_guid->assign(key_entries[2]);
+  device->assign(key_entries[3]);
+  hash->assign(key_entries[4]);
+  // the entry guid is key_entries[5]
+}
+
+} // namespace
+
+void FileEventQueueHandler::HandleRemoteAction(const string& key,
+                                               const string& value) {
+  (void)value;
+  LOG(INFO) << "HandleRemoteAction() called.";
+  // Value stored in the |key|.
+  // 1367949789_1_25baec40-5a1f-108b-4ca31a19-3ab710a6_yUCJ/6CWfX2Uin3kzy6cZC7L9Wc=,
+  // ts        tdn   guid                                  hash
+  string timestamp, top_dir, rel_path_guid, device, hash;
+  SplitKey(key, &timestamp, &top_dir, &rel_path_guid, &device, &hash);
+
+  string top_dir_path;
+  dbm_->Get(DBManager::Options(ClientDB::TOP_DIR_LOCATION, ""),
+            top_dir, &top_dir_path);
+
+  const string rel_path(dbm_->RelpathGuidToPath(rel_path_guid, top_dir));
+  if (!rel_path.empty()) {
+    HandleRemoteModAction(timestamp, top_dir, top_dir_path,
+                          rel_path_guid, rel_path, device, hash);
+  } else {
+    // TODO(tierney): Haven't seen this file before.
+    LOG(WARNING) << "Haven't seen this file before.";
+
+    HandleRemoteAddAction(timestamp, top_dir, top_dir_path,
+                          rel_path_guid, device, hash);
+  }
+}
+
+void FileEventQueueHandler::HandleRemoteAddAction(const string& timestamp,
+                                                  const string& top_dir,
+                                                  const string& top_dir_path,
+                                                  const string& rel_path_guid,
+                                                  const string& device,
+                                                  const string& hash) {
+  (void)timestamp;
+  (void)top_dir_path;
+  (void)device;
+
+  // Download the file.
+  LOG(INFO) << "Downloading the package.";
+  DownloadRequest request;
+  request.auth.email = user_auth_->email;
+  request.auth.password = user_auth_->password;
+  request.top_dir = top_dir;
+  request.pkg_name = hash;
+
+  RemotePackage package;
+  client_->Exec<void, RemotePackage&, const DownloadRequest&>(
+      &LockboxServiceClient::DownloadPackage, package, request);
+  CHECK(package.type == PackageType::SNAPSHOT) << "New path not a snapshot";
+
+  // Decrypt the path.
+  string rel_path;
+  CHECK(encryptor_->HybridDecrypt(package.path, &rel_path));
+  CHECK(!rel_path.empty());
+
+  // Map the RelPath GUID to the local path.
+  dbm_->NewRelPathGUIDLocalPath(top_dir, rel_path_guid, rel_path);
+
+  // Lock the path locally.
+  dbm_->AcquireLockPath(rel_path_guid, top_dir);
+
+  // Unpack the file to the location.
+  string full_path;
+  dbm_->Get(DBManager::Options(ClientDB::TOP_DIR_LOCATION, ""),
+            top_dir, &full_path);
+  full_path.append(rel_path);
+
+  string file_contents;
+  encryptor_->HybridDecrypt(package.payload, &file_contents);
+
+  LOG(INFO) << "Writing new file to " << full_path;
+  SetIgnorableAction(full_path, to_string(FW::Actions::Add));
+
+  const unsigned bytes_written = file_util::WriteFile(base::FilePath(full_path),
+                                                      file_contents.c_str(),
+                                                      file_contents.size());
+  CHECK(bytes_written == file_contents.size());
+
+  // Unlock the path.
+  dbm_->ReleaseLockPath(rel_path_guid, top_dir);
+}
+
+void FileEventQueueHandler::HandleRemoteModAction(const string& timestamp,
+                                                  const string& top_dir,
+                                                  const string& top_dir_path,
+                                                  const string& rel_path_guid,
+                                                  const string& rel_path,
+                                                  const string& device,
+                                                  const string& hash) {
+  (void)timestamp;
+  (void)device;
+
+  LOG(INFO) << "HandleRemoteModAction() called.";
+
+  // Local lock.
+  while (!dbm_->AcquireLockPath(rel_path_guid, top_dir)) {
+    LOG(WARNING) << "Waiting to get local lock.";
+    sleep(1);
+  }
+
+  // Determine what the deltas previous is supposed to be and if we have that
+  // previous file on disk.
+  // if (hash == ) {
+  // }
+
+  // Get downloaded packages hash.
+
+
+  DownloadRequest request;
+  request.auth.email = user_auth_->email;
+  request.auth.password = user_auth_->password;
+  request.top_dir = top_dir;
+  request.pkg_name = hash;
+
+  // Grab the package from the cloud.
+  LOG(INFO) << "Getting remote package";
+  RemotePackage package;
+  client_->Exec<void, RemotePackage&, const DownloadRequest&>(
+      &LockboxServiceClient::DownloadPackage, package, request);
+
+  // Learn the action type from the type of the package (DELTA | SNAPSHOT).
+  LOG(INFO) << "Package type " << _PackageType_VALUES_TO_NAMES.at(package.type);
+
+  // Case: Delta.
+  if (package.type == PackageType::DELTA) {
+    // Check that the prev is what we have. If we have the latest, then quit.
+
+    // Read the current file.
+    string current_file;
+    const string full_path = top_dir_path + rel_path;
+    LOG(INFO) << "Full_Path " << full_path;
+    file_util::ReadFileToString(base::FilePath(full_path), &current_file);
+
+    // Determine what the deltas previous is supposed to be and if we have that
+    // previous file on disk.
+    const string current_file_hash = SHA1Hex(current_file);
+    LOG(INFO) << "Current file hash " << current_file_hash;
+
+    // Get downloaded packages hash.
+
+    // Get hash fptr.
+    // client_->Exec();
+
+    // if hash fptr is our current versions fptr, then apply delta.
+
+    // Decrypt the delta.
+    string payload;
+    encryptor_->Decrypt(package.payload.data,
+                        package.payload.user_enc_session,
+                        &payload);
+
+    // Apply the delta.
+    string reconstructed = Delta::Apply(current_file, payload);
+
+    LOG(INFO) << "Writing reconstructed " << reconstructed;
+    SetIgnorableAction(full_path, to_string(FW::Actions::Modified));
+    const unsigned bytes_written = file_util::WriteFile(base::FilePath(full_path),
+                                                        reconstructed.c_str(),
+                                                        reconstructed.size());
+    CHECK(bytes_written == reconstructed.size());
+
+    // Store the reconstructed hash and keep the pointers.
+    dbm_->Put(DBManager::Options(ClientDB::RELPATHS_HEAD_FILE, top_dir),
+              rel_path, reconstructed);
+    const string reconstructed_hash = SHA1Hex(reconstructed);
+    dbm_->Put(DBManager::Options(ClientDB::RELPATHS_HEAD_FILE_HASH, top_dir),
+              rel_path, reconstructed_hash);
+  }
+
+  // Case: Snapshot.
+  if (package.type == PackageType::SNAPSHOT) {
+    string current_file;
+    string abs_path = top_dir_path + rel_path;
+    LOG(INFO) << "Path " << abs_path;
+    file_util::ReadFileToString(base::FilePath(abs_path), &current_file);
+
+    // See if the current file and the decrypted file are the same.
+    string payload;
+    encryptor_->Decrypt(package.payload.data,
+                        package.payload.user_enc_session,
+                        &payload);
+    LOG(INFO) << "Downloaded " << payload;
+    LOG(INFO) << "Current Fh " << current_file;
+
+    LOG(INFO) << "Writing downloaded " << payload;
+    SetIgnorableAction(abs_path, to_string(FW::Actions::Modified));
+    const unsigned bytes_written = file_util::WriteFile(base::FilePath(abs_path),
+                                                        payload.c_str(),
+                                                        payload.size());
+    CHECK(bytes_written == payload.size());
+
+    // Store the payload hash and keep the pointers.
+    dbm_->Put(DBManager::Options(ClientDB::RELPATHS_HEAD_FILE, top_dir),
+              rel_path, payload);
+    const string payload_hash = SHA1Hex(payload);
+    dbm_->Put(DBManager::Options(ClientDB::RELPATHS_HEAD_FILE_HASH, top_dir),
+              rel_path, payload_hash);
+
+  }
+
+  // Release local lock.
+  dbm_->ReleaseLockPath(rel_path_guid, top_dir);
+}
+
+bool FileEventQueueHandler::IgnorableAction(const string& abs_path,
+                                            const string& event_type) {
+  ScopedMutexLock lock(&ignorables_mutex_);
+  const string key = abs_path + event_type;
+  return (ignorable_actions_.erase(key) > 0);
+}
+
+void FileEventQueueHandler::SetIgnorableAction(const string& abs_path,
+                                               const string& event_type) {
+  ScopedMutexLock lock(&ignorables_mutex_);
+  const string key = abs_path + event_type;
+
+  CHECK(ignorable_actions_.end() == ignorable_actions_.find(key));
+
+  ignorable_actions_.insert(key);
+}
+
 void FileEventQueueHandler::HandleLocalAction(const string& ts_path,
                                               const string& event_type) {
   // For a local action.
   string ts, path;
   ParseTimestampPath(ts_path, &ts, &path);
+
+  // Check if cancelled.
+  if (IgnorableAction(path, event_type)) {
+    LOG(INFO) << "Ignoring " << path << " : " << event_type;
+    return;
+  }
 
   // What to do in each of the |event_types| (added, deleted, modified)?
   // We'll start by handling the added case.
@@ -175,6 +449,7 @@ bool FileEventQueueHandler::HandleModAction(const string& path) {
   options.name = top_dir_id_;
   string path_guid;
   dbm_->Get(options, RemoveBaseFromInput(top_dir_path_, path), &path_guid);
+  CHECK(!path_guid.empty());
 
   // Lock the file in the cloud.
   PathLockRequest path_lock;
@@ -236,9 +511,7 @@ bool FileEventQueueHandler::HandleModAction(const string& path) {
   string current;
   file_util::ReadFileToString(base::FilePath(path), &current);
 
-  string current_sha1(base::SHA1HashString(current));
-  string current_sha1_hex(base::HexEncode(current_sha1.c_str(),
-                                          current_sha1.length()));
+  const string current_sha1_hex(SHA1Hex(current));
   LOG(INFO) << "Curr Hash " << current_sha1_hex;
   if (current_sha1_hex == prev_hash) {
     LOG(INFO) << "File actually unchanged according to SHA1";
@@ -253,32 +526,46 @@ bool FileEventQueueHandler::HandleModAction(const string& path) {
   }
 
   // Compute the difference.
-  string delta(Delta::Generate(output, current));
+  const string delta = Delta::Generate(output, current);
+  LOG(INFO) << "Delta size produced " << delta.size();
+
+  // Model for changing between the delta and the snapshot.
+  bool use_delta = true;
+  if (delta.size() >= current.size()) {
+    LOG(INFO) << "But creating a new SNAPSHOT.";
+    use_delta = false;
+  }
+  const string& to_encrypt = use_delta ? delta : current;
 
   // encrypt, bundle the package, upload as a DELTA
   LOG(INFO) << "Encrypting.";
   RemotePackage package;
   package.top_dir = top_dir_id_;
   package.rel_path_id = path_guid;
-  package.type = PackageType::DELTA;
+  package.type = use_delta ? PackageType::DELTA : PackageType::SNAPSHOT;
   encryptor_->EncryptString(
-      top_dir_path_, path, delta, response.users, &package);
+      top_dir_path_, path, to_encrypt, response.users, &package);
 
-
+  // Encrypt the previous hash that corresponds to this update.
+  if (use_delta) {
+    encryptor_->EncryptInternal(
+        prev_hash, response.users, &(package.delta_prev_hash.data),
+        &(package.delta_prev_hash.user_enc_session));
+    package.delta_prev_hash.data_sha1 = SHA1Hex(package.delta_prev_hash.data);
+  }
 
   // Upload the package. Cloud needs to update the appropriate user's
   // update queues.
   LOG(INFO) << "Uploading.";
-  int64 ret = client_->Exec<int64, const RemotePackage&>(
-      &LockboxServiceClient::UploadPackage, package);
+  int64 ret = client_->Exec<int64, const UserAuth&, const RemotePackage&>(
+      &LockboxServiceClient::UploadPackage, *user_auth_, package);
   LOG(INFO) << "  Uploaded " << ret;
 
   // Store the data in the local client db. SHOULD ACTUALLY STORE THE WHOLE
   // VERSION. THIS WAY WE CAN AVOID RECONSTRUCTION COSTS.
   options.type = ClientDB::DATA;
   options.name = top_dir_id_;
-  const string sha1(base::SHA1HashString(package.payload.data));
-  const string hash(base::HexEncode(sha1.c_str(), sha1.size()));
+  const string hash(SHA1Hex(package.payload.data));
 
   serial_pkg.clear();
   ThriftToString(package, &serial_pkg);
@@ -287,10 +574,13 @@ bool FileEventQueueHandler::HandleModAction(const string& path) {
   // Put into relpath the latest hash.
   dbm_->Put(DBManager::Options(ClientDB::RELPATHS_HEAD_HASH, top_dir_id_),
             relative_path, hash);
+  dbm_->Put(DBManager::Options(ClientDB::RELPATHS_HEAD_FILE, top_dir_id_),
+            relative_path, current);
+  dbm_->Put(DBManager::Options(ClientDB::RELPATHS_HEAD_FILE_HASH, top_dir_id_),
+            relative_path, current_sha1_hex);
 
   // Then set the fptr.
   dbm_->Put(DBManager::Options(ClientDB::FPTRS, top_dir_id_), hash, prev_hash);
-
 
   // Release the lock.
   LOG(INFO) << "Releasing lock";
@@ -316,18 +606,23 @@ bool FileEventQueueHandler::HandleAddAction(const string& path) {
       &LockboxServiceClient::RegisterRelativePath,
       path_guid,
       rel_path_req);
+  CHECK(!path_guid.empty());
 
   LOG(INFO) << "ADDed file GUID from server " << path_guid;
-
   const string relative_path(RemoveBaseFromInput(top_dir_path_, path));
+
 
   // Store the association between the GUID and the location.
   DBManagerClient::Options options;
   options.type = ClientDB::RELPATH_ID_LOCATION;
   options.name = top_dir_id_;
   dbm_->Put(options, path_guid, relative_path);
+  LOG(INFO) << "Mapped " << path_guid << " to " << relative_path;
   options.type = ClientDB::LOCATION_RELPATH_ID;
   dbm_->Put(options, relative_path, path_guid);
+
+  // Lock the file locally.
+  CHECK(dbm_->AcquireLockPath(path_guid, top_dir_id_));
 
   // Lock the file in the cloud.
   PathLockRequest path_lock;
@@ -373,21 +668,17 @@ bool FileEventQueueHandler::HandleAddAction(const string& path) {
   // Upload the package. Cloud needs to update the appropriate user's
   // update queues.
   LOG(INFO) << "Uploading.";
-  int64 ret = client_->Exec<int64, const RemotePackage&>(
-      &LockboxServiceClient::UploadPackage,
-      package);
+  int64 ret = client_->Exec<int64, const UserAuth&, const RemotePackage&>(
+      &LockboxServiceClient::UploadPackage, *user_auth_, package);
   LOG(INFO) << "  Uploaded " << ret;
 
   // Store the data in the local client db.
   options.type = ClientDB::DATA;
   options.name = top_dir_id_;
-  const string sha1(base::SHA1HashString(package.payload.data));
-  const string hash(base::HexEncode(sha1.c_str(), sha1.size()));
+  const string hash(SHA1Hex(package.payload.data));
 
   // Place the contents of the previous file.
-  const string current_file_sha1(base::SHA1HashString(current));
-  const string current_file_sha1_hex(base::HexEncode(current_file_sha1.c_str(),
-                                                     current_file_sha1.size()));
+  const string current_file_sha1_hex(SHA1Hex(current));
   dbm_->Put(DBManager::Options(ClientDB::RELPATHS_HEAD_FILE, top_dir_id_),
             relative_path, current);
   dbm_->Put(DBManager::Options(ClientDB::RELPATHS_HEAD_FILE_HASH, top_dir_id_),
@@ -410,6 +701,7 @@ bool FileEventQueueHandler::HandleAddAction(const string& path) {
       &LockboxServiceClient::ReleaseLockRelPath,
       path_lock);
 
+  dbm_->ReleaseLockPath(path_guid, top_dir_id_);
 
   return true;
 }

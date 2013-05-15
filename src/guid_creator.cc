@@ -112,3 +112,9 @@ void CreateGUIDString(string* sguid) {
                       WriteInto(sguid, kGUIDStringLength + 1),
                       kGUIDStringLength + 1));
 }
+
+string CreateGUIDString() {
+  string sguid;
+  CreateGUIDString(&sguid);
+  return sguid;
+}

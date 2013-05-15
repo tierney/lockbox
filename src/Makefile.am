@@ -103,6 +103,14 @@ liblockbox_service_handler_la_LIBADD += libdb_manager_server.la
 liblockbox_service_handler_la_LIBADD += $(top_builddir)/base/libsha1.la
 liblockbox_service_handler_la_LIBADD += $(top_builddir)/base/libbase64.la
 
+noinst_LTLIBRARIES += libhash_util.la
+libhash_util_la_SOURCES = \
+	hash_util.h \
+	hash_util.cc
+libhash_util_la_LIBADD = \
+	$(top_builddir)/base/strings/libstring_number_conversions.la \
+	$(top_builddir)/base/libsha1.la
+
 bin_PROGRAMS += server
 server_SOURCES = server.cc
 server_CXXFLAGS = $(LEVELDB_CFLAGS)
@@ -201,6 +209,7 @@ libencryptor_la_SOURCES = encryptor.h
 libencryptor_la_SOURCES += encryptor.cc
 libencryptor_la_LIBADD =
 libencryptor_la_LIBADD += librsa.la
+libencryptor_la_LIBADD += libhash_util.la
 libencryptor_la_LIBADD += librsa_public_key_openssl.la
 libencryptor_la_LIBADD += libblock_cipher.la
 libencryptor_la_LIBADD += $(top_builddir)/crypto/libsymmetric_key.la
@@ -235,7 +244,8 @@ libfile_event_queue_handler_la_SOURCES += file_event_queue_handler.h
 libfile_event_queue_handler_la_SOURCES += file_event_queue_handler.cc
 libfile_event_queue_handler_la_LIBADD = $(top_builddir)/base/libmd5.la \
 	$(top_builddir)/base/libsha1.la \
-	libsimple_delta.la
+	libsimple_delta.la \
+	libhash_util.la
 
 # Database pieces.
 noinst_LTLIBRARIES += libdb_manager.la

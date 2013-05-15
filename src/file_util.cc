@@ -4,7 +4,7 @@
 
 namespace lockbox {
 
-bool IsDirectory(const base::FilePath& fpath) {
+bool IsDirectory(const base::FilePath& fpath, bool* is_directory) {
   CHECK(fpath.IsAbsolute());
   bool created = false;
   base::PlatformFileError error = base::PLATFORM_FILE_ERROR_FAILED;
@@ -13,10 +13,18 @@ bool IsDirectory(const base::FilePath& fpath) {
                          base::PLATFORM_FILE_OPEN | base::PLATFORM_FILE_READ,
                          &created,
                          &error));
-  CHECK(base::PLATFORM_FILE_OK == error) << "PlatformFile error " << error;
+  if (base::PLATFORM_FILE_OK != error) {
+    LOG(ERROR) << "PlatformFile error " << error;
+    return false;
+  }
+
   base::PlatformFileInfo info;
-  CHECK(base::GetPlatformFileInfo(pf, &info)) << " info problem";
-  return info.is_directory;
+  if (!base::GetPlatformFileInfo(pf, &info)) {
+    LOG(ERROR) << " info problem";
+    return false;
+  }
+  *is_directory = info.is_directory;
+  return true;
 }
 
 string GetHomeDirectory() {

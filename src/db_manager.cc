@@ -3,6 +3,7 @@
 #include "leveldb_util.h"
 
 #include "base/files/file_path.h"
+#include "base/memory/scoped_ptr.h"
 #include "base/strings/string_number_conversions.h"
 #include "base/strings/string_split.h"
 #include "base/string_util.h"
@@ -56,6 +57,26 @@ bool DBManager::GetList(const Options& options,
   return (!values->empty());
 }
 
+bool DBManager::GetMap(const Options& options,
+                       const string& key_prefix,
+                       map<string, string>* kvs) {
+  CHECK(kvs);
+  kvs->clear();
+
+  auto iter = db_map_.find(GenKey(options));
+  CHECK(iter != db_map_.end());
+  leveldb::DB* db = iter->second;
+  leveldb::Iterator* it = db->NewIterator(leveldb::ReadOptions());
+  for (it->Seek(key_prefix);
+       it->Valid() && StartsWithASCII(it->key().ToString(), key_prefix,
+                                      true /* case sensitive */);
+       it->Next()) {
+    LOG(INFO) << "Adding update (key): " << it->key().ToString();
+    kvs->insert(make_pair(it->key().ToString(), it->value().ToString()));
+  }
+  return (!kvs->empty());
+}
+
 bool DBManager::Put(const Options& options,
                     const string& key,
                     const string& value) {
@@ -70,7 +91,7 @@ bool DBManager::Put(const Options& options,
 
 // Append-like operation.
 bool DBManager::Append(const Options& options,
-                       const string& key,
+                       const string& key_prefix,
                        const string& new_value) {
   auto iter = db_map_.find(GenKey(options));
   CHECK(iter != db_map_.end());
@@ -79,13 +100,12 @@ bool DBManager::Append(const Options& options,
   // Gen key.
 
   // Gen GUID.
-  string guid;
-  CreateGUIDString(&guid);
-
-  const string key_guid = key + "_" + guid;
+  const string guid = CreateGUIDString();
+  const string key_guid = key_prefix + "_" + guid;
 
   // Write the key_GUID.
-  db->Put(leveldb::WriteOptions(), key, new_value);
+  LOG(INFO) << "Appending " << key_guid << " : " << new_value;
+  db->Put(leveldb::WriteOptions(), key_guid, new_value);
 
   return true;
 }
@@ -107,7 +127,7 @@ bool DBManager::First(const Options& options, string* key, string* value) {
   auto iter = db_map_.find(GenKey(options));
   CHECK(iter != db_map_.end());
   leveldb::DB* db = iter->second;
-  leveldb::Iterator* it = db->NewIterator(leveldb::ReadOptions());
+  scoped_ptr<leveldb::Iterator> it(db->NewIterator(leveldb::ReadOptions()));
   it->SeekToFirst();
   if (!it->Valid()) {
     return false;

@@ -72,10 +72,12 @@ void UpdateQueuer::Run() {
 
       vector<string> update;
       base::SplitString(tuple, '_', &update);
+      CHECK(update.size() == 5);
       const string& ts = update[0];
       const string& top_dir = update[1];
       const string& rel_path = update[2];
-      const string& hash = update[3];
+      const string& uploading_device = update[3];
+      const string& hash = update[4];
 
       // TOP_DIR_META editors.
       options.type = ServerDB::TOP_DIR_META;
@@ -83,11 +85,20 @@ void UpdateQueuer::Run() {
       string users_to_update;
 
       // Iterate through the EDITORS.
-      vector<string> users;
-      CHECK(dbm_->GetList(options, "EDITORS", &users));
+      vector<string> emails;
+      CHECK(dbm_->GetList(options, "EDITORS", &emails));
+
+      vector<string> user_ids;
+      for (const string& email : emails) {
+        string user_id;
+        CHECK(dbm_->Get(
+            DBManager::Options(ServerDB::EMAIL_USER, ""), email, &user_id))
+            << email;
+        user_ids.push_back(user_id);
+      }
 
       // USER_DEVICE
-      for (const string& user : users) {
+      for (const string& user : user_ids) {
         options.type = ServerDB::USER_DEVICE;
         options.name = "";
         vector<string> devices;
@@ -95,12 +106,17 @@ void UpdateQueuer::Run() {
             << user << " not in USER_DEVICE";
 
         // DEVICE_SYNC append.
+        options.type = ServerDB::DEVICE_SYNC;
+        options.name = "";
         for (const string& device : devices) {
-          options.type = ServerDB::DEVICE_SYNC;
-          options.name = "";
+          LOG(INFO) << "Device " << device << " for user " << user;
+          if (device == uploading_device) {
+            LOG(INFO) << "Skipping the uploading device.";
+            continue;
+          }
 
           // TODO(tierney): Lock the database entries for the prefix.
-          LOG(INFO) << "Appending " << tuple;
+          LOG(INFO) << "Appending to device " << device << ": " << tuple;
           CHECK(dbm_->Append(options, device, tuple));
         }
       }
