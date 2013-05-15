@@ -24,6 +24,8 @@ using std::vector;
 
 namespace lockbox {
 
+const int kNumEncryptAttempts = 3;
+
 Encryptor::Encryptor(Client* client, DBManagerClient* dbm, UserAuth* user_auth)
     : client_(client), dbm_(dbm), user_auth_(user_auth) {
   CHECK(client);
@@ -54,16 +56,37 @@ bool Encryptor::EncryptString(const string& top_dir_path,
 
   // Encrypt the relative path name.
   string rel_path(RemoveBaseFromInput(top_dir_path, path));
-  success = EncryptInternal(rel_path, users, &(package->path.data),
-                            &(package->path.user_enc_session));
-  package->path.data_sha1 = SHA1Hex(package->path.data);
-
+  string dec_rel_path;
+  int i = 0;
+  for (i = 0; i < kNumEncryptAttempts; i++) {
+    LOG(INFO) << "Encrypting and testing relative_path.";
+    success = EncryptInternal(rel_path, users, &(package->path.data),
+                              &(package->path.user_enc_session));
+    package->path.data_sha1 = SHA1Hex(package->path.data);
+    dec_rel_path.clear();
+    CHECK(Decrypt(package->path.data,
+                  package->path.user_enc_session,
+                  &dec_rel_path));
+    if (dec_rel_path == rel_path) {
+      break;
+    }
+    LOG(WARNING) << "Could not encrypt/decrypt path " << rel_path << " " << dec_rel_path;
+  }
+  if (i == kNumEncryptAttempts) {
+    CHECK(false) << "Could not encrypt path " << rel_path;
+  }
   CHECK(success);
 
   // Encrypt the data.
   success = EncryptInternal(raw_input, users, &(package->payload.data),
                             &(package->payload.user_enc_session));
   package->payload.data_sha1 = SHA1Hex(package->payload.data);
+  string dec_raw_input;
+  CHECK(Decrypt(package->payload.data,
+                package->payload.user_enc_session,
+                &dec_raw_input));
+  CHECK(raw_input == dec_raw_input);
+
 
   CHECK(success);
   return true;
@@ -76,17 +99,32 @@ bool Encryptor::EncryptInternal(
   CHECK(data);
   CHECK(user_enc_session);
 
-   // Encrypt the file with the session key.
+  string password;
+  // Encrypt the file with the session ke.
   char password_bytes[22];
-  memset(password_bytes, '\0', 22);
-  crypto::RandBytes(password_bytes, 21);
-  string password(password_bytes);
-  // LOG(INFO) << "Password " << password;
 
-  // Cipher the main payload data with the symmetric key algo.
-  BlockCipher block_cipher;
-  data->clear();
-  CHECK(block_cipher.Encrypt(raw_input, password, data));
+  int attempts = 0;
+  for (attempts = 0; attempts < kNumEncryptAttempts; attempts++) {
+    memset(password_bytes, '\0', 22);
+    crypto::RandBytes(password_bytes, 21);
+    password.clear();
+    password.assign(password_bytes, 21);
+    LOG(INFO) << "Password size " << password.size();
+
+    // Cipher the main payload data with the symmetric key algo.
+    BlockCipher block_cipher;
+    data->clear();
+    CHECK(block_cipher.Encrypt(raw_input, password, data));
+
+    string dec_data;
+    CHECK(block_cipher.Decrypt(*data, password, &dec_data));
+    if (dec_data == raw_input) {
+      break;
+    }
+    LOG(WARNING) << "Decrypt check failed.";
+  }
+  CHECK(attempts < kNumEncryptAttempts);
+
 
   // Encrypt the session key per user using RSA.
   DBManagerClient::Options email_key_options;
@@ -102,6 +140,7 @@ bool Encryptor::EncryptInternal(
       key = pub.key;
     }
     CHECK(!key.empty()) << "Could not find user's key anywhere " << email;
+    dbm_->Put(email_key_options, email, key);
 
     string enc_session;
     RSAPEM rsa_pem;
@@ -109,7 +148,7 @@ bool Encryptor::EncryptInternal(
     rsa_pem.PublicEncrypt(key, password, &enc_session);
 
     user_enc_session->insert(std::make_pair(email, enc_session));
-}
+  }
 
   return true;
 }

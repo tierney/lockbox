@@ -331,7 +331,7 @@ void FileEventQueueHandler::HandleRemoteModAction(const string& timestamp,
     // Apply the delta.
     string reconstructed = Delta::Apply(current_file, payload);
 
-    LOG(INFO) << "Writing reconstructed " << reconstructed;
+    LOG(INFO) << "Writing reconstructed size: " << reconstructed.size();
     SetIgnorableAction(full_path, to_string(FW::Actions::Modified));
     const unsigned bytes_written = file_util::WriteFile(base::FilePath(full_path),
                                                         reconstructed.c_str(),
@@ -358,10 +358,9 @@ void FileEventQueueHandler::HandleRemoteModAction(const string& timestamp,
     encryptor_->Decrypt(package.payload.data,
                         package.payload.user_enc_session,
                         &payload);
-    LOG(INFO) << "Downloaded " << payload;
-    LOG(INFO) << "Current Fh " << current_file;
+    LOG(INFO) << "Downloaded size : " << payload.size();
+    LOG(INFO) << "Current size    : " << current_file.size();
 
-    LOG(INFO) << "Writing downloaded " << payload;
     SetIgnorableAction(abs_path, to_string(FW::Actions::Modified));
     const unsigned bytes_written = file_util::WriteFile(base::FilePath(abs_path),
                                                         payload.c_str(),
@@ -449,7 +448,11 @@ bool FileEventQueueHandler::HandleModAction(const string& path) {
   options.name = top_dir_id_;
   string path_guid;
   dbm_->Get(options, RemoveBaseFromInput(top_dir_path_, path), &path_guid);
-  CHECK(!path_guid.empty());
+
+  if (path_guid.empty()) {
+    LOG(ERROR) << "Got mod before a GUID was assigned.";
+    return HandleAddAction(path);
+  }
 
   // Lock the file in the cloud.
   PathLockRequest path_lock;
