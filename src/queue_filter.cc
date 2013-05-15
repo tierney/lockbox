@@ -75,8 +75,8 @@ void QueueFilter::Run() {
     // queue).
 
     // Write to the update_queue, if necessary.
-    LOG(INFO) << "Putting " << ts_path << " into the update queue of "
-              << update_queue_options.name;
+    // LOG(INFO) << "Putting " << ts_path << " into the update queue of "
+    //           << update_queue_options.name;
     dbm_->Put(update_queue_options, ts_path, state);
 
     // Delete the key when done.

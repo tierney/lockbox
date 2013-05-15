@@ -225,12 +225,12 @@ bool DBManagerClient::AddNewFileToUnfilteredQueue(const string& dirname,
                                         std::to_string(time(NULL)).c_str(),
                                         dirname.c_str(),
                                         filename.c_str());
-  LOG(INFO) << "Key: " << key;
+  // LOG(INFO) << "Key: " << key;
   const string value = base::StringPrintf("%s/%s:%d",
                                           dirname.c_str(),
                                           filename.c_str(),
                                           action);
-  LOG(INFO) << "Value: " << value;
+  // LOG(INFO) << "Value: " << value;
 
   // Be sure to avoid overwriting a key that is already there.
   string existing_entry;

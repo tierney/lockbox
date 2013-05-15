@@ -29,7 +29,7 @@ void FileWatcherThread::AddDirectory(const string& path, bool recursive) {
   vector<string> files;
   EnumerateFiles(path, &files);
   for (const string& abs_filepath : files) {
-    LOG(INFO) << "Adding file " << abs_filepath;
+    // LOG(INFO) << "Adding file " << abs_filepath;
     base::FilePath filepath(abs_filepath);
     db_manager_->AddNewFileToUnfilteredQueue(filepath.DirName().value(),
                                              filepath.BaseName().value(),
