@@ -12,5 +12,11 @@ noinst_LTLIBRARIES += libfile_watcher.la
 libfile_watcher_la_SOURCES = file_watcher.h
 libfile_watcher_la_SOURCES += file_watcher_impl.h
 libfile_watcher_la_SOURCES += file_watcher.cc
+if LINUX
 libfile_watcher_la_SOURCES += file_watcher_linux.h
 libfile_watcher_la_SOURCES += file_watcher_linux.cc
+endif
+if DARWIN
+libfile_watcher_la_SOURCES += file_watcher_mac.h
+libfile_watcher_la_SOURCES += file_watcher_mac.cc
+endif

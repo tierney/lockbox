@@ -28,7 +28,7 @@
 #define _FW_FILEWATCHEROSX_H_
 #pragma once
 
-#include "FileWatcherImpl.h"
+#include "file_watcher_impl.h"
 
 #if FILEWATCHER_PLATFORM == FILEWATCHER_PLATFORM_KQUEUE
 

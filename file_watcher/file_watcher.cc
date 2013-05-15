@@ -27,7 +27,7 @@
 #	include <file_watcher/file_watcher_win.h>
 #	define FILEWATCHER_IMPL FileWatcherWin32
 #elif FILEWATCHER_PLATFORM == FILEWATCHER_PLATFORM_KQUEUE
-#	include <file_watcher/file_watcher_mac.hh>
+#	include <file_watcher/file_watcher_mac.h>
 #	define FILEWATCHER_IMPL FileWatcherOSX
 #elif FILEWATCHER_PLATFORM == FILEWATCHER_PLATFORM_LINUX
 #	include <file_watcher/file_watcher_linux.h>

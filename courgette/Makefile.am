@@ -5,7 +5,7 @@ AM_CXXFLAGS =
 
 if DARWIN
 AM_LDFLAGS += -framework Foundation -framework Cocoa -framework IOKit -framework Security
-AM_CXXFLAGS += --stdlib=libc++
+# AM_CXXFLAGS += --stdlib=libc++
 endif
 
 noinst_LTLIBRARIES =
@@ -27,6 +27,7 @@ libsimple_delta_la_LIBADD = \
 	$(top_builddir)/base/libtime.la \
 	$(top_builddir)/base/libprocess_util.la \
 	$(top_builddir)/base/liblogging.la \
+	$(top_builddir)/base/libtracked_objects.la \
 	third_party/libbsdiff.la
 
 # bin_PROGRAMS += courgette_tool
@@ -46,19 +47,20 @@ libstreams_la_SOURCES = streams.h
 libstreams_la_SOURCES += streams.cc
 libstreams_la_SOURCES += region.h
 libstreams_la_LIBADD = libmemory_allocator.la
-libstreams_la_LIBADD += $(top_builddir)/base/memory/libsingleton.la \
-	$(top_builddir)/base/libat_exit.la
+libstreams_la_LIBADD += \
+  $(top_builddir)/base/memory/libsingleton.la \
+  $(top_builddir)/base/libat_exit.la
 
-TESTS += streams_unittest
-bin_PROGRAMS += streams_unittest
-streams_unittest_SOURCES = streams_unittest.cc
-streams_unittest_LDADD = libsimple_delta.la
-streams_unittest_LDADD += libstreams.la
-streams_unittest_LDADD += $(top_builddir)/testing/gtest/lib/libgtest.la
-streams_unittest_LDADD += $(top_builddir)/testing/gtest/lib/libgtest_main.la
-streams_unittest_LDADD += $(top_builddir)/base/liblogging.la
-streams_unittest_LDADD += $(top_builddir)/base/threading/libplatform_thread.la \
-	$(top_builddir)/base/libprocess_util.la
+# TESTS += streams_unittest
+# bin_PROGRAMS += streams_unittest
+# streams_unittest_SOURCES = streams_unittest.cc
+# streams_unittest_LDADD = libsimple_delta.la
+# streams_unittest_LDADD += libstreams.la
+# streams_unittest_LDADD += $(top_builddir)/testing/gtest/lib/libgtest.la
+# streams_unittest_LDADD += $(top_builddir)/testing/gtest/lib/libgtest_main.la
+# streams_unittest_LDADD += $(top_builddir)/base/liblogging.la
+# streams_unittest_LDADD += $(top_builddir)/base/threading/libplatform_thread.la \
+# 	$(top_builddir)/base/libprocess_util.la
 
 noinst_LTLIBRARIES += third_party/libbsdiff.la
 third_party_libbsdiff_la_SOURCES = third_party/bsdiff.h
