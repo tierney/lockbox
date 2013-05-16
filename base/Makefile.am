@@ -2,11 +2,11 @@ SUBDIRS =
 DEFAULT_INCLUDES =
 AM_CPPFLAGS = -I$(top_srcdir) -I$(top_builddir)
 AM_CFLAGS = -I$(top_srcdir)
-AM_CXXFLAGS = -g -O0 -DOS_POSIX
+AM_CXXFLAGS = -g -O0 -DOS_POSIX -arch x86_64 -DCOMPILER_GCC -DARCH_CPU_X86_FAMILY
 
 if DARWIN
 AM_LDFLAGS = -framework Foundation
-AM_CXXFLAGS += --stdlib=libc++
+AM_CXXFLAGS += -DOS_MACOSX --stdlib=libc++
 endif
 
 EXTRA_DIST =
@@ -251,7 +251,7 @@ metrics_libhistogram_la_LIBADD += metrics/libhistogram_samples.la
 metrics_libhistogram_la_LIBADD += libvalues.la
 metrics_libhistogram_la_LIBADD += metrics/libbucket_ranges.la
 metrics_libhistogram_la_LIBADD += metrics/libsample_vector.la
-metrics_libhistogram_la_LIBADD += libatomicops.la
+# metrics_libhistogram_la_LIBADD += libatomicops.la
 metrics_libhistogram_la_LIBADD += libtime.la
 
 metrics_libhistogram_la_LIBADD += metrics/libstatistics_recorder.la
@@ -383,7 +383,7 @@ noinst_LTLIBRARIES += threading/libthread_id_name_manager.la
 threading_libthread_id_name_manager_la_SOURCES = threading/thread_id_name_manager.h
 threading_libthread_id_name_manager_la_SOURCES += threading/thread_id_name_manager.cc
 threading_libthread_id_name_manager_la_LIBADD = synchronization/liblock.la
-threading_libthread_id_name_manager_la_LIBADD += libatomicops.la
+# threading_libthread_id_name_manager_la_LIBADD += libatomicops.la
 
 noinst_LTLIBRARIES += memory/libsingleton.la
 memory_libsingleton_la_SOURCES = memory/singleton.h
@@ -391,11 +391,16 @@ memory_libsingleton_la_SOURCES += memory/singleton.cc
 memory_libsingleton_la_LIBADD = threading/libplatform_thread.la
 memory_libsingleton_la_LIBADD += libat_exit.la
 
+EXTRA_DIST = atomicops.h
+if LINUX
 noinst_LTLIBRARIES += libatomicops.la
-libatomicops_la_SOURCES = atomicops_internals_x86_gcc.cc
+libatomicops_la_SOURCES =
 libatomicops_la_SOURCES += atomicops_internals_x86_gcc.h
-libatomicops_la_SOURCES += atomicops.h
-libatomicops_la_SOURCES += atomicops_internals_mac.h
+libatomicops_la_SOURCES += atomicops_internals_x86_gcc.cc
+endif
+if DARWIN
+EXTRA_DIST += atomicops_internals_mac.h
+endif
 
 noinst_LTLIBRARIES += third_party/icu/libicu_utf.la
 third_party_icu_libicu_utf_la_SOURCES = third_party/icu/icu_utf.h
@@ -596,7 +601,7 @@ memory_libref_counted_la_SOURCES = memory/ref_counted.h
 memory_libref_counted_la_SOURCES += memory/ref_counted.cc
 memory_libref_counted_la_SOURCES += atomic_ref_count.h
 memory_libref_counted_la_LIBADD = threading/libthread_collision_warner.la
-memory_libref_counted_la_LIBADD += libatomicops.la
+# memory_libref_counted_la_LIBADD += libatomicops.la
 memory_libref_counted_la_LIBADD += libtask_runner.la
 
 
@@ -685,7 +690,7 @@ libstring_util_la_SOURCES += string_util.h
 libstring_util_la_SOURCES += string_util_posix.h
 libstring_util_la_LIBADD = third_party/icu/libicu_utf.la
 libstring_util_la_LIBADD += threading/libthread_restrictions.la
-libstring_util_la_LIBADD += libatomicops.la
+# libstring_util_la_LIBADD += libatomicops.la
 libstring_util_la_LIBADD += libstring16.la
 libstring_util_la_LIBADD += memory/libsingleton.la
 

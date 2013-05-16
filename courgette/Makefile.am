@@ -46,7 +46,8 @@ noinst_LTLIBRARIES += libstreams.la
 libstreams_la_SOURCES = streams.h
 libstreams_la_SOURCES += streams.cc
 libstreams_la_SOURCES += region.h
-libstreams_la_LIBADD = libmemory_allocator.la
+# libstreams_la_LIBADD = libmemory_allocator.la
+libstreams_la_LIBADD =
 libstreams_la_LIBADD += \
   $(top_builddir)/base/memory/libsingleton.la \
   $(top_builddir)/base/libat_exit.la
@@ -120,8 +121,11 @@ noinst_LTLIBRARIES += libcrc.la
 libcrc_la_SOURCES = crc.h
 libcrc_la_SOURCES += crc.cc
 
-noinst_LTLIBRARIES += libmemory_allocator.la
-libmemory_allocator_la_SOURCES = memory_allocator.h
-libmemory_allocator_la_SOURCES += memory_allocator.cc
-libmemory_allocator_la_LIBADD = $(top_builddir)/base/files/libfile_path.la
-libmemory_allocator_la_LIBADD += $(top_builddir)/base/libplatform_file.la
+EXTRA_DIST += memory_allocator.h
+# if WINDOWS
+# noinst_LTLIBRARIES += libmemory_allocator.la
+# libmemory_allocator_la_SOURCES = memory_allocator.h
+# libmemory_allocator_la_SOURCES += memory_allocator.cc
+# libmemory_allocator_la_LIBADD = $(top_builddir)/base/files/libfile_path.la
+# libmemory_allocator_la_LIBADD += $(top_builddir)/base/libplatform_file.la
+# endif
