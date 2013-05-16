@@ -125,7 +125,7 @@ void FileWatcherThread::handleFileAction(FW::WatchID watchid,
       for (i = 0; i < kNumAttempts; i++) {
         if (!IsDirectory(potential_dir, &is_dir)) {
           LOG(WARNING) << "Something broke about the file. Just ignore for now "
-                       << potential_dir;
+                       << potential_dir.value();
           sleep(1);
           continue;
         } else {
