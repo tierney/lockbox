@@ -75,7 +75,10 @@ libsimple_delta_la_LIBADD = \
 noinst_LTLIBRARIES += libupdate_queuer.la
 libupdate_queuer_la_SOURCES = update_queuer.h
 libupdate_queuer_la_SOURCES += update_queuer.cc
-libupdate_queuer_la_CXXFLAGS = $(BOOST_THREAD_CFLAGS) -stdlib=libc++ $(AM_CXXFLAGS)
+libupdate_queuer_la_CXXFLAGS = $(BOOST_THREAD_CFLAGS)
+if DARWIN
+libupdate_queuer_la_CXXFLAGS += -stdlib=libc++ $(AM_CXXFLAGS)
+endif
 libupdate_queuer_la_LIBADD = $(GLOG_LIBS)
 libupdate_queuer_la_LIBADD += $(BOOST_THREAD_LIBS)
 libupdate_queuer_la_LIBADD += libdb_manager_server.la
@@ -123,6 +126,7 @@ liblockbox_service_handler_la_CXXFLAGS = $(LEVELDB_CFLAGS) $(AM_CXXFLAGS)
 liblockbox_service_handler_la_LIBADD = liblockbox_thrift.la
 liblockbox_service_handler_la_LIBADD += libdb_manager_server.la
 liblockbox_service_handler_la_LIBADD += $(top_builddir)/base/libsha1.la
+liblockbox_service_handler_la_LIBADD += $(top_builddir)/base/liblogging.la
 liblockbox_service_handler_la_LIBADD += $(top_builddir)/base/libbase64.la
 
 noinst_LTLIBRARIES += libhash_util.la
@@ -214,7 +218,10 @@ libutil_la_SOURCES += util.cc
 noinst_LTLIBRARIES += libencryptor.la
 libencryptor_la_SOURCES = encryptor.h
 libencryptor_la_SOURCES += encryptor.cc
-libencryptor_la_CXXFLAGS = $(AM_CXXFLAGS) -I$(NSS_CFLAGS)/nss $(NSPR_CFLAGS)
+libencryptor_la_CXXFLAGS = $(AM_CXXFLAGS)
+if DARWIN
+libencryptor_la_CXXFLAGS += -I$(NSS_CFLAGS)/nss $(NSPR_CFLAGS)
+endif
 libencryptor_la_LIBADD =
 libencryptor_la_LIBADD += librsa.la
 libencryptor_la_LIBADD += libhash_util.la

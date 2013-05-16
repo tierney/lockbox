@@ -472,18 +472,17 @@ files_libscoped_temp_dir_la_SOURCES += files/scoped_temp_dir.cc
 # threading_libthread_la_LIBADD += synchronization/libwaitable_event.la
 
 noinst_LTLIBRARIES += libfile_util.la
+libfile_util_la_CXXFLAGS = $(GLIB_CFLAGS)
 libfile_util_la_SOURCES = file_util.h
 libfile_util_la_SOURCES += posix/eintr_wrapper.h
 libfile_util_la_SOURCES += file_util.cc
 if DARWIN
 libfile_util_la_SOURCES += file_util_mac.mm
 endif
-
 if LINUX
 libfile_util_la_SOURCES += file_util_linux.cc
 endif
 libfile_util_la_SOURCES += file_util_posix.cc
-libfile_util_la_CXXFLAGS = $(GLIB_CFLAGS)
 libfile_util_la_LIBADD = libplatform_file.la
 
 noinst_LTLIBRARIES += nix/libxdg_util.la
@@ -687,7 +686,7 @@ libstring_util_la_LIBADD = third_party/icu/libicu_utf.la
 libstring_util_la_LIBADD += threading/libthread_restrictions.la
 libstring_util_la_LIBADD += libatomicops.la
 libstring_util_la_LIBADD += libstring16.la
-# libstring_util_la_LIBADD += memory/libsingleton.la
+libstring_util_la_LIBADD += memory/libsingleton.la
 
 noinst_LTLIBRARIES += strings/libstring_piece.la
 strings_libstring_piece_la_SOURCES = strings/string_piece.cc
