@@ -5,7 +5,7 @@ AM_CPPFLAGS += -I$(top_srcdir) -I$(top_builddir) $(LEVELDB_CFLAGS)
 AM_CPPFLAGS += -DHAVE_INTTYPES_H -DHAVE_NETINET_IN_H -DUSE_OPENSSL
 AM_CFLAGS = -Wall -Wextra -g -O0
 AM_CXXFLAGS = -Wall -Wextra -g -O0
-AM_LDFLAGS = -L$(top_builddir) -static -lc++ -lc++abi
+AM_LDFLAGS = -L$(top_builddir) -static
 if DARWIN
 AM_LDFLAGS += -framework Foundation -framework Cocoa -framework Security
 AM_CXXFLAGS += -std=gnu++11 -stdlib=libc++

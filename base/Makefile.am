@@ -5,7 +5,7 @@ AM_CFLAGS = -I$(top_srcdir)
 AM_CXXFLAGS = -g -O0 -DOS_POSIX -DCOMPILER_GCC -DARCH_CPU_X86_FAMILY
 
 if DARWIN
-AM_LDFLAGS = -framework Foundation -lc++ -lc++abi
+AM_LDFLAGS = -framework Foundation
 AM_CXXFLAGS += -DOS_MACOSX -std=gnu++11 -stdlib=libc++
 endif
 

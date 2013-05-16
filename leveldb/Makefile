@@ -21,7 +21,7 @@ CFLAGS += -I. -I./include $(PLATFORM_CCFLAGS) $(OPT)
 CXXFLAGS += -I. -I./include $(PLATFORM_CXXFLAGS) $(OPT)
 
 LDFLAGS += $(PLATFORM_LDFLAGS) -std=gnu++11 -stdlib=libc++
-LIBS += $(PLATFORM_LIBS) -lc++ -lc++abi
+LIBS += $(PLATFORM_LIBS)
 
 LIBOBJECTS = $(SOURCES:.cc=.o)
 MEMENVOBJECTS = $(MEMENV_SOURCES:.cc=.o)
