@@ -22,15 +22,56 @@ FileWatcherThread::~FileWatcherThread() {
 
 void FileWatcherThread::AddDirectory(const string& path, bool recursive) {
   file_watcher_.addWatch(path, this);
+
+  // Should enumerate all files for the directory and then add these to the
+  // queue.
+  // TODO
+  vector<string> files;
+  EnumerateFiles(path, &files);
+  for (const string& abs_filepath : files) {
+    // LOG(INFO) << "Adding file " << abs_filepath;
+    base::FilePath filepath(abs_filepath);
+    db_manager_->AddNewFileToUnfilteredQueue(filepath.DirName().value(),
+                                             filepath.BaseName().value(),
+                                             FW::Action::Add);
+  }
+
   if (!recursive) {
     return;
   }
+
   vector<string> sub_dirs;
   EnumerateDirectories(path, &sub_dirs);
   for (auto& sub_dir : sub_dirs) {
     AddDirectory(sub_dir, false);
   }
 }
+
+void FileWatcherThread::EnumerateFiles(const string& directory,
+                                       vector<string>* files) {
+  CHECK(files);
+  base::FilePath base(directory);
+  CHECK(base.IsAbsolute());
+
+  file_util::FileEnumerator enumerator(
+      base,
+      false /* recursive */,
+      file_util::FileEnumerator::FILES);
+  while (true) {
+    base::FilePath fp(enumerator.Next());
+    if (fp.value().empty()) {
+      break;
+    }
+    files->push_back(fp.value());
+
+    file_util::FileEnumerator::FindInfo info;
+    enumerator.GetFindInfo(&info);
+    if (file_util::FileEnumerator::IsDirectory(info)) {
+      CHECK(false) << "Got a directory when asking for files only";
+    }
+  }
+}
+
 
 void FileWatcherThread::EnumerateDirectories(const string& path,
                                              vector<string>* dirs) {
@@ -59,6 +100,7 @@ namespace {
 
 bool IgnorableFile(const string& filename) {
   // swp, swpx, or . files
+  (void) filename;
   return true;
 }
 
@@ -68,8 +110,9 @@ void FileWatcherThread::handleFileAction(FW::WatchID watchid,
                                          const string& dir,
                                          const string& filename,
                                          FW::Action action) {
-  base::FilePath potential_dir(base::FilePath(dir).Append(filename));
+  (void) watchid;
 
+  base::FilePath potential_dir(base::FilePath(dir).Append(filename));
 
   int i = 0;
   bool is_dir = false;
@@ -81,7 +124,8 @@ void FileWatcherThread::handleFileAction(FW::WatchID watchid,
       // at.
       for (i = 0; i < kNumAttempts; i++) {
         if (!IsDirectory(potential_dir, &is_dir)) {
-          LOG(WARNING) << "Something broke about the file. Just ignore for now.";
+          LOG(WARNING) << "Something broke about the file. Just ignore for now "
+                       << potential_dir;
           sleep(1);
           continue;
         } else {
@@ -95,6 +139,8 @@ void FileWatcherThread::handleFileAction(FW::WatchID watchid,
       if (is_dir) {
         LOG(INFO) << "Watching new directory " << potential_dir.value();
         AddDirectory(potential_dir.value(), true);
+        LOG(INFO) << "Do not 'upload' a directory itself.";
+        return;
       }
       break;
     case FW::Actions::Delete:
@@ -108,6 +154,7 @@ void FileWatcherThread::handleFileAction(FW::WatchID watchid,
     default:
       CHECK(false) << "Should never happen!";
   }
+  /*
   DBManagerClient::Options options;
   options.type = ClientDB::UNFILTERED_QUEUE;
   // TODO(tierney): Bring this key formation to somewhere more manageable. We
@@ -133,6 +180,8 @@ void FileWatcherThread::handleFileAction(FW::WatchID watchid,
   }
 
   db_manager_->Put(options, key, value);
+  */
+  db_manager_->AddNewFileToUnfilteredQueue(dir, filename, action);
 }
 
 void FileWatcherThread::Start() {

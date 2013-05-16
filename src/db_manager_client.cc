@@ -1,6 +1,7 @@
 #include "db_manager_client.h"
 
 #include "base/memory/scoped_ptr.h"
+#include "base/stringprintf.h"
 #include "leveldb_util.h"
 #include "base/stl_util.h"
 #include "scoped_mutex.h"
@@ -211,4 +212,36 @@ void DBManagerClient::NewRelPathGUIDLocalPath(const string& top_dir,
   options.type = ClientDB::LOCATION_RELPATH_ID;
   Put(options, rel_path, rel_path_guid);
 }
+
+bool DBManagerClient::AddNewFileToUnfilteredQueue(const string& dirname,
+                                                  const string& filename,
+                                                  const int action) {
+  DBManagerClient::Options options;
+  options.type = ClientDB::UNFILTERED_QUEUE;
+  // TODO(tierney): Bring this key formation to somewhere more manageable. We
+  // shouldn't bake this in... Also see file_event_queue_handler when updating
+  // this code.
+  const string key = base::StringPrintf("%s:%s/%s",
+                                        std::to_string(time(NULL)).c_str(),
+                                        dirname.c_str(),
+                                        filename.c_str());
+  // LOG(INFO) << "Key: " << key;
+  const string value = base::StringPrintf("%s/%s:%d",
+                                          dirname.c_str(),
+                                          filename.c_str(),
+                                          action);
+  // LOG(INFO) << "Value: " << value;
+
+  // Be sure to avoid overwriting a key that is already there.
+  string existing_entry;
+  Get(options, key, &existing_entry);
+  if (!existing_entry.empty()) {
+    LOG(INFO) << "Dropping duplicate event for " << key << " " << value;
+    return false;
+  }
+
+  Put(options, key, value);
+  return true;
+}
+
 } // namespace lockbox
