@@ -3,10 +3,12 @@ DEFAULT_INCLUDES =
 AM_CPPFLAGS = -I$(top_srcdir) -I$(top_builddir)
 AM_CFLAGS = -I$(top_srcdir)
 AM_CXXFLAGS = -g -O0 -DOS_POSIX -DCOMPILER_GCC -DARCH_CPU_X86_FAMILY
+AM_OBJCXXFLAGS =
 
 if DARWIN
 AM_LDFLAGS = -framework Foundation
 AM_CXXFLAGS += -DOS_MACOSX -std=gnu++11 -stdlib=libc++
+AM_OBJCXXFLAGS += -DOS_MACOSX -stdlib=libc++
 endif
 
 EXTRA_DIST =
@@ -335,6 +337,7 @@ libprocess_util_la_SOURCES += files/dir_reader_posix.h
 # libprocess_util_la_SOURCES += files/dir_reader_linux.h
 libprocess_util_la_SOURCES += process_util_posix.cc
 libprocess_util_la_SOURCES += strings/string_tokenizer.h
+libprocess_util_la_CXXFLAGS = $(AM_CXXFLAGS)
 libprocess_util_la_LIBADD = libcommand_line.la
 if DARWIN
 libprocess_util_la_LIBADD += mac/libscoped_mach_port.la
@@ -477,7 +480,7 @@ files_libscoped_temp_dir_la_SOURCES += files/scoped_temp_dir.cc
 # threading_libthread_la_LIBADD += synchronization/libwaitable_event.la
 
 noinst_LTLIBRARIES += libfile_util.la
-libfile_util_la_CXXFLAGS = $(GLIB_CFLAGS)
+libfile_util_la_CXXFLAGS = $(GLIB_CFLAGS) $(AM_CXXFLAGS)
 libfile_util_la_SOURCES = file_util.h
 libfile_util_la_SOURCES += posix/eintr_wrapper.h
 libfile_util_la_SOURCES += file_util.cc
@@ -552,6 +555,7 @@ liblazy_instance_la_SOURCES += memory/aligned_memory.h
 noinst_LTLIBRARIES += files/libfile_path.la
 files_libfile_path_la_SOURCES = files/file_path.h
 files_libfile_path_la_SOURCES += files/file_path.cc
+files_libfile_path_la_CXXFLAGS = $(AM_CXXFLAGS)
 files_libfile_path_la_LIBADD = libpickle.la \
 	strings/libsys_string_conversions.la \
 	libutf_string_conversions.la \
@@ -588,6 +592,9 @@ libtracked_objects_la_SOURCES = tracked_objects.h
 libtracked_objects_la_SOURCES += tracked_objects.cc
 libtracked_objects_la_SOURCES += third_party/valgrind/memcheck.h
 libtracked_objects_la_SOURCES += third_party/valgrind/valgrind.h
+if DARWIN
+libtracked_objects_la_CXXFLAGS = $(AM_CXXFLAGS)
+endif
 libtracked_objects_la_LIBADD = liblazy_instance.la
 libtracked_objects_la_LIBADD += synchronization/liblock.la
 libtracked_objects_la_LIBADD += liblocation.la

@@ -7,7 +7,7 @@ AM_CFLAGS = -Wall -Wextra -g -O0
 AM_CXXFLAGS = -Wall -Wextra -g -O0
 AM_LDFLAGS = -L$(top_builddir) -static
 if DARWIN
-AM_LDFLAGS += -framework Foundation -framework Cocoa -framework Security
+AM_LDFLAGS += -framework Foundation -framework Cocoa -framework Security -framework IOKit
 AM_CXXFLAGS += -std=gnu++11 -stdlib=libc++
 endif
 
@@ -78,7 +78,7 @@ libupdate_queuer_la_SOURCES = update_queuer.h
 libupdate_queuer_la_SOURCES += update_queuer.cc
 libupdate_queuer_la_CXXFLAGS = $(BOOST_THREAD_CFLAGS)
 if DARWIN
-libupdate_queuer_la_CXXFLAGS += -stdlib=libc++ $(AM_CXXFLAGS)
+libupdate_queuer_la_CXXFLAGS += $(AM_CXXFLAGS)
 endif
 libupdate_queuer_la_LIBADD = $(GLOG_LIBS)
 libupdate_queuer_la_LIBADD += $(BOOST_THREAD_LIBS)
@@ -123,13 +123,14 @@ libguid_creator_la_SOURCES += guid_creator.cc
 noinst_LTLIBRARIES += liblockbox_service_handler.la
 liblockbox_service_handler_la_SOURCES = lockbox_service_handler.h
 liblockbox_service_handler_la_SOURCES += lockbox_service_handler.cc
-liblockbox_service_handler_la_CXXFLAGS = $(LEVELDB_CFLAGS) $(AM_CXXFLAGS)
+liblockbox_service_handler_la_CXXFLAGS = $(AM_CXXFLAGS) $(LEVELDB_CFLAGS)
 liblockbox_service_handler_la_LIBADD = liblockbox_thrift.la
 liblockbox_service_handler_la_LIBADD += libdb_manager_server.la
 liblockbox_service_handler_la_LIBADD += $(top_builddir)/base/libsha1.la
 liblockbox_service_handler_la_LIBADD += $(top_builddir)/base/liblogging.la
 liblockbox_service_handler_la_LIBADD += $(top_builddir)/base/libbase64.la
 liblockbox_service_handler_la_LIBADD += $(top_builddir)/base/libstring_util.la
+liblockbox_service_handler_la_LIBADD += $(top_builddir)/base/libprocess_util.la
 
 noinst_LTLIBRARIES += libhash_util.la
 libhash_util_la_SOURCES = \
@@ -142,16 +143,15 @@ libhash_util_la_LIBADD = \
 bin_PROGRAMS += server
 server_SOURCES = server.cc
 server_CXXFLAGS = $(LEVELDB_CFLAGS) $(AM_CXXFLAGS)
-# server_LDFLAGS =
 server_LDADD =
 server_LDADD += liblockbox_service_handler.la
+server_LDADD += $(LEVELDB_BIN_LIBS)
 server_LDADD += libupdate_queuer.la
 server_LDADD += liblockbox_thrift.la
 server_LDADD += libdb_manager_server.la
 server_LDADD += libcounter.la
 server_LDADD += libguid_creator.la
 server_LDADD += $(top_builddir)/crypto/librandom.la
-server_LDADD += $(LEVELDB_BIN_LIBS)
 server_LDADD += libleveldb_util.la
 server_LDADD += $(top_builddir)/base/files/libfile_path.la
 server_LDADD += $(GLOG_LIBS)
@@ -196,9 +196,14 @@ libclient_la_LIBADD += $(BOOST_THREAD_LIBS)
 # Delta encoding pieces.
 bin_PROGRAMS += delta_encoding_main
 delta_encoding_main_SOURCES = delta_encoding_main.cc
+delta_encoding_main_CXXFLAGS = $(AM_CXXFLAGS)
 delta_encoding_main_LDADD =
 delta_encoding_main_LDADD += $(top_builddir)/courgette/libsimple_delta.la
 delta_encoding_main_LDADD += $(top_builddir)/courgette/libstreams.la
+if DARWIN
+delta_encoding_main_LDADD += -L$(ZLIB_LIBS) -lz
+endif
+
 
 noinst_LTLIBRARIES += libfile_watcher_thread.la
 libfile_watcher_thread_la_SOURCES = file_watcher_thread.h
@@ -267,7 +272,7 @@ libfile_event_queue_handler_la_LIBADD = $(top_builddir)/base/libmd5.la \
 
 # Database pieces.
 noinst_LTLIBRARIES += libdb_manager.la
-libdb_manager_la_CXXFLAGS = $(LEVELDB_CFLAGS)
+libdb_manager_la_CXXFLAGS = $(LEVELDB_CFLAGS) $(AM_CXXFLAGS)
 libdb_manager_la_SOURCES = db_manager.h
 libdb_manager_la_SOURCES += db_manager.cc
 libdb_manager_la_LIBADD = libleveldb_util.la
@@ -295,7 +300,7 @@ libdb_manager_server_la_LIBADD += liblockbox_thrift.la
 libdb_manager_server_la_LIBADD += libdb_manager.la
 
 noinst_LTLIBRARIES += libleveldb_util.la
-libleveldb_util_la_CXXFLAGS = $(LEVELDB_CFLAGS)
+libleveldb_util_la_CXXFLAGS =  $(AM_CXXFLAGS) $(LEVELDB_CFLAGS)
 libleveldb_util_la_SOURCES = leveldb_util.h
 libleveldb_util_la_SOURCES += leveldb_util.cc
 libleveldb_util_la_LIBADD = $(top_builddir)/base/libfile_util.la

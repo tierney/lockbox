@@ -1,7 +1,7 @@
 AM_CPPFLAGS = -I$(top_srcdir)/testing/gtest/include -DCOURGETTE_USE_CRC_LIB
 AM_CPPFLAGS += -I$(top_srcdir) -I$(top_builddir)
 AM_LDFLAGS =
-AM_CXXFLAGS =
+AM_CXXFLAGS = -std=gnu++11 -stdlib=libc++
 
 if DARWIN
 AM_LDFLAGS += -framework Foundation -framework Cocoa -framework IOKit -framework Security
@@ -67,6 +67,7 @@ noinst_LTLIBRARIES += third_party/libbsdiff.la
 third_party_libbsdiff_la_SOURCES = third_party/bsdiff.h
 third_party_libbsdiff_la_SOURCES += third_party/bsdiff_apply.cc
 third_party_libbsdiff_la_SOURCES += third_party/bsdiff_create.cc
+third_party_libbsdiff_la_CXXFLAGS = $(AM_CXXFLAGS)
 third_party_libbsdiff_la_LIBADD = libcrc.la $(ZLIB_LIBS)
 third_party_libbsdiff_la_LIBADD += $(top_builddir)/base/libtime.la
 
@@ -120,6 +121,7 @@ libdifference_estimator_la_SOURCES += difference_estimator.cc
 noinst_LTLIBRARIES += libcrc.la
 libcrc_la_SOURCES = crc.h
 libcrc_la_SOURCES += crc.cc
+libcrc_la_CXXFLAGS = $(AM_CXXFLAGS) $(ZLIB_CFLAGS)
 
 EXTRA_DIST += memory_allocator.h
 # if WINDOWS

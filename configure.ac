@@ -29,8 +29,6 @@ AC_PROG_CC
 AC_PROG_OBJCXX([clang++])
 # AX_CXX_COMPILE_STDCXX_11
 
-# AC_SUBST([AM_CXXFLAGS], [-fpic -Wall -Wextra -g -O0 --stdlib=libc++ -std=gnu++11])
-
 # Checks for libraries.
 
 # First look for Boost, maybe for a specific minimum version:

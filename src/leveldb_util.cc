@@ -5,7 +5,7 @@
 
 namespace lockbox {
 
-leveldb::DB* OpenDB(const string& db_location) {
+leveldb::DB* OpenDB(const std::string& db_location) {
   leveldb::DB* db;
   leveldb::Options options;
   options.create_if_missing = true;
