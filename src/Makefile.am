@@ -5,10 +5,11 @@ AM_CPPFLAGS += -I$(top_srcdir) -I$(top_builddir) $(LEVELDB_CFLAGS)
 AM_CPPFLAGS += -DHAVE_INTTYPES_H -DHAVE_NETINET_IN_H -DUSE_OPENSSL
 AM_CFLAGS = -Wall -Wextra -g -O0
 AM_CXXFLAGS = -Wall -Wextra -g -O0
+AM_LDFLAGS = -L$(top_builddir) -static
 if DARWIN
+AM_LDFLAGS += -framework Foundation -framework Cocoa -framework Security
 AM_CXXFLAGS += -stdlib=libc++
 endif
-AM_LDFLAGS = -L$(top_builddir) -static
 
 TESTS =
 bin_PROGRAMS =
@@ -128,18 +129,20 @@ liblockbox_service_handler_la_LIBADD += libdb_manager_server.la
 liblockbox_service_handler_la_LIBADD += $(top_builddir)/base/libsha1.la
 liblockbox_service_handler_la_LIBADD += $(top_builddir)/base/liblogging.la
 liblockbox_service_handler_la_LIBADD += $(top_builddir)/base/libbase64.la
+liblockbox_service_handler_la_LIBADD += $(top_builddir)/base/libstring_util.la
 
 noinst_LTLIBRARIES += libhash_util.la
 libhash_util_la_SOURCES = \
-	hash_util.h \
-	hash_util.cc
+  hash_util.h \
+  hash_util.cc
 libhash_util_la_LIBADD = \
-	$(top_builddir)/base/strings/libstring_number_conversions.la \
-	$(top_builddir)/base/libsha1.la
+  $(top_builddir)/base/strings/libstring_number_conversions.la \
+  $(top_builddir)/base/libsha1.la
 
 bin_PROGRAMS += server
 server_SOURCES = server.cc
 server_CXXFLAGS = $(LEVELDB_CFLAGS) $(AM_CXXFLAGS)
+# server_LDFLAGS =
 server_LDADD =
 server_LDADD += liblockbox_service_handler.la
 server_LDADD += libupdate_queuer.la
@@ -269,8 +272,8 @@ libdb_manager_la_SOURCES = db_manager.h
 libdb_manager_la_SOURCES += db_manager.cc
 libdb_manager_la_LIBADD = libleveldb_util.la
 libdb_manager_la_LIBADD += liblockbox_thrift.la
-libdb_manager_la_LIBADD += libguid_creator.la \
-  $(top_builddir)/base/libstring_util.la
+libdb_manager_la_LIBADD += libguid_creator.la
+libdb_manager_la_LIBADD += $(top_builddir)/base/libstring_util.la
 
 noinst_LTLIBRARIES += libdb_manager_client.la
 libdb_manager_client_la_CXXFLAGS = $(LEVELDB_CFLAGS) $(AM_CXXFLAGS)

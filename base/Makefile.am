@@ -589,7 +589,7 @@ libtracked_objects_la_LIBADD += liblocation.la
 libtracked_objects_la_LIBADD += profiler/libtracked_time.la
 libtracked_objects_la_LIBADD += threading/libthread_local_storage.la
 libtracked_objects_la_LIBADD += profiler/libalternate_timer.la
-libtracked_objects_la_LIBADD += libprocess_util.la
+# libtracked_objects_la_LIBADD += libprocess_util.la
 
 noinst_LTLIBRARIES += memory/libref_counted.la
 memory_libref_counted_la_SOURCES = memory/ref_counted.h
@@ -637,6 +637,7 @@ liblogging_la_LIBADD += libbase_switches.la
 liblogging_la_LIBADD += debug/libalias.la
 liblogging_la_LIBADD += strings/libstring_piece.la
 liblogging_la_LIBADD += threading/libplatform_thread.la
+liblogging_la_LIBADD += libcommand_line.la
 
 noinst_LTLIBRARIES += libcommand_line.la
 libcommand_line_la_SOURCES = command_line.h
@@ -699,10 +700,9 @@ threading_libplatform_thread_la_SOURCES += threading/platform_thread_posix.cc
 if DARWIN
 threading_libplatform_thread_la_SOURCES += threading/platform_thread_mac.mm
 endif
-
 threading_libplatform_thread_la_LIBADD =
-threading_libplatform_thread_la_LIBADD += threading/libthread_id_name_manager.la
 threading_libplatform_thread_la_LIBADD += libtracked_objects.la
+threading_libplatform_thread_la_LIBADD += threading/libthread_id_name_manager.la
 
 noinst_LTLIBRARIES += libutf_string_conversions.la
 libutf_string_conversions_la_SOURCES = utf_string_conversions.cc
