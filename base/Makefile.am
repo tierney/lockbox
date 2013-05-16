@@ -2,11 +2,11 @@ SUBDIRS =
 DEFAULT_INCLUDES =
 AM_CPPFLAGS = -I$(top_srcdir) -I$(top_builddir)
 AM_CFLAGS = -I$(top_srcdir)
-AM_CXXFLAGS = -g -O0 -DOS_POSIX -arch x86_64 -DCOMPILER_GCC -DARCH_CPU_X86_FAMILY
+AM_CXXFLAGS = -g -O0 -DOS_POSIX -DCOMPILER_GCC -DARCH_CPU_X86_FAMILY
 
 if DARWIN
-AM_LDFLAGS = -framework Foundation
-AM_CXXFLAGS += -DOS_MACOSX --stdlib=libc++
+AM_LDFLAGS = -framework Foundation -lc++ -lc++abi
+AM_CXXFLAGS += -DOS_MACOSX -std=gnu++11 -stdlib=libc++
 endif
 
 EXTRA_DIST =
@@ -391,7 +391,7 @@ memory_libsingleton_la_SOURCES += memory/singleton.cc
 memory_libsingleton_la_LIBADD = threading/libplatform_thread.la
 memory_libsingleton_la_LIBADD += libat_exit.la
 
-EXTRA_DIST = atomicops.h
+EXTRA_DIST += atomicops.h
 if LINUX
 noinst_LTLIBRARIES += libatomicops.la
 libatomicops_la_SOURCES =
