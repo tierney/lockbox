@@ -7,6 +7,7 @@ AM_CFLAGS = -Wall -Wextra -g -O0
 AM_CXXFLAGS = -Wall -Wextra -g -O0
 AM_LDFLAGS = -L$(top_builddir) -static
 if DARWIN
+AM_CPPFLAGS += -DOS_MACOSX
 AM_LDFLAGS += -framework Foundation -framework Cocoa -framework Security -framework IOKit
 AM_CXXFLAGS += -std=gnu++11 -stdlib=libc++
 endif
@@ -20,7 +21,7 @@ LEVELDB_BIN_LIBS = $(top_builddir)/leveldb/libleveldb.a
 if DARWIN
 LEVELDB_BIN_LIBS += -L/usr/local/Cellar/snappy/1.0.5/lib
 endif
-LEVELDB_BIN_LIBS += -lsnappy
+LEVELDB_BIN_LIBS += -L$(SNAPPY_LIBS) -lsnappy
 
 # thrift compiler command. Note that the --out value for the output
 # directory.
@@ -76,6 +77,7 @@ libsimple_delta_la_LIBADD = \
 noinst_LTLIBRARIES += libupdate_queuer.la
 libupdate_queuer_la_SOURCES = update_queuer.h
 libupdate_queuer_la_SOURCES += update_queuer.cc
+libupdate_queuer_la_CPPFLAGS = $(AM_CPPFLAGS)
 libupdate_queuer_la_CXXFLAGS = $(BOOST_THREAD_CFLAGS)
 if DARWIN
 libupdate_queuer_la_CXXFLAGS += $(AM_CXXFLAGS)
@@ -156,6 +158,7 @@ server_LDADD += libleveldb_util.la
 server_LDADD += $(top_builddir)/base/files/libfile_path.la
 server_LDADD += $(GLOG_LIBS)
 server_LDADD += $(THRIFT_LIBS)
+server_LDADD += $(THRIFTNB_LIBS)
 server_LDADD += $(LIBEVENT_LIBS)
 server_LDADD += $(PTHREAD_LIBS)
 server_LDADD += $(BOOST_THREAD_LIBS)
@@ -186,6 +189,7 @@ libclient_la_LIBADD += librsa_public_key_openssl.la
 libclient_la_LIBADD += liblockbox_thrift.la
 libclient_la_LIBADD += libfile_util.la
 libclient_la_LIBADD += $(THRIFT_LIBS)
+libclient_la_LIBADD += $(THRIFTNB_LIBS)
 libclient_la_LIBADD += libdb_manager_client.la
 libclient_la_LIBADD += libfile_watcher_thread.la
 libclient_la_LIBADD += libfile_event_queue_handler.la
@@ -206,6 +210,7 @@ endif
 
 
 noinst_LTLIBRARIES += libfile_watcher_thread.la
+libfile_watcher_thread_la_CPPFLAGS = $(AM_CPPFLAGS)
 libfile_watcher_thread_la_SOURCES = file_watcher_thread.h
 libfile_watcher_thread_la_SOURCES += file_watcher_thread.cc
 libfile_watcher_thread_la_LIBADD = $(top_builddir)/file_watcher/libfile_watcher.la
@@ -228,7 +233,7 @@ libencryptor_la_SOURCES = encryptor.h
 libencryptor_la_SOURCES += encryptor.cc
 libencryptor_la_CXXFLAGS = $(AM_CXXFLAGS)
 if DARWIN
-libencryptor_la_CXXFLAGS += -I$(NSS_CFLAGS)/nss $(NSPR_CFLAGS)
+libencryptor_la_CXXFLAGS += -I$(NSS_CFLAGS) $(NSPR_CFLAGS)
 endif
 libencryptor_la_LIBADD =
 libencryptor_la_LIBADD += librsa.la
@@ -262,6 +267,7 @@ libqueue_filter_la_LIBADD += libutil.la
 libqueue_filter_la_LIBADD += $(top_builddir)/base/strings/libstring_split.la
 
 noinst_LTLIBRARIES += libfile_event_queue_handler.la
+libfile_event_queue_handler_la_CPPFLAGS = $(AM_CPPFLAGS)
 libfile_event_queue_handler_la_SOURCES =
 libfile_event_queue_handler_la_SOURCES += file_event_queue_handler.h
 libfile_event_queue_handler_la_SOURCES += file_event_queue_handler.cc
@@ -292,6 +298,7 @@ libdb_manager_client_la_LIBADD += liblockbox_thrift.la
 libdb_manager_client_la_LIBADD += libdb_manager.la
 
 noinst_LTLIBRARIES += libdb_manager_server.la
+libdb_manager_server_la_CPPFLAGS = $(AM_CPPFLAGS)
 libdb_manager_server_la_CXXFLAGS = $(LEVELDB_CFLAGS)  $(AM_CXXFLAGS)
 libdb_manager_server_la_SOURCES = db_manager_server.h
 libdb_manager_server_la_SOURCES += db_manager_server.cc

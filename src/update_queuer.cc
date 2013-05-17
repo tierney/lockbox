@@ -47,6 +47,7 @@ void UpdateQueuer::Run() {
       options.type = ServerDB::UPDATE_ACTION_QUEUE;
 
       leveldb::DB* db = dbm_->db(options);
+      lock.lock();
       sync_->cv.wait(lock, [&]{ return !DBEmpty(db, sync_); });
 
       db_lock.lock();

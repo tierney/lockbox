@@ -4,6 +4,11 @@
 #include <mutex>
 #include <set>
 #include <string>
+
+#if defined(OS_MACOSX)
+#define BOOST_NO_CXX11_NUMERIC_LIMITS 1
+#endif
+
 #include <boost/thread/thread.hpp>
 
 #include "client.h"

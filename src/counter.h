@@ -1,7 +1,12 @@
 #pragma once
 
-#include "base/basictypes.h"
+#if defined(OS_MACOSX)
+#define BOOST_NO_CXX11_NUMERIC_LIMITS 1
+#endif
 #include <boost/thread.hpp>
+
+#include "base/basictypes.h"
+
 
 namespace lockbox {
 class Counter {

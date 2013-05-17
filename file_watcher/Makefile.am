@@ -1,5 +1,8 @@
 AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src
 AM_CXXFLAGS = -Wall -Wextra
+if DARWIN
+AM_CXXFLAGS += -std=gnu++11 -stdlib=libc++
+endif
 
 bin_PROGRAMS =
 noinst_LTLIBRARIES =
