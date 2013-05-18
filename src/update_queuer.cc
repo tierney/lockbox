@@ -47,10 +47,13 @@ void UpdateQueuer::Run() {
       options.type = ServerDB::UPDATE_ACTION_QUEUE;
 
       leveldb::DB* db = dbm_->db(options);
+      #if defined(OS_MACOSX)
       lock.lock();
+      #endif
       sync_->cv.wait(lock, [&]{ return !DBEmpty(db, sync_); });
 
       db_lock.lock();
+
       leveldb::Iterator* it = db->NewIterator(leveldb::ReadOptions());
       it->SeekToFirst();
       CHECK(it->Valid());
