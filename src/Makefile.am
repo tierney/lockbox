@@ -5,13 +5,13 @@ AM_CPPFLAGS += -I$(top_srcdir) -I$(top_builddir) $(LEVELDB_CFLAGS)
 AM_CPPFLAGS += -DHAVE_INTTYPES_H -DHAVE_NETINET_IN_H -DUSE_OPENSSL
 
 AM_CFLAGS = -Wall -Wextra -O2
-AM_CXXFLAGS = -Wall -Wextra -O2
+AM_CXXFLAGS = -Wall -Wextra -O2 -std=gnu++11
 
 AM_LDFLAGS = -L$(top_builddir) -static
 if DARWIN
 AM_CPPFLAGS += -DOS_MACOSX
 AM_LDFLAGS += -framework Foundation -framework Cocoa -framework Security -framework IOKit
-AM_CXXFLAGS += -std=gnu++11 -stdlib=libc++
+AM_CXXFLAGS += -stdlib=libc++
 endif
 
 TESTS =
@@ -81,9 +81,7 @@ libupdate_queuer_la_SOURCES = update_queuer.h
 libupdate_queuer_la_SOURCES += update_queuer.cc
 libupdate_queuer_la_CPPFLAGS = $(AM_CPPFLAGS)
 libupdate_queuer_la_CXXFLAGS = $(BOOST_THREAD_CFLAGS)
-if DARWIN
 libupdate_queuer_la_CXXFLAGS += $(AM_CXXFLAGS)
-endif
 libupdate_queuer_la_LIBADD = $(GLOG_LIBS)
 libupdate_queuer_la_LIBADD += $(BOOST_THREAD_LIBS)
 libupdate_queuer_la_LIBADD += libdb_manager_server.la
@@ -164,6 +162,7 @@ server_LDADD += $(THRIFTNB_LIBS)
 server_LDADD += $(LIBEVENT_LIBS)
 server_LDADD += $(PTHREAD_LIBS)
 server_LDADD += $(BOOST_THREAD_LIBS)
+server_LDADD += $(BOOST_SYSTEM_LIBS)
 
 noinst_LTLIBRARIES += libfile_util.la
 libfile_util_la_SOURCES = file_util.h
@@ -179,6 +178,9 @@ client_main_LDADD =
 client_main_LDADD += $(GFLAGS_LIBS)
 client_main_LDADD += libclient.la
 client_main_LDADD += $(LEVELDB_BIN_LIBS)
+client_main_LDADD += $(BOOST_THREAD_LIBS)
+client_main_LDADD += $(BOOST_SYSTEM_LIBS)
+client_main_LDADD += $(LIBEVENT_LIBS)
 
 noinst_LTLIBRARIES += libclient.la
 libclient_la_SOURCES = client.h

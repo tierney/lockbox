@@ -131,6 +131,7 @@ bool DBManagerServer::NewTopDir(const Options& options) {
     // appropriate places.
     CHECK(Track(new_options));
   }
+  return true;
 }
 
 bool DBManagerServer::Track(const Options& options) {

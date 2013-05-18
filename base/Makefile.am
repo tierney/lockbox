@@ -396,15 +396,11 @@ memory_libsingleton_la_LIBADD = threading/libplatform_thread.la
 memory_libsingleton_la_LIBADD += libat_exit.la
 
 EXTRA_DIST += atomicops.h
-if LINUX
 noinst_LTLIBRARIES += libatomicops.la
 libatomicops_la_SOURCES =
 libatomicops_la_SOURCES += atomicops_internals_x86_gcc.h
 libatomicops_la_SOURCES += atomicops_internals_x86_gcc.cc
-endif
-if DARWIN
 EXTRA_DIST += atomicops_internals_mac.h
-endif
 
 noinst_LTLIBRARIES += third_party/icu/libicu_utf.la
 third_party_icu_libicu_utf_la_SOURCES = third_party/icu/icu_utf.h
@@ -609,7 +605,7 @@ memory_libref_counted_la_SOURCES = memory/ref_counted.h
 memory_libref_counted_la_SOURCES += memory/ref_counted.cc
 memory_libref_counted_la_SOURCES += atomic_ref_count.h
 memory_libref_counted_la_LIBADD = threading/libthread_collision_warner.la
-# memory_libref_counted_la_LIBADD += libatomicops.la
+memory_libref_counted_la_LIBADD += libatomicops.la
 memory_libref_counted_la_LIBADD += libtask_runner.la
 
 
@@ -698,7 +694,7 @@ libstring_util_la_SOURCES += string_util.h
 libstring_util_la_SOURCES += string_util_posix.h
 libstring_util_la_LIBADD = third_party/icu/libicu_utf.la
 libstring_util_la_LIBADD += threading/libthread_restrictions.la
-# libstring_util_la_LIBADD += libatomicops.la
+libstring_util_la_LIBADD += libatomicops.la
 libstring_util_la_LIBADD += libstring16.la
 libstring_util_la_LIBADD += memory/libsingleton.la
 

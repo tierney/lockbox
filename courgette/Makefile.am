@@ -1,11 +1,11 @@
 AM_CPPFLAGS = -I$(top_srcdir)/testing/gtest/include -DCOURGETTE_USE_CRC_LIB
 AM_CPPFLAGS += -I$(top_srcdir) -I$(top_builddir)
 AM_LDFLAGS =
-AM_CXXFLAGS = -O2 -std=gnu++11 -stdlib=libc++
+AM_CXXFLAGS = -O2 -std=gnu++11
 
 if DARWIN
 AM_LDFLAGS += -framework Foundation -framework Cocoa -framework IOKit -framework Security
-# AM_CXXFLAGS += --stdlib=libc++
+AM_CXXFLAGS += --stdlib=libc++
 endif
 
 noinst_LTLIBRARIES =
