@@ -1,6 +1,7 @@
 AM_CPPFLAGS = -I$(top_srcdir) -I$(top_builddir) -I$(top_builddir)/testing/gtest/include
 AM_CPPFLAGS += -DUSE_OPENSSL
-AM_CXXFLAGS = -Wall -Wextra -O0 -g -I$(NSS_CFLAGS) $(NSPR_CFLAGS)
+# AM_CXXFLAGS = -Wall -Wextra -O0 -g -I$(NSS_CFLAGS) $(NSPR_CFLAGS)
+AM_CXXFLAGS = -Wall -Wextra -O2 -I$(NSS_CFLAGS) $(NSPR_CFLAGS)
 if DARWIN
 AM_CXXFLAGS += -I/usr/local/Cellar/nss/3.12.10/include/nss --stdlib=libc++
 endif

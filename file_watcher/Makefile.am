@@ -1,5 +1,5 @@
 AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src
-AM_CXXFLAGS = -Wall -Wextra
+AM_CXXFLAGS = -Wall -Wextra -O2
 if DARWIN
 AM_CXXFLAGS += -std=gnu++11 -stdlib=libc++
 endif

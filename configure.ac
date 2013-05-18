@@ -24,18 +24,20 @@ AC_PROG_LIBTOOL
 
 AC_PROG_GREP
 AC_PROG_EGREP
-case $host_os in
-  *linux*)
-     AC_PROG_CXX;;
-  *darwin*)
-     AC_PROG_CXX([clang++])
-     AC_PROG_OBJCXX([clang++]);;
-esac
+dnl case $host_os in
+dnl   *linux*)
+dnl AC_PROG_CXX;;
+dnl   *darwin*)
+AC_PROG_CXX([clang++])
+AC_PROG_OBJCXX([clang++])
+dnl ;;
+dnl esac
 
 AC_PROG_CC
-case $host_os in
-     *linux*)	AX_CXX_COMPILE_STDCXX_11;;
-esac
+dnl case $host_os in
+dnl      *linux*)
+dnl AX_CXX_COMPILE_STDCXX_11;;
+dnl esac
 
 
 # Checks for libraries.
