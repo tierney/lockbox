@@ -118,7 +118,7 @@ void FileWatcherThread::handleFileAction(FW::WatchID watchid,
   bool is_dir = false;
   switch(action) {
     case FW::Actions::Add:
-      std::cout << "File (" << dir + "/" + filename << ") Added! "
+      LOG(INFO) << "File (" << dir + "/" + filename << ") Added! "
                 << std::endl;
       // There are problems with getting inotify updates without a file to look
       // at.
@@ -144,12 +144,12 @@ void FileWatcherThread::handleFileAction(FW::WatchID watchid,
       }
       break;
     case FW::Actions::Delete:
-      std::cout << "File (" << dir + "/" + filename << ") Deleted! "
+      LOG(INFO) << "File (" << dir + "/" + filename << ") Deleted! "
                 << std::endl;
       break;
     case FW::Actions::Modified:
-      std::cout << "File (" << dir + "/" + filename << ") Modified! "
-                << std::endl;
+      LOGG(INFO) << "File (" << dir + "/" + filename << ") Modified! "
+                 << std::endl;
       break;
     default:
       CHECK(false) << "Should never happen!";
