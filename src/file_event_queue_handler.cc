@@ -180,7 +180,6 @@ void SplitKey(const string& key, string* timestamp, string* top_dir,
 void FileEventQueueHandler::HandleRemoteAction(const string& key,
                                                const string& value) {
   (void)value;
-  LOG(INFO) << "HandleRemoteAction() called.";
   // Value stored in the |key|.
   // 1367949789_1_25baec40-5a1f-108b-4ca31a19-3ab710a6_yUCJ/6CWfX2Uin3kzy6cZC7L9Wc=,
   // ts        tdn   guid                                  hash
@@ -215,7 +214,6 @@ void FileEventQueueHandler::HandleRemoteAddAction(const string& timestamp,
   (void)device;
 
   // Download the file.
-  LOG(INFO) << "Downloading the package.";
   DownloadRequest request;
   request.auth.email = user_auth_->email;
   request.auth.password = user_auth_->password;
@@ -258,7 +256,10 @@ void FileEventQueueHandler::HandleRemoteAddAction(const string& timestamp,
   const unsigned bytes_written = file_util::WriteFile(abs_file_path,
                                                       file_contents.c_str(),
                                                       file_contents.size());
-  CHECK(bytes_written == file_contents.size());
+  if (bytes_written != file_contents.size()) {
+    LOG(ERROR) << "Wrote " << bytes_written << " for file of "
+               << file_contents.size();
+  }
 
   // Unlock the path.
   dbm_->ReleaseLockPath(rel_path_guid, top_dir);
@@ -273,8 +274,6 @@ void FileEventQueueHandler::HandleRemoteModAction(const string& timestamp,
                                                   const string& hash) {
   (void)timestamp;
   (void)device;
-
-  LOG(INFO) << "HandleRemoteModAction() called.";
 
   // Local lock.
   while (!dbm_->AcquireLockPath(rel_path_guid, top_dir)) {
@@ -297,13 +296,11 @@ void FileEventQueueHandler::HandleRemoteModAction(const string& timestamp,
   request.pkg_name = hash;
 
   // Grab the package from the cloud.
-  LOG(INFO) << "Getting remote package";
   RemotePackage package;
   client_->Exec<void, RemotePackage&, const DownloadRequest&>(
       &LockboxServiceClient::DownloadPackage, package, request);
 
   // Learn the action type from the type of the package (DELTA | SNAPSHOT).
-  LOG(INFO) << "Package type " << _PackageType_VALUES_TO_NAMES.at(package.type);
 
   // Case: Delta.
   if (package.type == PackageType::DELTA) {
@@ -312,13 +309,11 @@ void FileEventQueueHandler::HandleRemoteModAction(const string& timestamp,
     // Read the current file.
     string current_file;
     const string full_path = top_dir_path + rel_path;
-    LOG(INFO) << "Full_Path " << full_path;
     file_util::ReadFileToString(base::FilePath(full_path), &current_file);
 
     // Determine what the deltas previous is supposed to be and if we have that
     // previous file on disk.
     const string current_file_hash = SHA1Hex(current_file);
-    LOG(INFO) << "Current file hash " << current_file_hash;
 
     // Get downloaded packages hash.
 
@@ -336,7 +331,6 @@ void FileEventQueueHandler::HandleRemoteModAction(const string& timestamp,
     // Apply the delta.
     string reconstructed = Delta::Apply(current_file, payload);
 
-    LOG(INFO) << "Writing reconstructed size: " << reconstructed.size();
     SetIgnorableAction(full_path, to_string(FW::Actions::Modified));
     const unsigned bytes_written = file_util::WriteFile(base::FilePath(full_path),
                                                         reconstructed.c_str(),
@@ -355,7 +349,6 @@ void FileEventQueueHandler::HandleRemoteModAction(const string& timestamp,
   if (package.type == PackageType::SNAPSHOT) {
     string current_file;
     string abs_path = top_dir_path + rel_path;
-    LOG(INFO) << "Path " << abs_path;
     file_util::ReadFileToString(base::FilePath(abs_path), &current_file);
 
     // See if the current file and the decrypted file are the same.
@@ -363,8 +356,6 @@ void FileEventQueueHandler::HandleRemoteModAction(const string& timestamp,
     encryptor_->Decrypt(package.payload.data,
                         package.payload.user_enc_session,
                         &payload);
-    LOG(INFO) << "Downloaded size : " << payload.size();
-    LOG(INFO) << "Current size    : " << current_file.size();
 
     SetIgnorableAction(abs_path, to_string(FW::Actions::Modified));
     const unsigned bytes_written = file_util::WriteFile(base::FilePath(abs_path),
@@ -410,7 +401,6 @@ void FileEventQueueHandler::HandleLocalAction(const string& ts_path,
 
   // Check if cancelled.
   if (IgnorableAction(path, event_type)) {
-    LOG(INFO) << "Ignoring " << path << " : " << event_type;
     return;
   }
 
@@ -418,7 +408,6 @@ void FileEventQueueHandler::HandleLocalAction(const string& ts_path,
   // We'll start by handling the added case.
   int fw_action = 0;
   base::StringToInt(event_type, &fw_action);
-  LOG(INFO) << "fw_action: " << fw_action;
   bool success = false;
   switch (fw_action) {
     case FW::Actions::Add:
@@ -467,7 +456,6 @@ bool FileEventQueueHandler::HandleModAction(const string& path) {
   path_lock.rel_path = path_guid;
 
   // Acquire the lock on the cloud.
-  LOG(INFO) << "Locking on the cloud.";
   PathLockResponse response;
   client_->Exec<void, PathLockResponse&, const PathLockRequest&>(
       &LockboxServiceClient::AcquireLockRelPath,
@@ -513,20 +501,17 @@ bool FileEventQueueHandler::HandleModAction(const string& path) {
   string prev_hash;
   dbm_->Get(DBManager::Options(ClientDB::RELPATHS_HEAD_FILE_HASH, top_dir_id_),
             relative_path, &prev_hash);
-  LOG(INFO) << "Prev Hash " << prev_hash;
 
   // Read the file from the disk.
   string current;
   file_util::ReadFileToString(base::FilePath(path), &current);
 
   const string current_sha1_hex(SHA1Hex(current));
-  LOG(INFO) << "Curr Hash " << current_sha1_hex;
   if (current_sha1_hex == prev_hash) {
     LOG(INFO) << "File actually unchanged according to SHA1";
 
     // Release the lock.
     // TODO(tierney): Locking path remotely should be a scoped operation.
-    LOG(INFO) << "Releasing lock";
     client_->Exec<void, const PathLockRequest&>(
         &LockboxServiceClient::ReleaseLockRelPath,
         path_lock);
@@ -535,18 +520,15 @@ bool FileEventQueueHandler::HandleModAction(const string& path) {
 
   // Compute the difference.
   const string delta = Delta::Generate(output, current);
-  LOG(INFO) << "Delta size produced " << delta.size();
 
   // Model for changing between the delta and the snapshot.
   bool use_delta = true;
   if (delta.size() >= current.size()) {
-    LOG(INFO) << "But creating a new SNAPSHOT.";
     use_delta = false;
   }
   const string& to_encrypt = use_delta ? delta : current;
 
   // encrypt, bundle the package, upload as a DELTA
-  LOG(INFO) << "Encrypting.";
   RemotePackage package;
   package.top_dir = top_dir_id_;
   package.rel_path_id = path_guid;
@@ -567,10 +549,9 @@ bool FileEventQueueHandler::HandleModAction(const string& path) {
 
   // Upload the package. Cloud needs to update the appropriate user's
   // update queues.
-  LOG(INFO) << "Uploading.";
   int64 ret = client_->Exec<int64, const UserAuth&, const RemotePackage&>(
       &LockboxServiceClient::UploadPackage, *user_auth_, package);
-  LOG(INFO) << "  Uploaded " << ret;
+  LOG(INFO) << "Uploaded " << ret;
 
   // Store the data in the local client db. SHOULD ACTUALLY STORE THE WHOLE
   // VERSION. THIS WAY WE CAN AVOID RECONSTRUCTION COSTS.
@@ -594,7 +575,6 @@ bool FileEventQueueHandler::HandleModAction(const string& path) {
   dbm_->Put(DBManager::Options(ClientDB::FPTRS, top_dir_id_), hash, prev_hash);
 
   // Release the lock.
-  LOG(INFO) << "Releasing lock";
   client_->Exec<void, const PathLockRequest&>(
       &LockboxServiceClient::ReleaseLockRelPath,
       path_lock);
@@ -619,7 +599,6 @@ bool FileEventQueueHandler::HandleAddAction(const string& path) {
       rel_path_req);
   CHECK(!path_guid.empty());
 
-  LOG(INFO) << "ADDed file GUID from server " << path_guid;
   const string relative_path(RemoveBaseFromInput(top_dir_path_, path));
 
 
@@ -628,7 +607,7 @@ bool FileEventQueueHandler::HandleAddAction(const string& path) {
   options.type = ClientDB::RELPATH_ID_LOCATION;
   options.name = top_dir_id_;
   dbm_->Put(options, path_guid, relative_path);
-  LOG(INFO) << "Mapped " << path_guid << " to " << relative_path;
+
   options.type = ClientDB::LOCATION_RELPATH_ID;
   dbm_->Put(options, relative_path, path_guid);
 
@@ -643,7 +622,6 @@ bool FileEventQueueHandler::HandleAddAction(const string& path) {
   path_lock.rel_path = path_guid;
 
   // Acquire the lock on the cloud.
-  LOG(INFO) << "Locking on the cloud.";
   PathLockResponse response;
   client_->Exec<void, PathLockResponse&, const PathLockRequest&>(
       &LockboxServiceClient::AcquireLockRelPath,
@@ -662,7 +640,6 @@ bool FileEventQueueHandler::HandleAddAction(const string& path) {
   file_util::ReadFileToString(base::FilePath(path), &current);
 
   // Read the file, do the encryption.
-  LOG(INFO) << "Encrypting.";
   RemotePackage package;
   package.top_dir = top_dir_id_;
   package.rel_path_id = path_guid;
@@ -678,10 +655,9 @@ bool FileEventQueueHandler::HandleAddAction(const string& path) {
 
   // Upload the package. Cloud needs to update the appropriate user's
   // update queues.
-  LOG(INFO) << "Uploading.";
   int64 ret = client_->Exec<int64, const UserAuth&, const RemotePackage&>(
       &LockboxServiceClient::UploadPackage, *user_auth_, package);
-  LOG(INFO) << "  Uploaded " << ret;
+  LOG(INFO) << "Uploaded " << ret;
 
   // Store the data in the local client db.
   options.type = ClientDB::DATA;
@@ -707,7 +683,6 @@ bool FileEventQueueHandler::HandleAddAction(const string& path) {
   dbm_->Put(DBManager::Options(ClientDB::FPTRS, top_dir_id_), hash, "");
 
   // Release the lock.
-  LOG(INFO) << "Releasing lock";
   client_->Exec<void, const PathLockRequest&>(
       &LockboxServiceClient::ReleaseLockRelPath,
       path_lock);

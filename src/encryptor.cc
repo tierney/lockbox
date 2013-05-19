@@ -60,7 +60,6 @@ bool Encryptor::EncryptString(const string& top_dir_path,
   string dec_rel_path;
   int i = 0;
   for (i = 0; i < kNumEncryptAttempts; i++) {
-    LOG(INFO) << "Encrypting and testing relative_path.";
     success = EncryptInternal(rel_path, users, &(package->path.data),
                               &(package->path.user_enc_session));
     package->path.data_sha1 = SHA1Hex(package->path.data);
@@ -109,7 +108,6 @@ bool Encryptor::EncryptInternal(
     crypto::RandBytes(password_bytes, 21);
     password.clear();
     password.assign(password_bytes, 21);
-    LOG(INFO) << "Password size " << password.size();
 
     string compressed_input;
     Gzip::Compress(raw_input, &compressed_input);
@@ -137,7 +135,6 @@ bool Encryptor::EncryptInternal(
     string key;
     dbm_->Get(email_key_options, email, &key);
     if (key.empty()) {
-      LOG(INFO) << "Going to the cloud for the user's key " << email;
       PublicKey pub;
       client_->Exec<void, PublicKey&, const string&>(
           &LockboxServiceClient::GetKeyFromEmail, pub, email);
@@ -148,7 +145,6 @@ bool Encryptor::EncryptInternal(
 
     string enc_session;
     RSAPEM rsa_pem;
-    LOG(INFO) << "Encrypting for " << email;
     rsa_pem.PublicEncrypt(key, password, &enc_session);
 
     user_enc_session->insert(std::make_pair(email, enc_session));
@@ -173,7 +169,6 @@ bool Encryptor::Decrypt(const string& data,
 
   RSAPEM rsa_pem;
   string out;
-  LOG(WARNING) << "Using user auth password for PEM password. Correct?";
   rsa_pem.PrivateDecrypt(user_auth_->password, priv_key, encrypted_key, &out);
   CHECK(!out.empty());
 

@@ -31,6 +31,8 @@ using std::unique_lock;
 
 namespace lockbox {
 
+const int kNumTransportAttempts = 3;
+
 class Client {
  public:
   struct ConnInfo {
@@ -90,9 +92,20 @@ class Client {
         LockboxServiceClient service_client_,
         R(LockboxServiceClient::*func)(Args...), Args... args) {
       unique_lock<mutex> lock(*socket_mutex);
-      transport_->open();
-      R ret = (service_client_.*func)(std::forward<Args>(args)...);
-      transport_->close();
+      int attempts = 0;
+      R ret;
+      for (attempts = 0; attempts < kNumTransportAttempts; attempts++) {
+        try {
+          transport_->open();
+          ret = (service_client_.*func)(std::forward<Args>(args)...);
+          transport_->close();
+          break;
+        } catch (apache::thrift::transport::TTransportException& e) {
+          LOG(ERROR) << "Problem with transport: " << e.what();
+          sleep(7);
+        }
+      }
+      CHECK(attempts < kNumTransportAttempts);
       lock.unlock();
       return ret;
     }
@@ -106,9 +119,20 @@ class Client {
         LockboxServiceClient service_client_,
         void(LockboxServiceClient::*func)(Args...), Args... args) {
       unique_lock<mutex> lock(*socket_mutex);
-      transport_->open();
-      (service_client_.*func)(std::forward<Args>(args)...);
-      transport_->close();
+      int attempts = 0;
+      for (attempts = 0; attempts < kNumTransportAttempts; attempts++) {
+        try {
+          transport_->open();
+          (service_client_.*func)(std::forward<Args>(args)...);
+          transport_->close();
+          break;
+        } catch (apache::thrift::transport::TTransportException& e) {
+          LOG(ERROR) << "Problem with transport: " << e.what();
+          sleep(7);
+        }
+      }
+      CHECK(attempts < kNumTransportAttempts);
+
       lock.unlock();
     }
   };

@@ -140,10 +140,8 @@ bool DBManagerClient::AcquireLockPath(const string& guid,
                                       const string& top_dir) {
   const string path(RelpathGuidToPath(guid, top_dir));
   CHECK(!path.empty());
-  LOG(INFO) << "AcquireLockPath " << path;
 
   if (!ContainsKey(path_locks_, path)) {
-    LOG(INFO) << "Inserting path " << path;
     path_locks_.insert(make_pair(path, new mutex()));
   }
 
@@ -167,9 +165,7 @@ bool DBManagerClient::AcquireLockPath(const string& guid,
 bool DBManagerClient::ReleaseLockPath(const string& guid,
                                       const string& top_dir) {
   const string path(RelpathGuidToPath(guid, top_dir));
-  LOG(INFO) << "ReleaseLockPath " << path;
 
-  LOG(INFO) << "Looking for path " << path;
   CHECK(ContainsKey(path_locks_, path));
 
   ScopedMutexLock lock(path_locks_.at(path));
@@ -236,7 +232,6 @@ bool DBManagerClient::AddNewFileToUnfilteredQueue(const string& dirname,
   string existing_entry;
   Get(options, key, &existing_entry);
   if (!existing_entry.empty()) {
-    LOG(INFO) << "Dropping duplicate event for " << key << " " << value;
     return false;
   }
 
