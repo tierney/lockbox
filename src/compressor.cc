@@ -13,7 +13,7 @@ namespace lockbox {
 void Gzip::Compress(const string& input, string* output) {
   CHECK(output);
   boost::iostreams::filtering_istream in;
-  in.push(boost::iostreams::gzip_decompressor());
+  in.push(boost::iostreams::gzip_compressor());
 
   std::stringstream ssin;
   ssin << input;
@@ -28,7 +28,7 @@ void Gzip::Decompress(const string& input, string* output) {
   CHECK(output);
 
   boost::iostreams::filtering_istream in;
-  in.push(boost::iostreams::gzip_compressor());
+  in.push(boost::iostreams::gzip_decompressor());
 
   std::stringstream ssin;
   ssin << input;

@@ -551,8 +551,11 @@ bool FileEventQueueHandler::HandleModAction(const string& path) {
   package.top_dir = top_dir_id_;
   package.rel_path_id = path_guid;
   package.type = use_delta ? PackageType::DELTA : PackageType::SNAPSHOT;
-  encryptor_->EncryptString(
-      top_dir_path_, path, to_encrypt, response.users, &package);
+  encryptor_->EncryptInternal(
+      to_encrypt, response.users, &(package.payload.data),
+      &(package.payload.user_enc_session));
+  // encryptor_->EncryptString(
+  //     top_dir_path_, path, to_encrypt, response.users, &package);
 
   // Encrypt the previous hash that corresponds to this update.
   if (use_delta) {
