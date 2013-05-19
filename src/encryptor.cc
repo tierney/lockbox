@@ -18,6 +18,7 @@
 #include "rsa.h"
 #include "util.h"
 #include "hash_util.h"
+#include "compressor.h"
 
 using std::string;
 using std::vector;
@@ -81,17 +82,16 @@ bool Encryptor::EncryptString(const string& top_dir_path,
   success = EncryptInternal(raw_input, users, &(package->payload.data),
                             &(package->payload.user_enc_session));
   package->payload.data_sha1 = SHA1Hex(package->payload.data);
-  string dec_raw_input;
-  CHECK(Decrypt(package->payload.data,
-                package->payload.user_enc_session,
-                &dec_raw_input));
-  CHECK(raw_input == dec_raw_input);
 
+  // string dec_raw_input;
+  // CHECK(Decrypt(package->payload.data,
+  //               package->payload.user_enc_session,
+  //               &dec_raw_input));
+  // CHECK(raw_input == dec_raw_input);
 
   CHECK(success);
   return true;
 }
-
 
 bool Encryptor::EncryptInternal(
     const string& raw_input, const vector<string>& emails,
@@ -111,20 +111,24 @@ bool Encryptor::EncryptInternal(
     password.assign(password_bytes, 21);
     LOG(INFO) << "Password size " << password.size();
 
+    string compressed_input;
+    Gzip::Compress(raw_input, &compressed_input);
+
     // Cipher the main payload data with the symmetric key algo.
     BlockCipher block_cipher;
     data->clear();
-    CHECK(block_cipher.Encrypt(raw_input, password, data));
+    CHECK(block_cipher.Encrypt(compressed_input, password, data));
 
     string dec_data;
     CHECK(block_cipher.Decrypt(*data, password, &dec_data));
-    if (dec_data == raw_input) {
+    string decompressed;
+    Gzip::Decompress(dec_data, &decompressed);
+    if (decompressed == raw_input) {
       break;
     }
-    LOG(WARNING) << "Decrypt check failed.";
+    LOG(ERROR) << "Decrypt check failed.";
   }
   CHECK(attempts < kNumEncryptAttempts);
-
 
   // Encrypt the session key per user using RSA.
   DBManagerClient::Options email_key_options;
@@ -174,7 +178,10 @@ bool Encryptor::Decrypt(const string& data,
   CHECK(!out.empty());
 
   BlockCipher block_cipher;
-  CHECK(block_cipher.Decrypt(data, out, output));
+  string compressed;
+  CHECK(block_cipher.Decrypt(data, out, &compressed));
+
+  Gzip::Decompress(compressed, output);
 
   return true;
 }
