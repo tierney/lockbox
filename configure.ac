@@ -45,6 +45,7 @@ dnl esac
 # First look for Boost, maybe for a specific minimum version:
 BOOST_REQUIRE([1.34])
 # Then look for specific Boost libraries you need:
+BOOST_IOSTREAMS
 BOOST_THREADS
 BOOST_SYSTEM
 

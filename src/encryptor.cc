@@ -18,6 +18,7 @@
 #include "rsa.h"
 #include "util.h"
 #include "hash_util.h"
+#include "compressor.h"
 
 using std::string;
 using std::vector;
@@ -59,7 +60,6 @@ bool Encryptor::EncryptString(const string& top_dir_path,
   string dec_rel_path;
   int i = 0;
   for (i = 0; i < kNumEncryptAttempts; i++) {
-    LOG(INFO) << "Encrypting and testing relative_path.";
     success = EncryptInternal(rel_path, users, &(package->path.data),
                               &(package->path.user_enc_session));
     package->path.data_sha1 = SHA1Hex(package->path.data);
@@ -81,17 +81,16 @@ bool Encryptor::EncryptString(const string& top_dir_path,
   success = EncryptInternal(raw_input, users, &(package->payload.data),
                             &(package->payload.user_enc_session));
   package->payload.data_sha1 = SHA1Hex(package->payload.data);
-  string dec_raw_input;
-  CHECK(Decrypt(package->payload.data,
-                package->payload.user_enc_session,
-                &dec_raw_input));
-  CHECK(raw_input == dec_raw_input);
 
+  // string dec_raw_input;
+  // CHECK(Decrypt(package->payload.data,
+  //               package->payload.user_enc_session,
+  //               &dec_raw_input));
+  // CHECK(raw_input == dec_raw_input);
 
   CHECK(success);
   return true;
 }
-
 
 bool Encryptor::EncryptInternal(
     const string& raw_input, const vector<string>& emails,
@@ -109,22 +108,25 @@ bool Encryptor::EncryptInternal(
     crypto::RandBytes(password_bytes, 21);
     password.clear();
     password.assign(password_bytes, 21);
-    LOG(INFO) << "Password size " << password.size();
+
+    string compressed_input;
+    Gzip::Compress(raw_input, &compressed_input);
 
     // Cipher the main payload data with the symmetric key algo.
     BlockCipher block_cipher;
     data->clear();
-    CHECK(block_cipher.Encrypt(raw_input, password, data));
+    CHECK(block_cipher.Encrypt(compressed_input, password, data));
 
     string dec_data;
     CHECK(block_cipher.Decrypt(*data, password, &dec_data));
-    if (dec_data == raw_input) {
+    string decompressed;
+    Gzip::Decompress(dec_data, &decompressed);
+    if (decompressed == raw_input) {
       break;
     }
-    LOG(WARNING) << "Decrypt check failed.";
+    LOG(ERROR) << "Decrypt check failed.";
   }
   CHECK(attempts < kNumEncryptAttempts);
-
 
   // Encrypt the session key per user using RSA.
   DBManagerClient::Options email_key_options;
@@ -133,7 +135,6 @@ bool Encryptor::EncryptInternal(
     string key;
     dbm_->Get(email_key_options, email, &key);
     if (key.empty()) {
-      LOG(INFO) << "Going to the cloud for the user's key " << email;
       PublicKey pub;
       client_->Exec<void, PublicKey&, const string&>(
           &LockboxServiceClient::GetKeyFromEmail, pub, email);
@@ -144,7 +145,6 @@ bool Encryptor::EncryptInternal(
 
     string enc_session;
     RSAPEM rsa_pem;
-    LOG(INFO) << "Encrypting for " << email;
     rsa_pem.PublicEncrypt(key, password, &enc_session);
 
     user_enc_session->insert(std::make_pair(email, enc_session));
@@ -169,12 +169,14 @@ bool Encryptor::Decrypt(const string& data,
 
   RSAPEM rsa_pem;
   string out;
-  LOG(WARNING) << "Using user auth password for PEM password. Correct?";
   rsa_pem.PrivateDecrypt(user_auth_->password, priv_key, encrypted_key, &out);
   CHECK(!out.empty());
 
   BlockCipher block_cipher;
-  CHECK(block_cipher.Decrypt(data, out, output));
+  string compressed;
+  CHECK(block_cipher.Decrypt(data, out, &compressed));
+
+  Gzip::Decompress(compressed, output);
 
   return true;
 }

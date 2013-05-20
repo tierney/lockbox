@@ -23,7 +23,7 @@ LEVELDB_BIN_LIBS = $(top_builddir)/leveldb/libleveldb.a
 if DARWIN
 LEVELDB_BIN_LIBS += -L/usr/local/Cellar/snappy/1.0.5/lib
 endif
-LEVELDB_BIN_LIBS += -L$(SNAPPY_LIBS) -lsnappy
+LEVELDB_BIN_LIBS += $(SNAPPY_LIBS)
 
 # thrift compiler command. Note that the --out value for the output
 # directory.
@@ -87,6 +87,13 @@ noinst_LTLIBRARIES += librsync.la
 librsync_la_SOURCES = \
 	rsync.h \
 	rsync.cc
+
+noinst_LTLIBRARIES += libcompressor.la
+libcompressor_la_SOURCES = \
+	compressor.h \
+	compressor.cc
+libcompressor_la_LIBADD = \
+	$(BOOST_IOSTREAMS_LIBS)
 
 noinst_LTLIBRARIES += libupdate_queuer.la
 libupdate_queuer_la_SOURCES = update_queuer.h
@@ -252,6 +259,7 @@ if DARWIN
 libencryptor_la_CXXFLAGS += -I$(NSS_CFLAGS) $(NSPR_CFLAGS)
 endif
 libencryptor_la_LIBADD =
+libencryptor_la_LIBADD += libcompressor.la
 libencryptor_la_LIBADD += librsa.la
 libencryptor_la_LIBADD += libhash_util.la
 libencryptor_la_LIBADD += librsa_public_key_openssl.la
