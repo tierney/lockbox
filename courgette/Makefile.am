@@ -30,17 +30,17 @@ libsimple_delta_la_LIBADD += $(top_builddir)/base/liblogging.la
 libsimple_delta_la_LIBADD += $(top_builddir)/base/libtracked_objects.la
 libsimple_delta_la_LIBADD += third_party/libbsdiff.la
 
-# bin_PROGRAMS += courgette_tool
-# courgette_tool_SOURCES = courgette_tool.cc
-# courgette_tool_LDADD = $(top_builddir)/base/files/libfile_path.la
-# courgette_tool_LDADD += $(top_builddir)/base/libfile_util.la
-# courgette_tool_LDADD += libdisassembler.la
-# courgette_tool_LDADD += libstreams.la
-# courgette_tool_LDADD += third_party/libbsdiff.la
-# courgette_tool_LDADD += libadjustment_method.la
-# courgette_tool_LDADD += libensemble.la \
-# 	$(top_builddir)/base/libcommand_line.la \
-# 	$(top_builddir)/base/strings/libstring_number_conversions.la
+bin_PROGRAMS += courgette_tool
+courgette_tool_SOURCES = courgette_tool.cc
+courgette_tool_LDADD = $(top_builddir)/base/files/libfile_path.la
+courgette_tool_LDADD += $(top_builddir)/base/libfile_util.la
+courgette_tool_LDADD += libdisassembler.la
+courgette_tool_LDADD += libstreams.la
+courgette_tool_LDADD += third_party/libbsdiff.la
+courgette_tool_LDADD += libadjustment_method.la
+courgette_tool_LDADD += libensemble.la \
+	$(top_builddir)/base/libcommand_line.la \
+	$(top_builddir)/base/strings/libstring_number_conversions.la
 
 noinst_LTLIBRARIES += libstreams.la
 libstreams_la_SOURCES = streams.h

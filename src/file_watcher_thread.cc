@@ -148,8 +148,8 @@ void FileWatcherThread::handleFileAction(FW::WatchID watchid,
                 << std::endl;
       break;
     case FW::Actions::Modified:
-      LOGG(INFO) << "File (" << dir + "/" + filename << ") Modified! "
-                 << std::endl;
+      LOG(INFO) << "File (" << dir + "/" + filename << ") Modified! "
+                << std::endl;
       break;
     default:
       CHECK(false) << "Should never happen!";
