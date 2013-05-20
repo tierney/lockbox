@@ -199,6 +199,7 @@ void FileWatcherThread::Join() {
 void FileWatcherThread::Run() {
   try {
     while (true) {
+      LOG(INFO) << "Checking for updates.";
       file_watcher_.update();
       boost::this_thread::interruption_point();
       usleep(100000);

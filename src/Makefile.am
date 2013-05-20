@@ -61,6 +61,14 @@ include thrift.mk
 # leveldb_sb_LDADD = $(LEVELDB_BIN_LIBS)
 # leveldb_sb_LDADD += $(GLOG_LIBS)
 
+# noinst_LTLIBRARIES += libdiff_match_patch.la
+# libdiff_match_patch_la_SOURCES = \
+# 	diff_match_patch.h \
+# 	diff_match_patch.cpp
+
+bin_PROGRAMS += strdiff_main
+strdiff_main_SOURCES = strdiff_main.cpp
+
 # noinst_LTLIBRARIES += libleveldb_base.la
 # libleveldb_base_la_SOURCES = leveldb_base.h
 # libleveldb_base_la_SOURCES += leveldb_base.cc
@@ -74,6 +82,11 @@ libsimple_delta_la_SOURCES = \
 libsimple_delta_la_LIBADD = \
 	$(top_builddir)/courgette/libsimple_delta.la \
 	$(top_builddir)/courgette/libstreams.la
+
+noinst_LTLIBRARIES += librsync.la
+librsync_la_SOURCES = \
+	rsync.h \
+	rsync.cc
 
 noinst_LTLIBRARIES += libcompressor.la
 libcompressor_la_SOURCES = \
