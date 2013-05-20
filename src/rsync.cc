@@ -1,6 +1,5 @@
 #include "rsync.h"
 
-#include <librsync.h>
 #include <stdio.h>
 
 namespace lockbox {
@@ -15,7 +14,7 @@ Rsync::Rsync(int blocksize) : blocksize_(blocksize) {
 Rsync::~Rsync() {
 }
 
-void Rsync::GenerateDelta(const string& first, const string& second,
+rs_result Rsync::GenerateDelta(const string& first, const string& second,
                           string* output) {
   char *cfirst;
   size_t fsize;

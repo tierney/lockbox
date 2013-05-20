@@ -1,5 +1,6 @@
 #pragma once
 
+#include <librsync.h>
 #include <string>
 
 using std::string;
@@ -12,7 +13,7 @@ class Rsync {
 
   virtual ~Rsync();
 
-  void GenerateDelta(const string& first, const string& second,
+  rs_result GenerateDelta(const string& first, const string& second,
                      string* output);
 
   void ApplyDelta(const string& first, const string& delta,
