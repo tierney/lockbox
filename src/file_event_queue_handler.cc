@@ -100,7 +100,6 @@ void ParseTimestampPath(const string& ts_path_key, string* timestamp, string* pa
   vector<string> ts_path;
   // TODO(tierney): See the file_watcher_thread for updates to this code's
   // handling of the key formatting.
-  LOG(INFO) << "ts_path_key: " << ts_path_key;
   base::SplitString(ts_path_key, ':', &ts_path);
   if (ts_path.size() != 2) {
     CHECK(false) << "bad ts_path_key " << ts_path_key;
@@ -127,11 +126,9 @@ void FileEventQueueHandler::Run() {
             DBManager::Options(ClientDB::UPDATE_QUEUE_SERVER, top_dir_id_),
             &key, &value)) {
       HandleRemoteAction(key, value);
-      LOG(INFO) << "Done with remote update.";
       dbm_->Delete(
           DBManager::Options(ClientDB::UPDATE_QUEUE_SERVER, top_dir_id_),
           key);
-      LOG(INFO) << "Deleted entry on cloud after update";
       continue;
     }
 
@@ -139,7 +136,6 @@ void FileEventQueueHandler::Run() {
             DBManager::Options(ClientDB::UPDATE_QUEUE_CLIENT, top_dir_id_),
             &key, &value)) {
       HandleLocalAction(key, value);
-      LOG(INFO) << "Done with local update";
       dbm_->Delete(
           DBManager::Options(ClientDB::UPDATE_QUEUE_CLIENT, top_dir_id_),
           key);
@@ -549,9 +545,10 @@ bool FileEventQueueHandler::HandleModAction(const string& path) {
 
   // Upload the package. Cloud needs to update the appropriate user's
   // update queues.
+  LOG(INFO) << "Uploading " << path;
   int64 ret = client_->Exec<int64, const UserAuth&, const RemotePackage&>(
       &LockboxServiceClient::UploadPackage, *user_auth_, package);
-  LOG(INFO) << "Uploaded " << ret;
+  LOG(INFO) << "Uploaded " << ret << " bytes for " << path;
 
   // Store the data in the local client db. SHOULD ACTUALLY STORE THE WHOLE
   // VERSION. THIS WAY WE CAN AVOID RECONSTRUCTION COSTS.
@@ -655,9 +652,10 @@ bool FileEventQueueHandler::HandleAddAction(const string& path) {
 
   // Upload the package. Cloud needs to update the appropriate user's
   // update queues.
+  LOG(INFO) << "Uploading " << path;
   int64 ret = client_->Exec<int64, const UserAuth&, const RemotePackage&>(
       &LockboxServiceClient::UploadPackage, *user_auth_, package);
-  LOG(INFO) << "Uploaded " << ret;
+  LOG(INFO) << "Uploaded " << ret << " bytes for " << path;
 
   // Store the data in the local client db.
   options.type = ClientDB::DATA;
