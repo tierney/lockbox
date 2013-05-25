@@ -66,6 +66,12 @@ include thrift.mk
 # 	diff_match_patch.h \
 # 	diff_match_patch.cpp
 
+bin_PROGRAMS += hash_chain_main
+hash_chain_main_SOURCES = hash_chain_main.cc
+hash_chain_main_LDADD = $(top_builddir)/base/libsha1.la
+hash_chain_main_LDADD += $(top_builddir)/crypto/librandom.la
+hash_chain_main_LDADD += $(top_builddir)/base/liblogging.la
+
 bin_PROGRAMS += strdiff_main
 strdiff_main_SOURCES = strdiff_main.cpp
 

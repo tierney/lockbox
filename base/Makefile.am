@@ -647,6 +647,7 @@ liblogging_la_LIBADD += debug/libalias.la
 liblogging_la_LIBADD += strings/libstring_piece.la
 liblogging_la_LIBADD += threading/libplatform_thread.la
 liblogging_la_LIBADD += libcommand_line.la
+liblogging_la_LIBADD += libtracked_objects.la
 
 noinst_LTLIBRARIES += libcommand_line.la
 libcommand_line_la_SOURCES = command_line.h
